@@ -1,1 +1,0 @@
-<img src="./assets/build/StepLauncher.png" loading="lazy" decoding="async">
