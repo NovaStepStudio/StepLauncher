@@ -1,0 +1,123 @@
+:root {
+  --background-main-app: url('../assets/background/RRE36/19.webp');
+  --background-login-app: #010101;
+  --background-title-bar: #050505;
+  --titlebar-text-color: #fff;
+  --sidebar-bg: rgba(8, 8, 16, 0.65);
+  --panel-bg: rgba(8, 8, 16, 0.55);
+  --sidebar-btn-color: rgba(255, 255, 255, 0.06);
+
+  // Typography ----------
+  --font-family-primary: 'Lexend';
+  --font-family-secundary: 'Inter';
+
+  // Accent Colors ----------
+  --accent-color: #5cd0e7;
+  --accent-hover: #4bc0d7;
+  --accent-gradient: linear-gradient(135deg, #140676, #00cec9);
+
+  // Surfaces ----------
+  --surface-glass: rgba(255, 255, 255, 0.04);
+  --surface-glass-hover: rgba(255, 255, 255, 0.08);
+  --surface-card: rgba(255, 255, 255, 0.04);
+  --surface-card-hover: rgba(255, 255, 255, 0.07);
+  --surface-elevated: rgba(0, 0, 0, 0.6);
+  --surface-overlay: rgba(0, 0, 0, 0.8);
+
+  // Borders ----------
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-hover: rgba(255, 255, 255, 0.15);
+
+  // Text Colors ----------
+  --text-primary: #fff;
+  --text-secondary: rgba(255, 255, 255, 0.6);
+  --text-muted: rgba(255, 255, 255, 0.35);
+  --text-faint: rgba(255, 255, 255, 0.15);
+
+  // Inputs ----------
+  --input-bg: rgba(0, 0, 0, 0.3);
+  --input-border: rgba(255, 255, 255, 0.10);
+  --input-border-focus: var(--accent-color);
+  --input-radius: 9px;
+
+  // Radii ----------
+  --card-radius: 14px;
+  --panel-radius: 12px;
+  --button-radius: 8px;
+
+  // Blur Effects ----------
+  --blur-glass: blur(14px);
+  --blur-strong: blur(20px);
+  --blur-light: blur(6px);
+
+  // Modals ----------
+  --modal-bg: rgba(17, 17, 24, 0.97);
+  --modal-accent: var(--accent-color);
+  --modal-accent-hover: var(--accent-hover);
+  --modal-text: #fff;
+  --modal-text-muted: #ffffff4d;
+  --modal-text-secondary: #e0e0e0;
+  --modal-border: rgba(255, 255, 255, 0.06);
+  --modal-input-bg: rgba(255, 255, 255, 0.04);
+  --modal-hover: rgba(255, 255, 255, 0.04);
+  --modal-active-bg: rgba(0, 0, 0, 0.25);
+  --modal-danger: #f55;
+  --modal-success: #4caf50;
+  --modal-warning: #ffc107;
+
+  // Notifications ----------
+  --notif-error-bg: rgba(244, 67, 54, 0.2);
+  --notif-error-border: rgba(244, 67, 54, 0.3);
+  --notif-error-text: #e57373;
+  --notif-warn-bg: rgba(255, 193, 7, 0.2);
+  --notif-warn-border: rgba(255, 193, 7, 0.3);
+  --notif-warn-text: #ffd54f;
+  --notif-success-bg: rgba(76, 175, 80, 0.2);
+  --notif-success-border: rgba(76, 175, 80, 0.3);
+  --notif-success-text: #81c784;
+}
+
+html.blur-disabled {
+  --blur-glass: none;
+  --blur-strong: none;
+  --blur-light: none;
+}
+
+html.blur-disabled * { backdrop-filter: none !important; }
+html.filters-disabled * { filter: none !important; }
+html.shadows-disabled * { box-shadow: none !important; }
+html.blur-disabled.filters-disabled.shadows-disabled .gallery-item__static-light { display: none !important; }
+
+html.hide-console .bottom-btn-console { display: none !important; }
+html.hide-news .bottom-btn-news { display: none !important; }
+html.hide-icon .TitleBar .Logo { display: none !important; }
+
+html.macos-titlebar .TitleBar { flex-direction: row-reverse !important; }
+
+html.macos-titlebar .TitleBar button {
+  border-radius: 50% !important;
+  width: 11px !important;
+  height: 11px !important;
+  margin: 0 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+html.macos-titlebar .TitleBar button img { display: none !important; }
+
+html.macos-titlebar #btn-close, html.macos-titlebar #btn-close:hover { background: #ff605c !important; }
+html.macos-titlebar #btn-close:hover::after { content: '×' !important; color: #4a1c1b !important; font-size: 9px !important; font-weight: 700 !important; line-height: 1 !important; }
+html.macos-titlebar #btn-minimize { background: #ffbd44 !important; }
+html.macos-titlebar #btn-minimize:hover::after { content: '−' !important; color: #594400 !important; font-size: 9px !important; font-weight: 700 !important; line-height: 1 !important; }
+html.macos-titlebar #btn-maximize { background: #00ca4d !important; }
+html.macos-titlebar #btn-maximize:hover::after { content: '+' !important; color: #003d17 !important; font-size: 9px !important; font-weight: 700 !important; line-height: 1 !important; }
+
+html.macos-titlebar .TitleBar div:nth-child(1) { flex: 1 !important; justify-content: center !important; }
+html.macos-titlebar .TitleBar div:nth-child(2) { margin-left: 6px !important; }
+html.macos-titlebar #btn-close { order: 1 !important; }
+html.macos-titlebar #btn-minimize { order: 2 !important; }
+html.macos-titlebar #btn-maximize { order: 3 !important; }
+
+html.invert-position .TitleBar { flex-direction: row-reverse !important; }

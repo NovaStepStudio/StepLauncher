@@ -1,0 +1,202 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.friends-widget {
+  z-index: 9997;
+  -webkit-backdrop-filter: var(--blur-glass,blur(14px));
+  backdrop-filter: var(--blur-glass,blur(14px));
+  border: 1px solid var(--border-subtle,$border-subtle);
+  background: #00000080;
+  border-radius: 12px;
+  min-width: 200px;
+  max-width: 240px;
+  transition: background .2s;
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  overflow: hidden;
+
+  &:hover {
+    background: #000000b3;
+  }
+}
+
+.header {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  @include flex-center;
+  gap: 7px;
+  padding: 9px 12px;
+
+  .icon {
+    color: $text-muted;
+    flex-shrink: 0;
+  }
+
+  .title {
+    font-family: $font-heading, sans-serif;
+    color: #ffffffd9;
+    flex: 1;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+
+  .header-right {
+    @include flex-center;
+    gap: 6px;
+
+    .count {
+      font-family: $font, sans-serif;
+      color: #ffffff4d;
+      font-size: .6rem;
+      font-weight: 600;
+    }
+
+    .chevron {
+      color: #ffffff40;
+      transition: transform .2s;
+
+      &.open {
+        transform: rotate(180deg);
+      }
+    }
+  }
+}
+
+.list {
+  border-top: 1px solid $glass;
+  max-height: 340px;
+  padding: 4px 6px 8px;
+  overflow-y: auto;
+  @include custom-scrollbar(3px, #ffffff14);
+}
+
+.group {
+  + .group {
+    border-top: 1px solid $glass;
+    margin-top: 4px;
+    padding-top: 4px;
+  }
+}
+
+.group-header {
+  font-family: $font, sans-serif;
+  color: #fff3;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 4px 8px 2px;
+  font-size: .58rem;
+  font-weight: 600;
+}
+
+.friend {
+  border-radius: 8px;
+  @include flex-center;
+  gap: 9px;
+  padding: 6px 8px;
+  transition: background .15s;
+
+  &:hover {
+    background: $glass;
+  }
+
+  .avatar-wrap {
+    flex-shrink: 0;
+    position: relative;
+
+    .avatar {
+      object-fit: cover;
+      background: #ffffff0d;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: block;
+    }
+
+    .dot {
+      border: 2px solid #111;
+      border-radius: 50%;
+      width: 8px;
+      height: 8px;
+      transition: background .2s;
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+
+      &.online,
+      &.in_game {
+        background: #55efc4;
+      }
+
+      &.idle {
+        background: #faa81a;
+      }
+
+      &.busy {
+        background: #ff7675;
+      }
+
+      &.offline {
+        background: #636e72;
+      }
+    }
+  }
+
+  .info {
+    @include flex-column;
+    flex: 1;
+    min-width: 0;
+    gap: 3px;
+
+    .name {
+      font-family: $font, sans-serif;
+      color: #fff;
+      @include text-ellipsis;
+      font-size: .72rem;
+      font-weight: 600;
+    }
+
+    .presence {
+      font-family: $font, sans-serif;
+      color: $text-muted;
+      @include text-ellipsis;
+      font-size: .6rem;
+
+      &.online,
+      &.in_game {
+        color: #55efc4;
+      }
+
+      &.idle {
+        color: #faa81a;
+      }
+
+      &.busy {
+        color: #ff7675;
+      }
+    }
+  }
+}
+
+.status-row {
+  text-align: center;
+  font-family: $font, sans-serif;
+  color: #ffffff40;
+  padding: 14px 10px;
+  font-size: .65rem;
+}
+
+.collapse-enter-active,
+.collapse-leave-active {
+  transition: all .2s;
+  overflow: hidden;
+}
+
+.collapse-enter-from,
+.collapse-leave-to {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}

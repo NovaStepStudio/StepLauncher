@@ -1,0 +1,1022 @@
+{
+  "_metadata": {
+    "nivel_de_traduccion": 83,
+    "idioma": "ru-RU",
+    "require_reinicio": false,
+    "es_oficial": true,
+    "icono": "./icons/ru-RU.svg"
+  },
+  "splash": {
+    "title": "StepLauncher",
+    "subtitle": "Загрузка...",
+    "status": {
+      "initializing": "Инициализация...",
+      "loading_modules": "Загрузка модулей...",
+      "verifying_components": "Проверка компонентов...",
+      "downloading": "Загрузка {name}...",
+      "extracting": "Извлечение {name}...",
+      "extracting_files": "Распаковка файлов...",
+      "progress": "{pct}% — {downloaded} МБ / {total} МБ",
+      "error": "Ошибка: {error}",
+      "check_connection": "Проверьте подключение и попробуйте снова",
+      "download_failed": "Ошибка загрузки компонентов",
+      "download_failed_detail": "{item}: {error}",
+      "failed_item": "Ошибка: {item}",
+      "starting_novacore": "Запуск NovaCore-Engine...",
+      "starting_engine": "Запуск движка...",
+      "novacore_failed": "Ошибка запуска NovaCore",
+      "unknown_error": "Неизвестная ошибка",
+      "novacore_ready": "NovaCore готов",
+      "ready": "Готово",
+      "init_error": "Ошибка инициализации"
+    },
+    "labels": {
+      "java": "Java 25 LTS",
+      "novacore": "NovaCore-Engine",
+      "authlib": "authlib-injector"
+    }
+  },
+  "auth": {
+    "login": {
+      "brand_title": "StepLauncher",
+      "brand_subtitle": "Войдите, чтобы продолжить",
+      "tabs": {
+        "online": "В сети",
+        "offline": "Офлайн"
+      },
+      "fields": {
+        "username_label": "Пользователь",
+        "username_placeholder": "Имя пользователя",
+        "password_label": "Пароль",
+        "password_placeholder": "••••••••",
+        "offline_username_label": "Имя пользователя",
+        "offline_username_placeholder": "Ваше имя"
+      },
+      "buttons": {
+        "login": "Войти",
+        "oauth": "Продолжить в браузере",
+        "offline_play": "Играть офлайн"
+      },
+      "links": {
+        "create_account": "Создать аккаунт",
+        "forgot_password": "Забыл пароль"
+      },
+      "errors": {
+        "validation": "Заполните все поля",
+        "auth_web": "Ошибка авторизации через веб"
+      }
+    }
+  },
+  "navigation": {
+    "sidebar": {
+      "config": "Настройки",
+      "friends": "Друзья",
+      "screenshots": "Скриншоты",
+      "mods": "Моды",
+      "instances": "Сборки",
+      "downloads": "Загрузки",
+      "play": "Играть"
+    },
+    "bottom": {
+      "news": "Новости",
+      "console": "Консоль"
+    }
+  },
+  "console": {
+    "tabs": {
+      "events": "События",
+      "crash_history": "История вылетов"
+    },
+    "empty": {
+      "no_events": "Нет событий",
+      "no_crashes": "Нет зарегистрированных вылетов"
+    },
+    "crash": {
+      "code": "Код {exitCode}",
+      "view": "Смотреть",
+      "delete": "×",
+      "prefix": "[CRASH] Код {exitCode}: {reason}"
+    },
+    "log_prefix": {
+      "launch_exit": "[launch_exited] code={exitCode} normal={normal}",
+      "engine": "[engine] {version} | {baseDir}",
+      "system_os": "[system] {os} | {arch} | {cpu}",
+      "system_ram": "[system] RAM: {totalRam} ({ramFree} свободно) | Java: {java}",
+      "system_gpu": "[system] GPU: {gpu}"
+    }
+  },
+  "modals": {
+    "crash": {
+      "title": "Игра вылетела",
+      "exit_code": "Код выхода: {exitCode}",
+      "buttons": {
+        "close": "Закрыть",
+        "copy": "Копировать",
+        "console": "Консоль",
+        "show_logs": "Показать логи",
+        "hide_logs": "Скрыть"
+      },
+      "logs": {
+        "bar_title": "Последние строки лога",
+        "bar_count": "{count} строк",
+        "preview": "{count} строк лога доступно"
+      },
+      "copy_format": "[StepLauncher Crash]\nПричина: {reason}\nКод: {exitCode}\n\n{context}"
+    },
+    "download": {
+      "title": {
+        "installing": "Установка...",
+        "download": "Скачать Minecraft"
+      },
+      "loading_versions": "Загрузка версий...",
+      "version_label": "Версия Minecraft",
+      "search_placeholder": "Поиск версии...",
+      "tabs": {
+        "all": "Все",
+        "release": "Релиз",
+        "snapshot": "Snapshot",
+        "old": "Старые"
+      },
+      "no_results": "Нет результатов",
+      "modloader_label": "ModLoader",
+      "options": {
+        "vanilla": "Vanilla",
+        "fabric": "Fabric",
+        "forge": "Forge",
+        "neoforge": "NeoForge",
+        "quilt": "Quilt",
+        "optifine": "OptiFine"
+      },
+      "summary": {
+        "version": "Версия",
+        "modloader": "ModLoader"
+      },
+      "buttons": {
+        "download": "Скачать",
+        "cancel_install": "Отменить установку",
+        "show_logs": "Показать логи ({count})",
+        "hide_logs": "Скрыть логи ({count})"
+      },
+      "progress": {
+        "status": "Установка...",
+        "files": "{completed}/{total} файлов"
+      },
+      "modules": {
+        "client": "Клиент",
+        "libraries": "Библиотеки",
+        "assets": "Assets",
+        "natives": "Нативы",
+        "logging": "Логирование",
+        "runtime": "Runtime",
+        "modloader": "ModLoader"
+      },
+      "states": {
+        "pending": "Ожидание",
+        "downloading": "Загрузка",
+        "completed": "Завершено",
+        "failed": "Ошибка"
+      },
+      "types": {
+        "release": "Релиз",
+        "snapshot": "Snapshot",
+        "beta": "Бета",
+        "alpha": "Альфа"
+      },
+      "errors": {
+        "loading_versions": "Ошибка загрузки версий"
+      }
+    },
+    "launch": {
+      "title": "Запуск Minecraft",
+      "search_placeholder": "Поиск версии...",
+      "tabs": {
+        "all": "Все",
+        "vanilla": "Vanilla",
+        "release": "Release",
+        "snapshot": "Snapshot",
+        "beta": "Бета",
+        "alpha": "Альфа"
+      },
+      "loading_versions": "Загрузка версий...",
+      "no_results": "Нет подходящих версий",
+      "group_count": "{count} версия",
+      "group_count_plural": "{count} версий",
+      "play_button": "Играть {version}",
+      "badges": {
+        "release": "Release",
+        "snapshot": "Snapshot",
+        "beta": "Бета",
+        "alpha": "Альфа",
+        "vanilla": "Vanilla",
+        "forge": "Forge",
+        "fabric": "Fabric",
+        "quilt": "Quilt",
+        "neoforge": "NeoForge",
+        "optifine": "OptiFine",
+        "legacyfabric": "Legacy Fabric"
+      }
+    }
+  },
+  "configuration": {
+    "sidebar": {
+      "launcher": "Лаунчер",
+      "minecraft": "Minecraft",
+      "personalization": "Персонализация",
+      "themes": "Темы",
+      "language": "Язык",
+      "about": "О нас"
+    },
+    "launcher": {
+      "title": "Лаунчер",
+      "auto_start_minecraft": "Запускать Minecraft после установки",
+      "hide_on_launch": "Скрывать лаунчер при запуске Minecraft",
+      "show_console": "Показывать консоль событий",
+      "show_news": "Показывать новости Minecraft",
+      "subsection_performance": "Производительность",
+      "filters": "Фильтры",
+      "filters_desc": "Визуальное улучшение интерфейса",
+      "blur": "Размытие",
+      "blur_desc": "Эффект размытия на панелях",
+      "hardware_acceleration": "Аппаратное ускорение",
+      "hardware_acceleration_desc": "Ускорение GPU для интерфейса",
+      "shadows": "Тени",
+      "shadows_desc": "Тени во всем интерфейсе",
+      "subsection_integration": "Интеграция",
+      "discord_rpc": "Показывать присутствие в Discord RPC",
+      "discord_rpc_desc": "Показывает в Discord, что вы делаете в лаунчере",
+      "open_launcher_folder": "Открыть папку .StepLauncher"
+    },
+    "minecraft": {
+      "title": "Minecraft",
+      "use_recommended_java": "Использовать Java, рекомендованную Mojang",
+      "use_recommended_java_desc": "Использует версию Java, включенную по умолчанию",
+      "max_console_events": "Максимум событий в консоли",
+      "notify_on_launch": "Уведомление при запуске Minecraft",
+      "clean_before_launch": "Очищать мусор перед запуском",
+      "clean_before_launch_desc": "Удаляет логи, crash-reports и сжатые файлы",
+      "java_path": "Путь к Java",
+      "java_path_desc": "Пользовательский (необязательно)",
+      "java_path_placeholder": "Напр: /usr/lib/jvm/java-17/bin/java",
+      "fullscreen": "Полный экран",
+      "window_size": "Размер окна",
+      "window_width": "Ширина",
+      "window_height": "Высота",
+      "ram_limit": "Лимит RAM",
+      "ram_limit_desc": "Память, выделенная для Minecraft",
+      "ram_min": "Мин. RAM",
+      "ram_min_desc": "Базовое выделение памяти",
+      "ram_hint": "Система: {total} — Рекомендуется: {recommended}",
+      "gc_preset": "Пресет GC",
+      "gc_preset_desc": "Алгоритм сборщика мусора",
+      "gc_options": {
+        "default": "Отключено (по умолчанию системы)",
+        "serial": "Serial GC",
+        "parallel": "Parallel GC",
+        "g1gc": "G1GC",
+        "g1gc_optimized": "G1GC Оптимизированный",
+        "zgc": "ZGC",
+        "shenandoah": "Shenandoah GC",
+        "epsilon": "Epsilon GC (без сборки)"
+      },
+      "gpu_preference": "Предпочтение GPU",
+      "gpu_preference_desc": "Выберите видеокарту",
+      "gpu_options": {
+        "none": "Не настраивать",
+        "auto": "Авто",
+        "integrated": "Встроенная",
+        "dedicated": "Дискретная"
+      },
+      "subsection_advanced": "Расширенные",
+      "jvm_args_label": "JVM Args",
+      "jvm_args_desc": "Аргументы для виртуальной машины (один на строку)",
+      "jvm_args_placeholder": "-XX:+AlwaysPreTouch\n-XX:+DisableExplicitGC",
+      "jvm_badge": "JVM",
+      "game_args_label": "Game Args",
+      "game_args_desc": "Дополнительные аргументы для Minecraft",
+      "game_args_placeholder": "--server localhost --port 25565",
+      "game_badge": "GAME"
+    },
+    "personalization": {
+      "title": "Персонализация",
+      "subsection_colors": "Общие цвета",
+      "accent_color": "Цвет текста",
+      "accent_color_desc": "Кнопки, переключатели, ссылки",
+      "title_bar_color": "Цвет строки заголовка",
+      "subsection_modals": "Всплывающие окна",
+      "modal_accent": "Акцентный цвет",
+      "modal_accent_desc": "Кнопки и декоративные элементы в диалогах",
+      "modal_background": "Фон",
+      "modal_background_desc": "Цвет фона диалогов загрузки, запуска и уведомлений",
+      "preview_label": "Предпросмотр",
+      "preview_dialog_title": "Пример диалога",
+      "preview_text": "Текст с {color} акцентным цветом {/color} и кнопка:",
+      "preview_button": "Принять",
+      "subsection_panels": "Панели",
+      "panel_background": "Фон панелей",
+      "panel_background_desc": "Все панели содержимого приложения",
+      "subsection_sidebar": "Боковая панель",
+      "sidebar_background": "Фон",
+      "sidebar_background_desc": "Плавающая панель навигации",
+      "sidebar_button_color": "Цвет кнопок",
+      "sidebar_button_color_desc": "Фон кнопок при наведении",
+      "sidebar_position": "Позиция",
+      "sidebar_position_desc": "Сторона экрана для отображения",
+      "sidebar_position_left": "Слева",
+      "sidebar_position_right": "Справа",
+      "subsection_notifications": "Уведомления",
+      "notif_error": "Ошибка",
+      "notif_warning": "Предупреждение",
+      "notif_success": "Успех",
+      "subsection_app_bg": "Фон приложения",
+      "app_background": "Фон приложения",
+      "app_background_desc": "Выберите фон для лаунчера",
+      "bg_option_rre36": "RRE36 {n}",
+      "btn_upload": "Загрузить",
+      "subsection_typography": "Типографика",
+      "font_primary": "Основной",
+      "font_primary_desc": "Заголовки",
+      "font_secondary": "Вторичный",
+      "font_secondary_desc": "Текст и метки",
+      "font_lexend": "Lexend",
+      "font_inter": "Inter",
+      "subsection_titlebar": "Строка заголовка",
+      "macos_style": "Стиль macOS",
+      "macos_style_desc": "Кнопки управления (красный, желтый, зеленый)",
+      "show_icon": "Показывать иконку",
+      "show_icon_desc": "Показывает логотип в строке заголовка",
+      "invert_position": "Инвертировать позицию",
+      "invert_position_desc": "Меняет местами логотип и кнопки"
+    },
+    "themes": {
+      "title": "Темы",
+      "buttons": {
+        "export_theme": "Экспорт темы",
+        "import": "Импорт темы",
+        "export": "Экспорт",
+        "exporting": "Экспорт...",
+        "cancel": "Отмена",
+        "apply": "Применить тему",
+        "applying": "Применение...",
+        "delete": "Удалить",
+        "reset_default": "Сбросить на умолчание"
+      },
+      "export": {
+        "label_name": "Название",
+        "label_author": "Автор",
+        "label_version": "Версия",
+        "label_web": "Сайт",
+        "placeholder_name": "Моя тема",
+        "placeholder_author": "Ваше имя",
+        "placeholder_version": "1.0.0",
+        "placeholder_web": "https://"
+      },
+      "subsection_installed": "Установленные темы",
+      "loading": "Загрузка...",
+      "empty_themes": "Нет установленных тем",
+      "theme_by": "от {author}",
+      "theme_version": "v{version}",
+      "detail_name": "Название",
+      "detail_author": "Автор",
+      "detail_version": "Версия",
+      "detail_web": "Сайт",
+      "file_filters": {
+        "java": "Java",
+        "all": "Все файлы",
+        "images": "Изображения"
+      }
+    },
+    "language": {
+      "title": "Язык",
+      "official": "Официальный",
+      "community": "Сообщество",
+      "translation_level": "Уровень перевода",
+      "names": {
+        "lang_es_AR": "Español (Argentina)",
+        "lang_en_US": "English (US)",
+        "lang_es_ES": "Español (España)",
+        "lang_es_MX": "Español (México)",
+        "lang_fr_FR": "Français",
+        "lang_pt_BR": "Português (Brasil)",
+        "lang_ru_RU": "Русский",
+        "lang_de_DE": "Deutsch"
+      }
+    },
+    "about": {
+      "title": "О нас",
+      "description": "StepLauncher — это современный лаунчер для Minecraft, разработанный NovaStepStudios. Он позволяет быстро, безопасно и современно загружать, управлять и запускать официальные и модифицированные версии Minecraft.",
+      "studio": "NovaStepStudios",
+      "studio_desc": "Студия разработки, стоящая за StepLauncher. Мы создаём инструменты с открытым исходным кодом для сообщества Minecraft.",
+      "developer": "Разработчик",
+      "developer_desc": "Stepnicka012 — создатель и главный разработчик StepLauncher и NovaCore-Engine.",
+      "links_title": "Ссылки",
+      "links": {
+        "github": "Организация GitHub",
+        "github_dev": "GitHub — Stepnicka012",
+        "discord": "Сервер Discord",
+        "youtube": "YouTube канал",
+        "instagram": "Instagram",
+        "whatsapp": "Канал WhatsApp",
+        "source": "Исходный код",
+        "website": "Официальный сайт"
+      },
+      "tech_title": "Технологии",
+      "tech_desc": "Работает на NovaCore-Engine, создан с использованием Electron, Vue 3 и TypeScript."
+    }
+  },
+  "about": {
+    "title": "О нас"
+  },
+  "language": {
+    "title": "Язык"
+  },
+  "instances": {
+    "sidebar": {
+      "filters": {
+        "all": "Все",
+        "favorites": "Избранные",
+        "pinned": "Закрепленные"
+      },
+      "empty": "Нет сборок"
+    },
+    "tooltips": {
+      "favorite": "Избранное",
+      "pinned": "Закреплено",
+      "close": "Закрыть (ESC)"
+    },
+    "empty": {
+      "title": "Нет сборок",
+      "desc": "Создайте свою первую сборку"
+    },
+    "buttons": {
+      "create": "Создать сборку",
+      "install": "Установить",
+      "force_kill": "Принудительно закрыть",
+      "play": "Играть",
+      "launching": "Запуск...",
+      "edit": "Редактировать",
+      "delete": "Удалить",
+      "browse": "Обзор",
+      "open_folder": "Открыть папку сборки",
+      "accept": "Принять",
+      "show_logs": "Показать логи ({count})",
+      "hide_logs": "Скрыть ({count})"
+    },
+    "create": {
+      "title": "Новая сборка",
+      "fields": {
+        "name": "Название",
+        "name_placeholder": "Напр: Мое выживание",
+        "description": "Описание",
+        "description_placeholder": "Описание (необязательно)",
+        "version": "Версия Minecraft",
+        "search_placeholder": "Поиск версии...",
+        "modloader": "ModLoader"
+      },
+      "tabs": {
+        "all": "Все",
+        "release": "Релиз",
+        "snapshot": "Snapshot",
+        "old": "Старые"
+      },
+      "no_results": "Нет результатов",
+      "options": {
+        "vanilla": "Vanilla",
+        "fabric": "Fabric",
+        "forge": "Forge",
+        "neoforge": "NeoForge",
+        "quilt": "Quilt"
+      },
+      "summary": {
+        "version": "Версия",
+        "modloader": "ModLoader",
+        "name": "Название"
+      }
+    },
+    "status": {
+      "installing": "Установка...",
+      "preparing": "Подготовка загрузки...",
+      "starting_install": "Начало установки...",
+      "processing_modloader": "Обработка {loader}...",
+      "resolving_modloader": "Поиск версии {loader}...",
+      "downloading_modloader": "Загрузка {loader}...",
+      "installing_modloader": "Установка {loader}...",
+      "install_completed": "Установка завершена",
+      "error": "Ошибка: {error}",
+      "error_install": "Ошибка: {error}",
+      "files_progress": "{completed}/{total} файлов"
+    },
+    "modules": {
+      "client": "Клиент",
+      "libraries": "Библиотеки",
+      "assets": "Assets",
+      "natives": "Нативы",
+      "logging": "Логирование",
+      "runtime": "Runtime",
+      "modloader": "ModLoader"
+    },
+    "states": {
+      "pending": "Ожидание",
+      "downloading": "Загрузка",
+      "completed": "Завершено",
+      "failed": "Ошибка"
+    },
+    "detail": {
+      "tabs": {
+        "info": "Информация",
+        "mods": "Моды",
+        "worlds": "Миры",
+        "screenshots": "Скриншоты",
+        "console": "Консоль"
+      },
+      "modloader_none": "Нет",
+      "yes": "Да",
+      "no": "Нет",
+      "version": "Версия",
+      "modloader": "ModLoader",
+      "ram": "RAM",
+      "gc": "GC",
+      "gpu": "GPU",
+      "window": "Окно",
+      "hw_accel": "Апп. ускорение",
+      "playtime": "Время",
+      "last_played": "Последний раз",
+      "path": "Путь",
+      "playtime_format": {
+        "hours": "{h}ч {m}м",
+        "minutes": "{m}м"
+      },
+      "ram_format": "{min} МБ - {max} МБ",
+      "gc_label_none": "Нет",
+      "gpu_label_none": "Нет"
+    },
+    "edit": {
+      "sections": {
+        "personalization": "Персонализация",
+        "performance": "Производительность",
+        "window": "Окно",
+        "jvm": "JVM",
+        "game": "Игра"
+      },
+      "fields": {
+        "name": "Название",
+        "description": "Описание",
+        "icon": "Иконка",
+        "icon_placeholder": "Путь к иконке",
+        "hero": "Hero",
+        "hero_placeholder": "Путь к hero",
+        "version": "Версия",
+        "ram_min": "Мин. RAM (МБ)",
+        "ram_max": "Макс. RAM (МБ)",
+        "gc_preset": "GC Preset",
+        "gpu_pref": "GPU Preference",
+        "hw_accel": "Hardware Accel",
+        "java_path": "Java Path",
+        "width": "Ширина",
+        "height": "Высота",
+        "fullscreen": "Fullscreen",
+        "extra_args": "Extra Args",
+        "prepend_args": "Prepend Args",
+        "extra_game_args": "Extra Game Args"
+      },
+      "buttons": {
+        "save": "Сохранить",
+        "cancel": "Отмена"
+      },
+      "gc_options": {
+        "none": "None",
+        "auto": "Auto",
+        "disabled": "Disabled",
+        "off": "Off",
+        "g1gc_basic": "G1GC Basic",
+        "g1gc_optimized": "G1GC Optimized",
+        "zgc": "ZGC",
+        "shenandoah": "Shenandoah"
+      },
+      "gpu_options": {
+        "none": "None",
+        "auto": "Auto",
+        "dgpu": "DGPU",
+        "igpu": "IGPU"
+      },
+      "hw_options": {
+        "no": "Нет",
+        "yes": "Да"
+      },
+      "confirm_delete": "Удалить \"{name}\"?"
+    },
+    "mods_section": {
+      "title": "Моды сборки",
+      "search_placeholder": "Ищите моды на Modrinth...",
+      "desc_placeholder": "Ищите моды на Modrinth для прямой загрузки в эту сборку",
+      "download": "Скачать",
+      "loading_more": "Загрузить ещё",
+      "empty_worlds": "Нет сохраненных миров",
+      "empty_screenshots": "Нет скриншотов",
+      "metadata_format": "{author} · {downloads} загрузок",
+      "search_error": "Ошибка поиска",
+      "downloading": "..."
+    },
+    "console": {
+      "waiting": "Ожидание логов игры...",
+      "clear": "Очистить",
+      "old_logs": "Старые логи ({count})",
+      "logfile_kb": "{size} КБ"
+    }
+  },
+  "mods": {
+    "title": "Моды",
+    "tabs": {
+      "browse": "Обзор",
+      "library": "Библиотека"
+    },
+    "browse": {
+      "search_placeholder": "Поиск на Modrinth...",
+      "filters": {
+        "type": "Тип",
+        "loader": "Загрузчик",
+        "mc_version": "Версия MC",
+        "sort": "Сортировка",
+        "category": "Категория"
+      },
+      "types": {
+        "mods": "Моды",
+        "shaders": "Шейдеры",
+        "resourcepacks": "Текстуры",
+        "modpacks": "Модпаки",
+        "datapacks": "Датапаки"
+      },
+      "loaders": {
+        "fabric": "Fabric",
+        "forge": "Forge",
+        "neoforge": "NeoForge",
+        "quilt": "Quilt"
+      },
+      "sort": {
+        "relevance": "Актуальность",
+        "downloads": "Загрузки",
+        "newest": "Новые",
+        "updated": "Обновленные"
+      },
+      "option_all": "Все",
+      "loading": "Поиск...",
+      "error": "Ошибка поиска",
+      "no_results": "Нет результатов",
+      "card_view": "Смотреть"
+    },
+    "library": {
+      "new": "Новая библиотека",
+      "sort_name": "Название",
+      "sort_entries": "Элементы",
+      "sort_newest": "Новейшие",
+      "current": "Текущая библиотека",
+      "select_hint": "Выберите библиотеку",
+      "back": "Назад",
+      "back_to_libraries": "Назад к библиотекам",
+      "empty": "У вас нет библиотек. Создайте через веб.",
+      "entries_count": "{count} элементов",
+      "empty_entries": "Эта библиотека пуста.",
+      "loading": "Загрузка библиотеки...",
+      "error": "Ошибка загрузки библиотеки. Вы вошли в систему?",
+      "no_desc": "Нет описания",
+      "save": "Сохранить",
+      "remove": "Удалить"
+    },
+    "detail": {
+      "author": "{author}",
+      "downloads": "{downloads}",
+      "follows": "{follows}",
+      "project_type": "{type}",
+      "tabs": {
+        "info": "Информация",
+        "versions": "Версии",
+        "gallery": "Галерея"
+      },
+      "client_side": "Клиент",
+      "categories": "Категории",
+      "buttons": {
+        "download": "Скачать",
+        "add": "Добавить"
+      },
+      "versions": {
+        "loading": "Загрузка версий...",
+        "empty": "Нет доступных версий",
+        "filter_all": "Все",
+        "search_placeholder": "Поиск версии...",
+        "date": "{date}",
+        "download": "Скачать"
+      }
+    },
+    "modals": {
+      "select_version": "Выберите версию",
+      "add_to_library": "Добавить в библиотеку",
+      "new_library": "Новая библиотека",
+      "title_placeholder": "Название",
+      "desc_placeholder": "Описание (необязательно)",
+      "is_public": "Публичная",
+      "cancel": "Отмена",
+      "create": "Создать",
+      "no_libraries": "У вас нет библиотек",
+      "world_picker": "Выберите мир",
+      "world_picker_desc": "В какой мир вы хотите установить этот датапак?",
+      "install_all_worlds": "Все миры"
+    },
+    "notifications": {
+      "modpack_installed": "Модпак успешно установлен",
+      "datapack_global": "Датапак загружен в глобальную папку датапаков",
+      "datapack_world": "Датапак установлен в мир \"{world}\"",
+      "mod_downloaded": "{type} успешно загружен",
+      "modpack_error": "Ошибка установки модпака",
+      "download_error": "Ошибка загрузки",
+      "datapack_all_worlds": "Датапак установлен для всех миров"
+    },
+    "entry": {
+      "author": "Автор",
+      "downloads": "Загрузки",
+      "followers": "Подписчики",
+      "client": "Клиент",
+      "server": "Сервер",
+      "license": "Лицензия",
+      "slug": "Slug",
+      "provider": "Провайдер",
+      "categories": "Категории",
+      "tags": "Теги",
+      "loaders": "Загрузчики",
+      "versions": "Версии",
+      "links": "Ссылки",
+      "link_modrinth": "Modrinth",
+      "link_issues": "Issues",
+      "link_source": "Source",
+      "link_wiki": "Wiki",
+      "link_discord": "Discord",
+      "link_donate": "Пожертвовать"
+    }
+  },
+  "friends": {
+    "panel": {
+      "title": "Друзья",
+      "search_placeholder": "Поиск пользователя...",
+      "search_results": "Результаты",
+      "no_bio": "Нет био",
+      "buttons": {
+        "add": "Добавить",
+        "accept": "Принять",
+        "reject": "Отклонить"
+      },
+      "sections": {
+        "online": "Друзья онлайн",
+        "all": "Все друзья",
+        "received": "Полученные заявки",
+        "sent": "Отправленные"
+      },
+      "empty_friends": "Пока нет друзей. Найдите кого-нибудь!",
+      "badge_pending": "Ожидание",
+      "empty_state": "Выберите друга для просмотра профиля",
+      "profile_loading": "Загрузка профиля..."
+    },
+    "widget": {
+      "title": "Друзья",
+      "count": "{online}/{total}",
+      "loading": "Загрузка друзей...",
+      "empty": "У вас нет друзей",
+      "groups": {
+        "in_game": "В игре",
+        "online": "В сети",
+        "idle": "Отсутствуют",
+        "busy": "Заняты",
+        "offline": "Не в сети"
+      },
+      "presence": {
+        "online": "В сети",
+        "offline": "Не в сети",
+        "seen_just_now": "только что",
+        "seen_minutes": "{m}м назад",
+        "seen_hours": "{h}ч назад",
+        "seen_days": "{d}д назад",
+        "seen_format": "Был(а) {time}"
+      }
+    }
+  },
+  "screenshots": {
+    "title": "Скриншоты",
+    "empty": "Нет скриншотов",
+    "empty_viewer": "Выберите скриншот"
+  },
+  "news": {
+    "title": "Новости",
+    "loading": "Загрузка новостей...",
+    "filters": {
+      "all": "Все",
+      "releases": "Релизы",
+      "snapshots": "Snapshots"
+    },
+    "buttons": {
+      "retry": "Повторить"
+    },
+    "badges": {
+      "release": "Релиз",
+      "snapshot": "Snapshot"
+    },
+    "no_matches": "Нет совпадений",
+    "error": "Ошибка подключения"
+  },
+  "profile": {
+    "followers": "Подписчики",
+    "following": "Подписки",
+    "likes": "Лайки",
+    "labels": {
+      "member_since": "Участник с",
+      "last_version_played": "Последняя сыгранная версия",
+      "last_launcher_version": "Последняя версия лаунчера",
+      "playtime": "Времени сыграно",
+      "status": "Статус",
+      "last_seen": "Последний раз"
+    },
+    "status": {
+      "online": "В сети",
+      "offline": "Не в сети"
+    },
+    "sections": {
+      "presence": "Присутствие",
+      "common_friends": "Общие друзья ({count})",
+      "libraries": "Библиотеки",
+      "cosmetics": "Косметика",
+      "character": "Персонаж",
+      "social": "Соцсети"
+    },
+    "presence_updated": "Обновлено: {date}",
+    "badges": {
+      "public": "Публичная",
+      "admin": "Админ"
+    },
+    "library_entries": "{count} элементов",
+    "cosmetics": {
+      "skins": "Скины ({count})",
+      "capes": "Плащи ({count})",
+      "kits": "Наборы ({count})"
+    },
+    "tiers": {
+      "free": "Free",
+      "premium": "Premium",
+      "team": "Team",
+      "ultimate": "Ultimate"
+    },
+    "tooltip_verified": "Аккаунт подтвержден",
+    "date_format": "{day} {month} {year}",
+    "playtime": {
+      "hours": "{h}ч {m}м",
+      "minutes": "{m}м"
+    }
+  },
+  "widgets": {
+    "status_bar": {
+      "labels": {
+        "api": "API",
+        "novacore": "NovaCore"
+      },
+      "popup_title": "Состояние системы",
+      "legend": {
+        "online": "Подключено",
+        "checking": "Проверка",
+        "offline": "Отключено"
+      },
+      "chart": {
+        "now": "сейчас",
+        "ago": "{seconds}с назад"
+      },
+      "tooltips": {
+        "now": "Сейчас",
+        "ago": "{seconds}с назад",
+        "offline": "{when}: Нет связи",
+        "checking": "{when}: Проверка...",
+        "latency": "{when}: {latency}мс"
+      },
+      "status": {
+        "online": "Подключено",
+        "offline": "Отключено",
+        "starting": "Запуск...",
+        "checking": "Проверка..."
+      }
+    },
+    "user_card": {
+      "online": "В сети",
+      "offline": "Не в сети"
+    },
+    "install_progress": {
+      "files_info": "{completed} / {total} файлов",
+      "files_info_with_mb": "{completed} / {total} файлов · {downloaded} / {total} МБ",
+      "modules": {
+        "client": "Клиент",
+        "libraries": "Библиотеки",
+        "assets": "Assets",
+        "natives": "Нативы"
+      },
+      "states": {
+        "pending": "Ожидание",
+        "downloading": "Загрузка",
+        "completed": "Завершено",
+        "verifying": "Проверка",
+        "verified": "Проверено",
+        "failed": "Ошибка",
+        "retrying": "Повтор"
+      },
+      "buttons": {
+        "cancel": "Отмена"
+      },
+      "empty_logs": "Пока нет логов",
+      "tooltips": {
+        "logs": "Логи",
+        "close": "Закрыть"
+      }
+    }
+  },
+  "notifications": {
+    "welcome": "Добро пожаловать, {username}!",
+    "install": {
+      "error": "Что-то пошло не так: {error}",
+      "error_title": "Упс! Ошибка установки",
+      "error_body": "{instance}: {error}",
+      "complete": "Готово! {instance} установлен",
+      "complete_title": "Установка завершена!",
+      "complete_body": "{instance} готов к игре",
+      "session_error": "Что-то пошло не так: {error}",
+      "session_error_title": "Упс! Что-то не так",
+      "session_error_body": "Возникла проблема с установкой: {error}",
+      "cancelled": "Установка отменена — ничего страшного, можете попробовать снова"
+    },
+    "launch": {
+      "error": "Не удалось запустить: {error}",
+      "generic_error": "Ошибка запуска: {error}",
+      "success": "Поехали! Запуск {version}...",
+      "success_title": "Приятной игры!",
+      "success_body": "{version} запускается, наслаждайтесь!"
+    },
+    "game": {
+      "closed_title": "До встречи!",
+      "closed_body": "{version} закрыт",
+      "closed_inst_body": "{name} закрыт. Возвращайтесь скорее!"
+    }
+  },
+  "install": {
+    "steps": {
+      "resolving_version": "Определение версии...",
+      "fetching_asset_index": "Получение индекса assets...",
+      "downloading_jvm": "Загрузка Java runtime...",
+      "building_task_list": "Подготовка файлов...",
+      "downloading": "Загрузка...",
+      "verifying": "Проверка файлов...",
+      "retrying": "Повтор неудачных загрузок...",
+      "extracting_natives": "Извлечение нативов...",
+      "modloader": "Установка ModLoader..."
+    },
+    "status": {
+      "starting": "Запуск...",
+      "preparing_download": "Подготовка загрузки...",
+      "completed": "Завершено",
+      "cancelled": "Отменено",
+      "error": "Ошибка",
+      "processing_modloader": "Обработка ModLoader..."
+    },
+    "log": {
+      "downloading_file": "Загрузка: {file}"
+    },
+    "errors": {
+      "installation": "Ошибка установки",
+      "session": "Ошибка сессии",
+      "unknown": "Ошибка при запуске загрузки",
+      "connecting_engine": "Ошибка подключения к движку",
+      "unknown_launch": "Неизвестная ошибка"
+    },
+    "default_instance_name": "Установка",
+    "friend_request": "У вас {count} новая заявка в друзья",
+    "friend_request_plural": "У вас {count} новых заявок в друзья",
+    "library_cloned": "Библиотека \"{title}\" добавлена в ваш аккаунт"
+  },
+  "electron": {
+    "system_gpu_not_detected": "Не обнаружено",
+    "file_dialog_java": "Java",
+    "file_dialog_all_files": "Все файлы",
+    "default_username": "Player"
+  },
+  "skin_card": {
+    "badge_active": "Активна"
+  },
+  "general": {
+    "back": "Назад",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "close": "Закрыть",
+    "delete": "Удалить",
+    "search": "Поиск",
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успех",
+    "confirm": "Подтвердить",
+    "accept": "Принять",
+    "reject": "Отклонить",
+    "off": "Выкл",
+    "on": "Вкл",
+    "yes": "Да",
+    "no": "Нет",
+    "none": "Нет"
+  }
+}

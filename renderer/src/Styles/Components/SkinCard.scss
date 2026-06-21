@@ -1,0 +1,60 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.skin-card {
+  cursor: pointer;
+  @include surface-card;
+  flex-direction: column;
+  align-items: center;
+  gap: .4rem;
+  width: 126px;
+  padding: .6rem;
+  transition: border-color .2s, background .2s, transform .15s;
+  display: flex;
+
+  &:hover {
+    border-color: rgba($accent, 0.40);
+    transform: translateY(-3px);
+  }
+
+  &--active {
+    background: rgba($accent, 0.12);
+    border-color: rgba($accent, 0.60);
+  }
+
+  &__viewer {
+    width: 110px;
+    height: 160px;
+    position: relative;
+  }
+
+  &__canvas {
+    background: radial-gradient(rgba($accent, 0.12) 0%, #0000 70%);
+    border-radius: 8px;
+    display: block;
+  }
+
+  &__badge {
+    color: #fff;
+    text-transform: uppercase;
+    background: rgba($accent, 0.85);
+    border-radius: 4px;
+    padding: .1rem .35rem;
+    font-family: Inter, sans-serif;
+    font-size: .6rem;
+    font-weight: 700;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+  }
+
+  &__name {
+    color: #ccc;
+    text-align: center;
+    @include text-ellipsis;
+    max-width: 100%;
+    font-family: Inter, sans-serif;
+    font-size: .72rem;
+    font-weight: 600;
+  }
+}

@@ -1,0 +1,104 @@
+﻿{
+  "name": "steplauncher",
+  "description": "StepLauncher - El mejor de launcher de minecraft java edition premium y no premium.",
+  "version": "1.4.0",
+  "private": true,
+  "type": "module",
+  "homepage": "https://steplauncher.pages.dev",
+  "main": "./dist/App.js",
+  "author": {
+    "name": "NovaStepStudio",
+    "email": "stepnicka012@gmail.com",
+    "url": "https://github.com/NovaStepStudio"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NovaStepStudio/StepLauncher"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dev": "vite",
+    "build": "run-p type-check \"build-only {@}\" --",
+    "preview": "vite preview",
+    "build-only": "vite build",
+    "type-check": "vue-tsc --build",
+    "format": "oxfmt ./renderer/src/",
+    "compile:electron": "tsc -p tsconfig.electron.json",
+    "dist:win": "npm run build && npm run compile:electron && electron-builder --win --x64 --ia32",
+    "dist:linux": "npm run build && npm run compile:electron && electron-builder --linux --x64",
+    "dist:all": "npm run build && npm run compile:electron && electron-builder --win --linux --x64"
+  },
+  "build": {
+    "appId": "dev.github.novastepstudio.steplauncher",
+    "productName": "StepLauncher",
+    "asar": true,
+    "directories": {  
+      "output": "Releases"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets"
+      }
+    ],
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "ia32"
+          ]
+        }
+      ],
+      "artifactName": "StepLauncher-v${version}-${arch}-win.zip"
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "target": [
+        "zip"
+      ],
+      "artifactName": "StepLauncher-v${version}-${arch}-linux.${ext}",
+      "category": "Game"
+    }
+  },
+  "dependencies": {
+    "discord-rpc": "^4.0.1",
+    "marked": "^18.0.5",
+    "skinview3d": "^3.4.2",
+    "tar": "^7.5.16",
+    "unzipper": "^0.12.3",
+    "vue": "^3.5.32",
+    "vue-i18n": "^9.14.5"
+  },
+  "devDependencies": {
+    "@tsconfig/node24": "^24.0.4",
+    "@types/node": "^24.12.2",
+    "@types/unzipper": "^0.10.11",
+    "@vitejs/plugin-vue": "^6.0.6",
+    "@vue/tsconfig": "^0.9.1",
+    "electron": "^42.4.1",
+    "electron-builder": "^25.1.8",
+    "npm-run-all2": "^8.0.4",
+    "oxfmt": "^0.45.0",
+    "sass-embedded": "^1.100.0",
+    "typescript": "~6.0.0",
+    "vite": "^8.0.8",
+    "vite-plugin-static-copy": "^4.1.1",
+    "vite-plugin-vue-devtools": "^8.1.1",
+    "vue-tsc": "^3.2.6"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

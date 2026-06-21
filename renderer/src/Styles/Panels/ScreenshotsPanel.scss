@@ -1,0 +1,105 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.ss-panel {
+  @include panel-base(9000);
+  @include fade-in;
+  background: var(--panel-bg,#000000d9);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.ss-sidebar {
+  @include flex-column;
+  border-right: 1px solid #ffffff14;
+  gap: .5rem;
+  width: 200px;
+  padding: .75rem;
+  overflow-y: auto;
+
+  .btn-icon {
+    @include btn-icon;
+    color: #fff;
+    align-self: flex-start;
+    padding: .25rem;
+
+    &:hover {
+      background: #ffffff14;
+    }
+  }
+
+  .ss-title {
+    font-size: .95rem;
+    font-weight: 600;
+    font-family: var(--font-family-principal,"Unbounded"), sans-serif;
+    color: #fff;
+    margin: 0;
+  }
+}
+
+.ss-grid {
+  @include flex-column;
+  gap: 6px;
+}
+
+.ss-thumb {
+  cursor: pointer;
+  aspect-ratio: 16/9;
+  border: 2px solid #0000;
+  border-radius: 8px;
+  transition: border-color .2s;
+  overflow: hidden;
+
+  &.active {
+    border-color: $accent;
+  }
+
+  &:hover {
+    border-color: rgba($accent, 0.50);
+  }
+}
+
+.ss-thumb-img {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ss-empty {
+  text-align: center;
+  color: #fff6;
+  padding: 2rem 0;
+  font-size: .75rem;
+}
+
+.ss-viewer {
+  @include flex-column;
+  @include flex-center;
+  flex: 1;
+  gap: 1rem;
+  padding: 2rem;
+  color: #fff6;
+
+  &--empty {
+    svg {
+      display: block;
+    }
+
+    span {
+      font-size: .85rem;
+    }
+  }
+}
+
+.ss-viewer-img {
+  object-fit: contain;
+  border-radius: 12px;
+  max-width: 100%;
+  max-height: calc(100vh - 4rem);
+  box-shadow: 0 4px 24px #00000080;
+}
+
+.ss-viewer-name {
+  color: #ffffff80;
+  font-size: .75rem;
+}

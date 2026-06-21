@@ -1,0 +1,92 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.user-card {
+  z-index: 9997;
+  -webkit-backdrop-filter: var(--blur-glass, blur(14px));
+  backdrop-filter: var(--blur-glass, blur(14px));
+  border: 1px solid $border-subtle;
+  cursor: pointer;
+  background: #00000080;
+  border-radius: 12px;
+  align-items: center;
+  gap: 10px;
+  max-width: 30rem;
+  padding: 8px 12px;
+  transition: all 0.2s;
+  display: flex;
+  position: fixed;
+  overflow: hidden;
+  bottom: 12px;
+  left: 12px;
+
+  &:hover {
+    background: #000000bf;
+  }
+
+  .user-card-banner {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: 12px;
+    opacity: 0.5;
+    background-position: center;
+    background-size: cover;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(to right, black 35%, transparent 100%);
+    mask-image: linear-gradient(to right, black 35%, transparent 100%);
+  }
+
+  .avatar-wrap {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .avatar {
+    object-fit: cover;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: block;
+  }
+
+  .status-dot {
+    border: 2px solid #111;
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+
+    &.online {
+      background: #55efc4;
+    }
+    &.offline {
+      background: #636e72;
+    }
+  }
+
+  .info {
+    @include flex-column;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  .username {
+    font-family: $font-heading, Arial, sans-serif;
+    color: #fff;
+    @include text-ellipsis;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .presence {
+    font-family: $font, Arial, sans-serif;
+    color: #999;
+    @include text-ellipsis;
+    font-size: 0.65rem;
+  }
+}

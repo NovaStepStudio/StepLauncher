@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "rootDir": "./electron",
+    "outDir": "./dist",
+    "target": "esnext",
+    "module": "esnext",
+    "strict": true,
+    "jsx": "preserve",
+    "esModuleInterop": true,
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitAny": false,
+    "noImplicitReturns": true
+  },
+  "include": ["./electron/**/*"],
+  "exclude": ["dist","renderer","node_modules"]
+}

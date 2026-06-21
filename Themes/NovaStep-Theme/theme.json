@@ -1,0 +1,31 @@
+{
+  "name": "NovaStep-Theme",
+  "author": "NovaStepStudio",
+  "homePage": "https://steplauncher.pages.dev",
+  "version": "1.0.0",
+  "thumbnail": "./Thumbail.png",
+  "gallery":[
+    "./Galery-1.png",
+    "./Galery-2.png",
+    "./Galery-3.png"
+  ],
+  "config": {
+    "titleBarColor": "#000000ff",
+    "appBackground": "url('assets/background/RRE36/30.webp')",
+    "fontPrimary": "Lexend",
+    "fontSecondary": "Inter",
+    "accentColor": "#ffffffff",
+    "modalAccent": "#fdffffff",
+    "modalBackground": "#111111ff",
+    "sidebarBackground": "#00000097",
+    "panelBackground": "#00000063",
+    "notificationErrorColor": "#e57373",
+    "notificationWarnColor": "#ffd54f",
+    "notificationSuccessColor": "#81c784",
+    "sidebarButtonColor": "#3c3c3ca2",
+    "macOSTitlebar": false,
+    "showIcon": true,
+    "invertPosition": false,
+    "sidebarPosition": "left"
+  }
+}

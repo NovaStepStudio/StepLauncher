@@ -1,0 +1,237 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.install-island {
+  z-index: 9997;
+  background: var(--modal-bg,#12121ef7);
+  min-width: 200px;
+  max-width: 320px;
+  font-family: $font, Arial, sans-serif;
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid $border-subtle;
+  border-radius: 12px;
+  font-size: .65rem;
+  transition: all .3s cubic-bezier(.4,0,.2,1);
+  position: fixed;
+  top: 2.2rem;
+  left: 50%;
+  overflow: hidden;
+  transform: translate(-50%);
+  box-shadow: 0 8px 32px #0009;
+
+  &.minimized {
+    border-radius: 20px;
+    min-width: auto;
+    max-width: 200px;
+    box-shadow: 0 4px 16px #0006;
+  }
+
+  &.done {
+    border-color: #4caf5033;
+  }
+}
+
+.island-header {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  display: flex;
+
+  .ih-left {
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    display: flex;
+  }
+
+  .ih-right {
+    flex-shrink: 0;
+    align-items: center;
+    gap: 3px;
+    display: flex;
+  }
+
+  .ih-name {
+    color: var(--modal-text);
+    @include text-ellipsis;
+    font-size: .65rem;
+    font-weight: 600;
+  }
+
+  .ih-pct {
+    color: var(--modal-accent);
+    font-size: .6rem;
+    font-weight: 700;
+  }
+}
+
+.spinner {
+  @include spinner(10px);
+  border: 1.5px solid $border-hover;
+  border-top-color: var(--modal-accent);
+  flex-shrink: 0;
+
+  &.done {
+    border-color: var(--modal-success);
+    animation: none;
+  }
+}
+
+.ih-btn {
+  @include btn-base;
+  color: var(--modal-text-muted);
+  background: 0 0;
+  align-items: center;
+  padding: 3px;
+  display: flex;
+
+  &:hover {
+    color: var(--modal-text);
+    background: $border-subtle;
+  }
+
+  &.ih-close:hover {
+    color: var(--modal-danger);
+  }
+}
+
+.island-body {
+  @include flex-column;
+  gap: 5px;
+  padding: 0 10px 10px;
+}
+
+.status {
+  color: var(--modal-text-muted);
+  text-align: center;
+  font-size: .6rem;
+}
+
+.progress-track {
+  background: #ffffff14;
+  border-radius: 2px;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+
+  .progress-fill {
+    background: var(--modal-accent);
+    height: 100%;
+    transition: width .25s;
+  }
+}
+
+.file-info {
+  color: var(--modal-text-muted);
+  text-align: center;
+  font-size: .55rem;
+}
+
+.modules {
+  @include flex-column;
+  gap: 1px;
+
+  .module-row {
+    background: #ffffff06;
+    border-radius: 3px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 5px;
+    display: flex;
+
+    .module-name {
+      color: var(--modal-text-muted);
+      font-size: .55rem;
+    }
+
+    .module-status {
+      border-radius: 2px;
+      padding: 1px 5px;
+      font-size: .5rem;
+      font-weight: 600;
+
+      &.completed {
+        color: var(--modal-success);
+        background: #4caf501f;
+      }
+
+      &.downloading {
+        color: var(--modal-accent);
+        background: rgba($accent, 0.12);
+      }
+
+      &.pending {
+        color: var(--modal-text-muted);
+        background: #ffffff08;
+      }
+
+      &.failed {
+        color: var(--modal-danger);
+        background: #ff55551f;
+      }
+
+      &.verifying,
+      &.verified {
+        color: #ffc107;
+        background: #ffc1071f;
+      }
+
+      &.retrying {
+        color: #ff9800;
+        background: #ff98001f;
+      }
+    }
+  }
+}
+
+.error-msg {
+  color: var(--modal-danger);
+  text-align: center;
+  background: #ff555514;
+  border-radius: 3px;
+  padding: 3px;
+  font-size: .6rem;
+}
+
+.logs {
+  background: $input-bg;
+  border-radius: 3px;
+  max-height: 60px;
+  padding: 4px;
+  overflow-y: auto;
+
+  &.empty {
+    color: var(--modal-text-muted);
+    text-align: center;
+    padding: 6px;
+    font-size: .55rem;
+  }
+
+  .log-line {
+    color: var(--modal-text-muted);
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-family: monospace;
+    font-size: .5rem;
+    line-height: 1.3;
+  }
+}
+
+.cancel-btn {
+  @include btn-base;
+  color: var(--modal-danger);
+  background: #ff55551f;
+  border: 1px solid #f553;
+  margin-top: 2px;
+  padding: 4px;
+  font-size: .6rem;
+  font-weight: 600;
+
+  &:hover {
+    background: #f553;
+  }
+}

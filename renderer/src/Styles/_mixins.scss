@@ -1,0 +1,167 @@
+@use './variables' as *;
+
+@mixin surface-glass {
+  background: var(--surface-glass, $glass);
+  -webkit-backdrop-filter: var(--blur-glass, blur(14px));
+  backdrop-filter: var(--blur-glass, blur(14px));
+}
+
+@mixin surface-card {
+  background: var(--surface-glass, $glass);
+  border: 1px solid $border-subtle;
+  border-radius: $radius;
+}
+
+@mixin btn-base {
+  font-family: $font, sans-serif;
+  cursor: pointer;
+  border: none;
+  border-radius: $radius-xs;
+  transition: all .15s;
+}
+
+@mixin btn-accent {
+  @include btn-base;
+  background: $accent;
+  color: #000;
+  font-weight: 600;
+  padding: .55rem 1.2rem;
+  font-size: .8rem;
+
+  &:hover { opacity: .85; }
+  &:disabled { opacity: .4; cursor: default; }
+}
+
+@mixin btn-ghost {
+  @include btn-base;
+  background: transparent;
+  border: 1px solid $border-subtle;
+  color: #fff;
+  padding: .5rem 1rem;
+  font-size: .75rem;
+
+  &:hover { background: var(--surface-glass, $glass); }
+  &:disabled { opacity: .4; cursor: default; }
+}
+
+@mixin btn-danger {
+  @include btn-base;
+  background: #e74c3c;
+  color: #fff;
+  padding: .5rem 1rem;
+  font-size: .75rem;
+
+  &:hover { opacity: .85; }
+  &:disabled { opacity: .4; cursor: default; }
+}
+
+@mixin btn-icon {
+  all: unset;
+  cursor: pointer;
+  border-radius: $radius-xs;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 24px;
+  height: 24px;
+  transition: all .15s;
+
+  &:hover { background: var(--surface-glass, $glass); }
+}
+
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+@mixin text-ellipsis {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+@mixin custom-scrollbar($width: 4px, $thumb-color: $border) {
+  &::-webkit-scrollbar { width: $width; height: $width; }
+  &::-webkit-scrollbar-thumb { background: $thumb-color; border-radius: 2px; }
+}
+
+@mixin panel-base($z: 100) {
+  z-index: $z;
+  display: flex;
+  position: fixed;
+  inset: 1.75rem 0 0;
+}
+
+@mixin sidebar-base($width: 220px) {
+  background: var(--sidebar-bg, #080810a6);
+  -webkit-backdrop-filter: var(--blur-glass, blur(14px));
+  backdrop-filter: var(--blur-glass, blur(14px));
+  border-right: 1px solid $border-subtle;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: .6rem;
+  width: $width;
+  padding: .8rem;
+  display: flex;
+  overflow-y: auto;
+}
+
+@mixin main-panel {
+  background: var(--panel-bg, #0808108c);
+  -webkit-backdrop-filter: var(--blur-strong, blur(20px));
+  backdrop-filter: var(--blur-strong, blur(20px));
+  flex-direction: column;
+  flex: 1;
+  padding: 1.25rem;
+  display: flex;
+  overflow-y: auto;
+}
+
+@mixin input-field {
+  color: #fff;
+  width: 100%;
+  font-family: $font, sans-serif;
+  box-sizing: border-box;
+  background: $input-bg;
+  border: 1px solid $border-subtle;
+  border-radius: 8px;
+  outline: none;
+  padding: .5rem .6rem;
+  font-size: .72rem;
+
+  &:focus { border-color: $accent; }
+  &::placeholder { color: #ffffff1f; }
+}
+
+@mixin label {
+  color: $text-muted;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  font-size: .6rem;
+  font-weight: 700;
+}
+
+@mixin spinner($size: 20px) {
+  border: 2px solid #ffffff14;
+  border-top-color: $accent;
+  border-radius: 50%;
+  width: $size;
+  height: $size;
+  animation: .6s linear infinite spin;
+}
+
+@mixin fade-in {
+  animation: .15s fade-in;
+}
+
+@keyframes fade-in { 0% { opacity: 0; } to { opacity: 1; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeUp { 0% { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes indet-bar { 0% { left: -40%; } to { left: 100%; } }

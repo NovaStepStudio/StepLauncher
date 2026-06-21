@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>StepLauncher</title>  
+</head>
+<body>
+  <div class="TitleBar">
+    <div>
+      <img src="./assets/icon.png" class="Logo" loading="lazy" decoding="async" fetchpriority="high">
+      <h1>StepLauncher</h1>
+    </div>
+    <div>
+      <button id="btn-minimize"><img src="./assets/svg/minus.svg" loading="eager" decoding="async" fetchpriority="high"></button>
+      <button id="btn-maximize"><img src="./assets/svg/square.svg" loading="eager" decoding="async" fetchpriority="high"></button>
+      <button id="btn-close"><img src="./assets/svg/x.svg" loading="eager" decoding="async" fetchpriority="high"></button>
+    </div>
+  </div>
+  <div id="app"></div>
+
+  <div id="splash-screen">
+    <img src="./assets/icon.png" class="splash-logo" alt="StepLauncher">
+    <h1 class="splash-title">StepLauncher</h1>
+    <p class="splash-subtitle" id="splash-subtitle">Cargando...</p>
+    <div class="splash-body" id="splash-body">
+      <p class="splash-status" id="splash-status">Inicializando...</p>
+      <div class="splash-progress-track">
+        <div class="splash-progress-fill" id="splash-progress"></div>
+      </div>
+      <p class="splash-detail" id="splash-detail"></p>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id)
+    const splash=$('splash-screen')
+    const status=$('splash-status')
+    const progress=$('splash-progress')
+    const detail=$('splash-detail')
+    const body=$('splash-body')
+
+    const $splashSubtitle = $('splash-subtitle')
+    const setSubtitle = msg => $splashSubtitle.textContent = msg
+
+    const setStatus = msg => status.textContent = msg
+    const setProgress = pct => progress.style.width = pct + '%'
+    const setDetail = msg => detail.textContent = msg
+
+    async function loadSplashLocale(){
+        const supported = ['es-AR','en-US','es-ES','es-MX','fr-FR','pt-BR','ru-RU','de-DE']
+        let loc = 'es-AR'
+        try {
+            const config = await window.ConfigManager.Get()
+            const cfgLoc = config?.launcher?.locale
+            if (cfgLoc && supported.includes(cfgLoc)) loc = cfgLoc
+        } catch {}
+        let d = null
+        if(window.ElectronAPI?.ReadLocaleFile){
+            d = await window.ElectronAPI.ReadLocaleFile(loc).catch(() => null)
+        }
+        return { loc, t: (k) => d ? k.split('.').reduce((o,i)=>o&&o[i], d) : k }
+    }
+
+    async function initSplash(){
+        try{
+            const { t } = await loadSplashLocale()
+            setSubtitle(t('splash.subtitle'))
+            setProgress(5)
+            setStatus(t('splash.status.loading_modules'))
+            setProgress(10)
+
+            if(window.DownloadManager){
+                const exists = await window.DownloadManager.CheckAll()
+
+                if(!exists.java || !exists.novacore || !exists.authlib){
+                    setStatus(t('splash.status.verifying_components'))
+                    setProgress(15)
+
+                    const unsub = window.DownloadManager.OnProgress(p => {
+                        const labels = {
+                            java: t('splash.labels.java'),
+                            novacore: t('splash.labels.novacore'),
+                            authlib: t('splash.labels.authlib'),
+                        }
+                        const name = labels[p.item] || p.item
+
+                        if(p.phase === 'downloading'){
+                            setStatus(t('splash.status.downloading').replace('{name}', name))
+                            const pct = p.totalBytes > 0
+                                ? Math.round((p.downloadedBytes / p.totalBytes) * 100)
+                                : 0
+                            const prog = t('splash.status.progress')
+                                .replace('{pct}', String(pct))
+                                .replace('{downloaded}', (p.downloadedBytes / 1048576).toFixed(1))
+                                .replace('{total}', (p.totalBytes / 1048576).toFixed(1))
+                            setDetail(prog)
+                            setProgress(15 + pct * .7)
+                        }else if(p.phase === 'extracting'){
+                            setStatus(t('splash.status.extracting').replace('{name}', name))
+                            setDetail(t('splash.status.extracting_files'))
+                        }else if(p.phase === 'error'){
+                            setStatus(t('splash.status.error').replace('{error}', p.error))
+                            setDetail(t('splash.status.check_connection'))
+                        }
+                    })
+
+                    const result = await window.DownloadManager.StartAll()
+                    unsub()
+
+                    if(!result.success){
+                        setStatus(t('splash.status.download_failed'))
+                        const detailMsg = result.error
+                            ? t('splash.status.download_failed_detail').replace('{item}', result.item).replace('{error}', result.error)
+                            : t('splash.status.failed_item').replace('{item}', result.item)
+                        setDetail(detailMsg)
+                        return
+                    }
+                }
+
+                setStatus(t('splash.status.starting_novacore'))
+                setProgress(90)
+                setDetail(t('splash.status.starting_engine'))
+            }
+
+            if(window.NovaCoreManager){
+                setStatus(t('splash.status.starting_novacore'))
+                setProgress(92)
+                setDetail(t('splash.status.starting_engine'))
+
+                const r = await window.NovaCoreManager.Start()
+                if(!r.success){
+                    setStatus(t('splash.status.novacore_failed'))
+                    setDetail(r.error || t('splash.status.unknown_error'))
+                    return
+                }
+
+                setStatus(t('splash.status.novacore_ready'))
+                setProgress(98)
+            }
+
+            setStatus(t('splash.status.ready'))
+            setProgress(100)
+            setDetail('')
+
+            window.__splashDone = true
+            await new Promise(r => setTimeout(r, 200))
+            body.style.opacity = '0'
+            await new Promise(r => setTimeout(r, 500))
+            splash.classList.add('hidden')
+            setTimeout(() => splash.remove(), 700)
+        }catch(e){
+            setStatus('Error de inicializacion')
+            setDetail(String(e))
+        }
+    }
+
+    if(document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', initSplash)
+    }else{
+        initSplash()
+    }
+  </script>
+
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>

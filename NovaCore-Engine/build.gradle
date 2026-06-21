@@ -1,0 +1,125 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'com.gradleup.shadow' version '9.4.1'
+}
+
+group = 'dev.novastep'
+ext.mainClass = 'dev.novastep.core.Main'
+version = file('version.txt').text.trim()
+description = 'NovaCore Engine SDK for Minecraft runtime, launcher and modloader integration.'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+    withSourcesJar()
+    withJavadocJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.21.2'
+    implementation 'org.java-websocket:Java-WebSocket:1.5.4'
+    implementation 'org.slf4j:slf4j-api:2.0.17'
+    implementation 'org.slf4j:slf4j-simple:2.0.17'
+    implementation 'org.benf:cfr:0.152'
+    implementation 'commons-io:commons-io:2.11.0'
+}
+
+shadowJar {
+    archiveBaseName.set('novacore-engine')
+    archiveClassifier.set('')
+    archiveVersion.set('')
+    manifest {
+        attributes 'Main-Class': mainClass
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release.set(25)
+    options.compilerArgs.addAll(['-Xlint:deprecation', '-Xlint:unchecked'])
+}
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    testLogging {
+        events = ['passed', 'skipped', 'failed']
+        exceptionFormat = 'full'
+    }
+}
+
+jar {
+    archiveBaseName.set('novacore-engine')
+    archiveVersion.set(project.version)
+    manifest {
+        attributes(
+            'Main-Class': mainClass,
+            'Implementation-Title': project.name,
+            'Implementation-Vendor': 'NovaStepStudios',
+            'Implementation-Version': project.version
+        )
+    }
+}
+
+task fatJar(type: Jar) {
+    archiveBaseName.set('novacore-engine')
+    archiveVersion.set(project.version)
+    manifest {
+        attributes('Main-Class': mainClass)
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(sourceSets.main.output)
+    from {
+        configurations.runtimeClasspath.filter { it.exists() }.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+tasks.build {
+    dependsOn fatJar
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact tasks.named('sourcesJar')
+            artifact tasks.named('javadocJar')
+            pom {
+                name.set('NovaCore Engine')
+                description.set('Native Minecraft SDK for NovaCore engine, launcher and modloader workflows.')
+                url.set('https://github.com/NovaStepStudio/NovaCore-Engine')
+                licenses {
+                    license {
+                        name.set('Apache-2.0 License')
+                        url.set('https://www.apache.org/licenses/LICENSE-2.0')
+                    }
+                }
+                developers {
+                    developer {
+                        id.set('novastep')
+                        name.set('NovaStep Studios')
+                    }
+                }
+                scm {
+                    connection.set('scm:git:git://github.com/NovaStepStudio/NovaCore-Engine.git')
+                    developerConnection.set('scm:git:ssh://github.com/NovaStepStudio/NovaCore-Engine.git')
+                    url.set('https://github.com/NovaStepStudio/NovaCore-Engine')
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'local'
+            url = uri("${buildDir}/repos/maven")
+        }
+    }
+}

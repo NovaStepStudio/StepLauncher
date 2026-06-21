@@ -1,0 +1,1022 @@
+{
+  "_metadata": {
+    "nivel_de_traduccion": 77,
+    "idioma": "fr-FR",
+    "require_reinicio": false,
+    "es_oficial": true,
+    "icono": "./icons/fr-FR.svg"
+  },
+  "splash": {
+    "title": "StepLauncher",
+    "subtitle": "Chargement...",
+    "status": {
+      "initializing": "Initialisation...",
+      "loading_modules": "Chargement des modules...",
+      "verifying_components": "Vérification des composants...",
+      "downloading": "Téléchargement de {name}...",
+      "extracting": "Extraction de {name}...",
+      "extracting_files": "Décompression des fichiers...",
+      "progress": "{pct}% — {downloaded} Mo / {total} Mo",
+      "error": "Erreur : {error}",
+      "check_connection": "Vérifie ta connexion et réessaie",
+      "download_failed": "Échec du téléchargement des composants",
+      "download_failed_detail": "{item} : {error}",
+      "failed_item": "Échec : {item}",
+      "starting_novacore": "Démarrage de NovaCore-Engine...",
+      "starting_engine": "Lancement du moteur...",
+      "novacore_failed": "Échec du démarrage de NovaCore",
+      "unknown_error": "Erreur inconnue",
+      "novacore_ready": "NovaCore prêt",
+      "ready": "Prêt",
+      "init_error": "Erreur d'initialisation"
+    },
+    "labels": {
+      "java": "Java 25 LTS",
+      "novacore": "NovaCore-Engine",
+      "authlib": "authlib-injector"
+    }
+  },
+  "auth": {
+    "login": {
+      "brand_title": "StepLauncher",
+      "brand_subtitle": "Connecte-toi pour continuer",
+      "tabs": {
+        "online": "En ligne",
+        "offline": "Hors ligne"
+      },
+      "fields": {
+        "username_label": "Utilisateur",
+        "username_placeholder": "Nom d'utilisateur",
+        "password_label": "Mot de passe",
+        "password_placeholder": "••••••••",
+        "offline_username_label": "Nom d'utilisateur",
+        "offline_username_placeholder": "Ton nom"
+      },
+      "buttons": {
+        "login": "Se connecter",
+        "oauth": "Continuer sur le web",
+        "offline_play": "Jouer hors ligne"
+      },
+      "links": {
+        "create_account": "Créer un compte",
+        "forgot_password": "Mot de passe oublié"
+      },
+      "errors": {
+        "validation": "Remplis tous les champs",
+        "auth_web": "Erreur d'authentification sur le web"
+      }
+    }
+  },
+  "navigation": {
+    "sidebar": {
+      "config": "Configuration",
+      "friends": "Amis",
+      "screenshots": "Captures",
+      "mods": "Mods",
+      "instances": "Instances",
+      "downloads": "Téléchargements",
+      "play": "Jouer"
+    },
+    "bottom": {
+      "news": "Actualités",
+      "console": "Console"
+    }
+  },
+  "console": {
+    "tabs": {
+      "events": "Événements",
+      "crash_history": "Historique des crashs"
+    },
+    "empty": {
+      "no_events": "Aucun événement",
+      "no_crashes": "Aucun crash enregistré"
+    },
+    "crash": {
+      "code": "Code {exitCode}",
+      "view": "Voir",
+      "delete": "×",
+      "prefix": "[CRASH] Code {exitCode} : {reason}"
+    },
+    "log_prefix": {
+      "launch_exit": "[launch_exited] code={exitCode} normal={normal}",
+      "engine": "[engine] {version} | {baseDir}",
+      "system_os": "[system] {os} | {arch} | {cpu}",
+      "system_ram": "[system] RAM : {totalRam} ({ramFree} libre) | Java : {java}",
+      "system_gpu": "[system] GPU : {gpu}"
+    }
+  },
+  "modals": {
+    "crash": {
+      "title": "Le jeu a planté",
+      "exit_code": "Code de sortie : {exitCode}",
+      "buttons": {
+        "close": "Fermer",
+        "copy": "Copier",
+        "console": "Console",
+        "show_logs": "Voir les logs",
+        "hide_logs": "Masquer"
+      },
+      "logs": {
+        "bar_title": "Dernières lignes du log",
+        "bar_count": "{count} lignes",
+        "preview": "{count} lignes de log disponibles"
+      },
+      "copy_format": "[StepLauncher Crash]\nMotif : {reason}\nCode : {exitCode}\n\n{context}"
+    },
+    "download": {
+      "title": {
+        "installing": "Installation...",
+        "download": "Télécharger Minecraft"
+      },
+      "loading_versions": "Chargement des versions...",
+      "version_label": "Version de Minecraft",
+      "search_placeholder": "Cherche une version...",
+      "tabs": {
+        "all": "Toutes",
+        "release": "Version stable",
+        "snapshot": "Snapshot",
+        "old": "Anciennes"
+      },
+      "no_results": "Aucun résultat",
+      "modloader_label": "ModLoader",
+      "options": {
+        "vanilla": "Vanilla",
+        "fabric": "Fabric",
+        "forge": "Forge",
+        "neoforge": "NeoForge",
+        "quilt": "Quilt",
+        "optifine": "OptiFine"
+      },
+      "summary": {
+        "version": "Version",
+        "modloader": "ModLoader"
+      },
+      "buttons": {
+        "download": "Télécharger",
+        "cancel_install": "Annuler l'installation",
+        "show_logs": "Voir les logs ({count})",
+        "hide_logs": "Masquer les logs ({count})"
+      },
+      "progress": {
+        "status": "Installation...",
+        "files": "{completed}/{total} fichiers"
+      },
+      "modules": {
+        "client": "Client",
+        "libraries": "Bibliothèques",
+        "assets": "Assets",
+        "natives": "Natifs",
+        "logging": "Logging",
+        "runtime": "Runtime",
+        "modloader": "ModLoader"
+      },
+      "states": {
+        "pending": "En attente",
+        "downloading": "Téléchargement",
+        "completed": "Terminé",
+        "failed": "Erreur"
+      },
+      "types": {
+        "release": "Version stable",
+        "snapshot": "Snapshot",
+        "beta": "Bêta",
+        "alpha": "Alpha"
+      },
+      "errors": {
+        "loading_versions": "Erreur lors du chargement des versions"
+      }
+    },
+    "launch": {
+      "title": "Lancer Minecraft",
+      "search_placeholder": "Cherche une version...",
+      "tabs": {
+        "all": "Toutes",
+        "vanilla": "Vanilla",
+        "release": "Release",
+        "snapshot": "Snapshot",
+        "beta": "Bêta",
+        "alpha": "Alpha"
+      },
+      "loading_versions": "Chargement des versions...",
+      "no_results": "Aucune version correspondante",
+      "group_count": "{count} version",
+      "group_count_plural": "{count} versions",
+      "play_button": "Jouer à {version}",
+      "badges": {
+        "release": "Release",
+        "snapshot": "Snapshot",
+        "beta": "Bêta",
+        "alpha": "Alpha",
+        "vanilla": "Vanilla",
+        "forge": "Forge",
+        "fabric": "Fabric",
+        "quilt": "Quilt",
+        "neoforge": "NeoForge",
+        "optifine": "OptiFine",
+        "legacyfabric": "Legacy Fabric"
+      }
+    }
+  },
+  "configuration": {
+    "sidebar": {
+      "launcher": "Launcher",
+      "minecraft": "Minecraft",
+      "personalization": "Personnalisation",
+      "themes": "Thèmes",
+      "language": "Langue",
+      "about": "À Propos"
+    },
+    "launcher": {
+      "title": "Launcher",
+      "auto_start_minecraft": "Lancer Minecraft après une installation",
+      "hide_on_launch": "Masquer le launcher au lancement de Minecraft",
+      "show_console": "Afficher la console d'événements",
+      "show_news": "Afficher les actualités Minecraft",
+      "subsection_performance": "Performances",
+      "filters": "Filtres",
+      "filters_desc": "Amélioration visuelle de l'interface",
+      "blur": "Flou",
+      "blur_desc": "Effet de flou sur les panneaux",
+      "hardware_acceleration": "Accélération matérielle",
+      "hardware_acceleration_desc": "Accélération GPU pour l'interface",
+      "shadows": "Ombres",
+      "shadows_desc": "Ombres sur toute l'interface",
+      "subsection_integration": "Intégration",
+      "discord_rpc": "Afficher la présence sur Discord RPC",
+      "discord_rpc_desc": "Affiche sur Discord ce que tu fais dans le launcher",
+      "open_launcher_folder": "Ouvrir le dossier .StepLauncher"
+    },
+    "minecraft": {
+      "title": "Minecraft",
+      "use_recommended_java": "Utiliser le Java recommandé par Mojang",
+      "use_recommended_java_desc": "Utilise la version de Java incluse par défaut",
+      "max_console_events": "Événements max dans la console",
+      "notify_on_launch": "Notification au lancement de Minecraft",
+      "clean_before_launch": "Nettoyer avant de lancer",
+      "clean_before_launch_desc": "Supprime les logs, crash-reports et fichiers compressés",
+      "java_path": "Chemin de Java",
+      "java_path_desc": "Personnalisé (optionnel)",
+      "java_path_placeholder": "Ex : /usr/lib/jvm/java-17/bin/java",
+      "fullscreen": "Plein écran",
+      "window_size": "Taille de la fenêtre",
+      "window_width": "Largeur",
+      "window_height": "Hauteur",
+      "ram_limit": "Limite de RAM",
+      "ram_limit_desc": "Mémoire allouée à Minecraft",
+      "ram_min": "RAM minimale",
+      "ram_min_desc": "Allocation de base de la mémoire",
+      "ram_hint": "Système : {total} — Recommandé : {recommended}",
+      "gc_preset": "Préréglage GC",
+      "gc_preset_desc": "Algorithme du ramasse-miettes",
+      "gc_options": {
+        "default": "Désactivé (par défaut du système)",
+        "serial": "Serial GC",
+        "parallel": "Parallel GC",
+        "g1gc": "G1GC",
+        "g1gc_optimized": "G1GC Optimisé",
+        "zgc": "ZGC",
+        "shenandoah": "Shenandoah GC",
+        "epsilon": "Epsilon GC (sans collecte)"
+      },
+      "gpu_preference": "Préférence GPU",
+      "gpu_preference_desc": "Sélectionne la carte graphique",
+      "gpu_options": {
+        "none": "Ne pas configurer",
+        "auto": "Automatique",
+        "integrated": "Intégrée",
+        "dedicated": "Dédiée"
+      },
+      "subsection_advanced": "Avancé",
+      "jvm_args_label": "Arguments JVM",
+      "jvm_args_desc": "Arguments pour la machine virtuelle (un par ligne)",
+      "jvm_args_placeholder": "-XX:+AlwaysPreTouch\n-XX:+DisableExplicitGC",
+      "jvm_badge": "JVM",
+      "game_args_label": "Arguments du jeu",
+      "game_args_desc": "Arguments supplémentaires pour Minecraft",
+      "game_args_placeholder": "--server localhost --port 25565",
+      "game_badge": "JEU"
+    },
+    "personalization": {
+      "title": "Personnalisation",
+      "subsection_colors": "Couleurs générales",
+      "accent_color": "Couleur du texte",
+      "accent_color_desc": "Boutons, interrupteurs, liens",
+      "title_bar_color": "Couleur de la barre de titre",
+      "subsection_modals": "Fenêtres contextuelles",
+      "modal_accent": "Couleur d'accent",
+      "modal_accent_desc": "Boutons et éléments décoratifs dans les dialogues",
+      "modal_background": "Arrière-plan",
+      "modal_background_desc": "Couleur de fond des dialogues de téléchargement, lancement et alertes",
+      "preview_label": "Aperçu",
+      "preview_dialog_title": "Dialogue d'exemple",
+      "preview_text": "Texte avec {color} couleur d'accent {/color} et bouton :",
+      "preview_button": "Accepter",
+      "subsection_panels": "Panneaux",
+      "panel_background": "Fond des panneaux",
+      "panel_background_desc": "Tous les panneaux de contenu de l'app",
+      "subsection_sidebar": "Barre latérale",
+      "sidebar_background": "Fond",
+      "sidebar_background_desc": "Panneau de navigation flottant",
+      "sidebar_button_color": "Couleur des boutons",
+      "sidebar_button_color_desc": "Fond des boutons au survol",
+      "sidebar_position": "Position",
+      "sidebar_position_desc": "Côté de l'écran où elle s'affiche",
+      "sidebar_position_left": "Gauche",
+      "sidebar_position_right": "Droite",
+      "subsection_notifications": "Notifications",
+      "notif_error": "Erreur",
+      "notif_warning": "Avertissement",
+      "notif_success": "Succès",
+      "subsection_app_bg": "Fond de l'app",
+      "app_background": "Fond de l'application",
+      "app_background_desc": "Sélectionne un fond pour le launcher",
+      "bg_option_rre36": "RRE36 {n}",
+      "btn_upload": "Importer",
+      "subsection_typography": "Typographie",
+      "font_primary": "Principale",
+      "font_primary_desc": "Titres et en-têtes",
+      "font_secondary": "Secondaire",
+      "font_secondary_desc": "Corps du texte et étiquettes",
+      "font_lexend": "Lexend",
+      "font_inter": "Inter",
+      "subsection_titlebar": "Barre de titre",
+      "macos_style": "Style macOS",
+      "macos_style_desc": "Boutons de trafic (rouge, jaune, vert)",
+      "show_icon": "Afficher l'icône",
+      "show_icon_desc": "Affiche le logo dans la barre de titre",
+      "invert_position": "Inverser la position",
+      "invert_position_desc": "Échange le côté du logo et des boutons"
+    },
+    "themes": {
+      "title": "Thèmes",
+      "buttons": {
+        "export_theme": "Exporter le thème",
+        "import": "Importer un thème",
+        "export": "Exporter",
+        "exporting": "Exportation...",
+        "cancel": "Annuler",
+        "apply": "Appliquer le thème",
+        "applying": "Application...",
+        "delete": "Supprimer",
+        "reset_default": "Rétablir par défaut"
+      },
+      "export": {
+        "label_name": "Nom",
+        "label_author": "Auteur",
+        "label_version": "Version",
+        "label_web": "Site web",
+        "placeholder_name": "Mon thème",
+        "placeholder_author": "Ton nom",
+        "placeholder_version": "1.0.0",
+        "placeholder_web": "https://"
+      },
+      "subsection_installed": "Thèmes installés",
+      "loading": "Chargement...",
+      "empty_themes": "Aucun thème installé",
+      "theme_by": "par {author}",
+      "theme_version": "v{version}",
+      "detail_name": "Nom",
+      "detail_author": "Auteur",
+      "detail_version": "Version",
+      "detail_web": "Site web",
+      "file_filters": {
+        "java": "Java",
+        "all": "Tous les fichiers",
+        "images": "Images"
+      }
+    },
+    "language": {
+      "title": "Langue",
+      "official": "Officiel",
+      "community": "Communauté",
+      "translation_level": "Niveau de traduction",
+      "names": {
+        "lang_es_AR": "Español (Argentina)",
+        "lang_en_US": "English (US)",
+        "lang_es_ES": "Español (España)",
+        "lang_es_MX": "Español (México)",
+        "lang_fr_FR": "Français",
+        "lang_pt_BR": "Português (Brasil)",
+        "lang_ru_RU": "Русский",
+        "lang_de_DE": "Deutsch"
+      }
+    },
+    "about": {
+      "title": "À Propos",
+      "description": "StepLauncher est un launcher moderne pour Minecraft développé par NovaStepStudios. Il permet de télécharger, gérer et exécuter les versions officielles et moddées de Minecraft de façon rapide, sécurisée et moderne.",
+      "studio": "NovaStepStudios",
+      "studio_desc": "Studio de développement derrière StepLauncher. Nous créons des outils open-source pour la communauté Minecraft.",
+      "developer": "Développeur",
+      "developer_desc": "Stepnicka012 — créateur et développeur principal de StepLauncher et NovaCore-Engine.",
+      "links_title": "Liens",
+      "links": {
+        "github": "Organisation GitHub",
+        "github_dev": "GitHub — Stepnicka012",
+        "discord": "Serveur Discord",
+        "youtube": "Chaîne YouTube",
+        "instagram": "Instagram",
+        "whatsapp": "Chaîne WhatsApp",
+        "source": "Code Source",
+        "website": "Site Web Officiel"
+      },
+      "tech_title": "Technologie",
+      "tech_desc": "Propulsé par NovaCore-Engine, construit avec Electron, Vue 3 et TypeScript."
+    }
+  },
+  "about": {
+    "title": "À Propos"
+  },
+  "language": {
+    "title": "Langue"
+  },
+  "instances": {
+    "sidebar": {
+      "filters": {
+        "all": "Toutes",
+        "favorites": "Favorites",
+        "pinned": "Épinglées"
+      },
+      "empty": "Aucune instance"
+    },
+    "tooltips": {
+      "favorite": "Favori",
+      "pinned": "Épinglé",
+      "close": "Fermer (ÉCHAP)"
+    },
+    "empty": {
+      "title": "Aucune instance",
+      "desc": "Crée ta première instance"
+    },
+    "buttons": {
+      "create": "Créer une instance",
+      "install": "Installer",
+      "force_kill": "Forcer la fermeture",
+      "play": "Jouer",
+      "launching": "Lancement...",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "browse": "Parcourir",
+      "open_folder": "Ouvrir le dossier de l'instance",
+      "accept": "Accepter",
+      "show_logs": "Voir les logs ({count})",
+      "hide_logs": "Masquer ({count})"
+    },
+    "create": {
+      "title": "Nouvelle instance",
+      "fields": {
+        "name": "Nom",
+        "name_placeholder": "Ex : Ma Survie",
+        "description": "Description",
+        "description_placeholder": "Description optionnelle",
+        "version": "Version de Minecraft",
+        "search_placeholder": "Cherche une version...",
+        "modloader": "ModLoader"
+      },
+      "tabs": {
+        "all": "Toutes",
+        "release": "Version stable",
+        "snapshot": "Snapshot",
+        "old": "Anciennes"
+      },
+      "no_results": "Aucun résultat",
+      "options": {
+        "vanilla": "Vanilla",
+        "fabric": "Fabric",
+        "forge": "Forge",
+        "neoforge": "NeoForge",
+        "quilt": "Quilt"
+      },
+      "summary": {
+        "version": "Version",
+        "modloader": "ModLoader",
+        "name": "Nom"
+      }
+    },
+    "status": {
+      "installing": "Installation...",
+      "preparing": "Préparation du téléchargement...",
+      "starting_install": "Démarrage de l'installation...",
+      "processing_modloader": "Traitement de {loader}...",
+      "resolving_modloader": "Recherche de la version de {loader}...",
+      "downloading_modloader": "Téléchargement de {loader}...",
+      "installing_modloader": "Installation de {loader}...",
+      "install_completed": "Installation terminée",
+      "error": "Erreur : {error}",
+      "error_install": "Erreur : {error}",
+      "files_progress": "{completed}/{total} fichiers"
+    },
+    "modules": {
+      "client": "Client",
+      "libraries": "Bibliothèques",
+      "assets": "Assets",
+      "natives": "Natifs",
+      "logging": "Logging",
+      "runtime": "Runtime",
+      "modloader": "ModLoader"
+    },
+    "states": {
+      "pending": "En attente",
+      "downloading": "Téléchargement",
+      "completed": "Terminé",
+      "failed": "Erreur"
+    },
+    "detail": {
+      "tabs": {
+        "info": "Informations",
+        "mods": "Mods",
+        "worlds": "Mondes",
+        "screenshots": "Captures d'écran",
+        "console": "Console"
+      },
+      "modloader_none": "Aucun",
+      "yes": "Oui",
+      "no": "Non",
+      "version": "Version",
+      "modloader": "ModLoader",
+      "ram": "RAM",
+      "gc": "GC",
+      "gpu": "GPU",
+      "window": "Fenêtre",
+      "hw_accel": "Accél. matérielle",
+      "playtime": "Temps de jeu",
+      "last_played": "Dernière fois",
+      "path": "Chemin",
+      "playtime_format": {
+        "hours": "{h}h {m}m",
+        "minutes": "{m}m"
+      },
+      "ram_format": "{min} Mo - {max} Mo",
+      "gc_label_none": "Aucun",
+      "gpu_label_none": "Aucun"
+    },
+    "edit": {
+      "sections": {
+        "personalization": "Personnalisation",
+        "performance": "Performances",
+        "window": "Fenêtre",
+        "jvm": "JVM",
+        "game": "Jeu"
+      },
+      "fields": {
+        "name": "Nom",
+        "description": "Description",
+        "icon": "Icône",
+        "icon_placeholder": "Chemin de l'icône",
+        "hero": "Hero",
+        "hero_placeholder": "Chemin du hero",
+        "version": "Version",
+        "ram_min": "RAM minimale (Mo)",
+        "ram_max": "RAM maximale (Mo)",
+        "gc_preset": "Préréglage GC",
+        "gpu_pref": "Préférence GPU",
+        "hw_accel": "Accélération matérielle",
+        "java_path": "Chemin Java",
+        "width": "Largeur",
+        "height": "Hauteur",
+        "fullscreen": "Plein écran",
+        "extra_args": "Arguments supplémentaires",
+        "prepend_args": "Arguments de préfixe",
+        "extra_game_args": "Arguments de jeu supplémentaires"
+      },
+      "buttons": {
+        "save": "Enregistrer",
+        "cancel": "Annuler"
+      },
+      "gc_options": {
+        "none": "Aucun",
+        "auto": "Auto",
+        "disabled": "Désactivé",
+        "off": "Off",
+        "g1gc_basic": "G1GC Basic",
+        "g1gc_optimized": "G1GC Optimisé",
+        "zgc": "ZGC",
+        "shenandoah": "Shenandoah"
+      },
+      "gpu_options": {
+        "none": "Aucun",
+        "auto": "Auto",
+        "dgpu": "DGPU",
+        "igpu": "IGPU"
+      },
+      "hw_options": {
+        "no": "Non",
+        "yes": "Oui"
+      },
+      "confirm_delete": "Supprimer \"{name}\" ?"
+    },
+    "mods_section": {
+      "title": "Mods de l'instance",
+      "search_placeholder": "Cherche des mods sur Modrinth...",
+      "desc_placeholder": "Cherche des mods sur Modrinth pour les télécharger directement dans cette instance",
+      "download": "Télécharger",
+      "loading_more": "Charger plus",
+      "empty_worlds": "Aucun monde sauvegardé",
+      "empty_screenshots": "Aucune capture d'écran",
+      "metadata_format": "{author} · {downloads} téléchargements",
+      "search_error": "Erreur de recherche",
+      "downloading": "..."
+    },
+    "console": {
+      "waiting": "Attente des logs du jeu...",
+      "clear": "Effacer",
+      "old_logs": "Anciens logs ({count})",
+      "logfile_kb": "{size} Ko"
+    }
+  },
+  "mods": {
+    "title": "Mods",
+    "tabs": {
+      "browse": "Parcourir",
+      "library": "Bibliothèque"
+    },
+    "browse": {
+      "search_placeholder": "Cherche sur Modrinth...",
+      "filters": {
+        "type": "Type",
+        "loader": "Loader",
+        "mc_version": "Version MC",
+        "sort": "Trier",
+        "category": "Catégorie"
+      },
+      "types": {
+        "mods": "Mods",
+        "shaders": "Shaders",
+        "resourcepacks": "Textures",
+        "modpacks": "Modpacks",
+        "datapacks": "Datapacks"
+      },
+      "loaders": {
+        "fabric": "Fabric",
+        "forge": "Forge",
+        "neoforge": "NeoForge",
+        "quilt": "Quilt"
+      },
+      "sort": {
+        "relevance": "Pertinence",
+        "downloads": "Téléchargements",
+        "newest": "Plus récents",
+        "updated": "Mis à jour"
+      },
+      "option_all": "Toutes",
+      "loading": "Recherche...",
+      "error": "Erreur de recherche",
+      "no_results": "Aucun résultat",
+      "card_view": "Voir"
+    },
+    "library": {
+      "new": "Nouvelle bibliothèque",
+      "sort_name": "Nom",
+      "sort_entries": "Éléments",
+      "sort_newest": "Plus récentes",
+      "current": "Bibliothèque actuelle",
+      "select_hint": "Sélectionne une bibliothèque",
+      "back": "Retour",
+      "back_to_libraries": "Retour aux bibliothèques",
+      "empty": "Tu n'as pas de bibliothèques. Crées-en une depuis le web.",
+      "entries_count": "{count} éléments",
+      "empty_entries": "Cette bibliothèque est vide.",
+      "loading": "Chargement de la bibliothèque...",
+      "error": "Erreur de chargement de la bibliothèque. Es-tu connecté ?",
+      "no_desc": "Aucune description",
+      "save": "Enregistrer",
+      "remove": "Supprimer"
+    },
+    "detail": {
+      "author": "{author}",
+      "downloads": "{downloads}",
+      "follows": "{follows}",
+      "project_type": "{type}",
+      "tabs": {
+        "info": "Informations",
+        "versions": "Versions",
+        "gallery": "Galerie"
+      },
+      "client_side": "Client",
+      "categories": "Catégories",
+      "buttons": {
+        "download": "Télécharger",
+        "add": "Ajouter"
+      },
+      "versions": {
+        "loading": "Chargement des versions...",
+        "empty": "Aucune version disponible",
+        "filter_all": "Toutes",
+        "search_placeholder": "Cherche une version...",
+        "date": "{date}",
+        "download": "Télécharger"
+      }
+    },
+    "modals": {
+      "select_version": "Sélectionne une version",
+      "add_to_library": "Ajouter à la bibliothèque",
+      "new_library": "Nouvelle bibliothèque",
+      "title_placeholder": "Titre",
+      "desc_placeholder": "Description (optionnelle)",
+      "is_public": "Publique",
+      "cancel": "Annuler",
+      "create": "Créer",
+      "no_libraries": "Tu n'as pas de bibliothèques",
+      "world_picker": "Choisis un monde",
+      "world_picker_desc": "Dans quel monde veux-tu installer ce datapack ?",
+      "install_all_worlds": "Tous les mondes"
+    },
+    "notifications": {
+      "modpack_installed": "Modpack installé avec succès",
+      "datapack_global": "Datapack téléchargé dans le dossier global des datapacks",
+      "datapack_world": "Datapack installé dans le monde \"{world}\"",
+      "mod_downloaded": "{type} téléchargé avec succès",
+      "modpack_error": "Erreur lors de l'installation du modpack",
+      "download_error": "Erreur de téléchargement",
+      "datapack_all_worlds": "Datapack installé pour tous les mondes"
+    },
+    "entry": {
+      "author": "Auteur",
+      "downloads": "Téléchargements",
+      "followers": "Abonnés",
+      "client": "Client",
+      "server": "Serveur",
+      "license": "Licence",
+      "slug": "Slug",
+      "provider": "Fournisseur",
+      "categories": "Catégories",
+      "tags": "Tags",
+      "loaders": "Loaders",
+      "versions": "Versions",
+      "links": "Liens",
+      "link_modrinth": "Modrinth",
+      "link_issues": "Problèmes",
+      "link_source": "Source",
+      "link_wiki": "Wiki",
+      "link_discord": "Discord",
+      "link_donate": "Faire un don"
+    }
+  },
+  "friends": {
+    "panel": {
+      "title": "Amis",
+      "search_placeholder": "Cherche un utilisateur...",
+      "search_results": "Résultats",
+      "no_bio": "Pas de bio",
+      "buttons": {
+        "add": "Ajouter",
+        "accept": "Accepter",
+        "reject": "Refuser"
+      },
+      "sections": {
+        "online": "Amis en ligne",
+        "all": "Tous les amis",
+        "received": "Demandes reçues",
+        "sent": "Envoyées"
+      },
+      "empty_friends": "Pas encore d'amis. Cherche quelqu'un !",
+      "badge_pending": "En attente",
+      "empty_state": "Sélectionne un ami pour voir son profil",
+      "profile_loading": "Chargement du profil..."
+    },
+    "widget": {
+      "title": "Amis",
+      "count": "{online}/{total}",
+      "loading": "Chargement des amis...",
+      "empty": "Tu n'as pas d'amis",
+      "groups": {
+        "in_game": "En jeu",
+        "online": "Connectés",
+        "idle": "Absents",
+        "busy": "Occupés",
+        "offline": "Déconnectés"
+      },
+      "presence": {
+        "online": "Connecté",
+        "offline": "Déconnecté",
+        "seen_just_now": "à l'instant",
+        "seen_minutes": "il y a {m}m",
+        "seen_hours": "il y a {h}h",
+        "seen_days": "il y a {d}d",
+        "seen_format": "Vu {time}"
+      }
+    }
+  },
+  "screenshots": {
+    "title": "Captures d'écran",
+    "empty": "Aucune capture",
+    "empty_viewer": "Sélectionne une capture"
+  },
+  "news": {
+    "title": "Actualités",
+    "loading": "Chargement des actualités...",
+    "filters": {
+      "all": "Toutes",
+      "releases": "Releases",
+      "snapshots": "Snapshots"
+    },
+    "buttons": {
+      "retry": "Réessayer"
+    },
+    "badges": {
+      "release": "Release",
+      "snapshot": "Snapshot"
+    },
+    "no_matches": "Aucune correspondance",
+    "error": "Erreur de connexion"
+  },
+  "profile": {
+    "followers": "Abonnés",
+    "following": "Abonnements",
+    "likes": "J'aime",
+    "labels": {
+      "member_since": "Membre depuis",
+      "last_version_played": "Dernière version jouée",
+      "last_launcher_version": "Dernière version du launcher",
+      "playtime": "Temps de jeu",
+      "status": "Statut",
+      "last_seen": "Dernière visite"
+    },
+    "status": {
+      "online": "En ligne",
+      "offline": "Hors ligne"
+    },
+    "sections": {
+      "presence": "Présence",
+      "common_friends": "Amis en commun ({count})",
+      "libraries": "Bibliothèques",
+      "cosmetics": "Cosmétiques",
+      "character": "Personnage",
+      "social": "Réseaux sociaux"
+    },
+    "presence_updated": "Mis à jour : {date}",
+    "badges": {
+      "public": "Publique",
+      "admin": "Admin"
+    },
+    "library_entries": "{count} éléments",
+    "cosmetics": {
+      "skins": "Skins ({count})",
+      "capes": "Capes ({count})",
+      "kits": "Kits ({count})"
+    },
+    "tiers": {
+      "free": "Gratuit",
+      "premium": "Premium",
+      "team": "Team",
+      "ultimate": "Ultimate"
+    },
+    "tooltip_verified": "Compte vérifié",
+    "date_format": "{day} {month} {year}",
+    "playtime": {
+      "hours": "{h}h {m}m",
+      "minutes": "{m}m"
+    }
+  },
+  "widgets": {
+    "status_bar": {
+      "labels": {
+        "api": "API",
+        "novacore": "NovaCore"
+      },
+      "popup_title": "État du système",
+      "legend": {
+        "online": "Connecté",
+        "checking": "Vérification",
+        "offline": "Déconnecté"
+      },
+      "chart": {
+        "now": "maintenant",
+        "ago": "il y a {seconds}s"
+      },
+      "tooltips": {
+        "now": "Maintenant",
+        "ago": "Il y a {seconds}s",
+        "offline": "{when} : Hors connexion",
+        "checking": "{when} : Vérification...",
+        "latency": "{when} : {latency}ms"
+      },
+      "status": {
+        "online": "Connecté",
+        "offline": "Déconnecté",
+        "starting": "Démarrage...",
+        "checking": "Vérification..."
+      }
+    },
+    "user_card": {
+      "online": "Connecté",
+      "offline": "Déconnecté"
+    },
+    "install_progress": {
+      "files_info": "{completed} / {total} fichiers",
+      "files_info_with_mb": "{completed} / {total} fichiers · {downloaded} / {total} Mo",
+      "modules": {
+        "client": "Client",
+        "libraries": "Bibliothèques",
+        "assets": "Assets",
+        "natives": "Natifs"
+      },
+      "states": {
+        "pending": "En attente",
+        "downloading": "Téléchargement",
+        "completed": "Terminé",
+        "verifying": "Vérification",
+        "verified": "Vérifié",
+        "failed": "Échec",
+        "retrying": "Nouvelle tentative"
+      },
+      "buttons": {
+        "cancel": "Annuler"
+      },
+      "empty_logs": "Pas de logs pour l'instant",
+      "tooltips": {
+        "logs": "Logs",
+        "close": "Fermer"
+      }
+    }
+  },
+  "notifications": {
+    "welcome": "Bienvenue, {username} !",
+    "install": {
+      "error": "Quelque chose s'est mal passé : {error}",
+      "error_title": "Oups ! Erreur d'installation",
+      "error_body": "{instance} : {error}",
+      "complete": "Prêt ! {instance} installé",
+      "complete_title": "Installation terminée !",
+      "complete_body": "{instance} est prêt à être joué",
+      "session_error": "Quelque chose s'est mal passé : {error}",
+      "session_error_title": "Oups ! Quelque chose a échoué",
+      "session_error_body": "Un problème est survenu lors de l'installation : {error}",
+      "cancelled": "Installation annulée — pas de souci, tu peux réessayer"
+    },
+    "launch": {
+      "error": "Impossible de lancer : {error}",
+      "generic_error": "Erreur au lancement : {error}",
+      "success": "C'est parti ! Lancement de {version}...",
+      "success_title": "Bonne partie !",
+      "success_body": "{version} démarre, amuse-toi bien !"
+    },
+    "game": {
+      "closed_title": "À bientôt !",
+      "closed_body": "{version} s'est fermé",
+      "closed_inst_body": "{name} s'est fermé. Reviens vite !"
+    }
+  },
+  "install": {
+    "steps": {
+      "resolving_version": "Résolution de la version...",
+      "fetching_asset_index": "Récupération de l'index des assets...",
+      "downloading_jvm": "Téléchargement du runtime Java...",
+      "building_task_list": "Préparation des fichiers...",
+      "downloading": "Téléchargement...",
+      "verifying": "Vérification des fichiers...",
+      "retrying": "Nouvelle tentative des téléchargements échoués...",
+      "extracting_natives": "Extraction des natifs...",
+      "modloader": "Installation du ModLoader..."
+    },
+    "status": {
+      "starting": "Démarrage...",
+      "preparing_download": "Préparation du téléchargement...",
+      "completed": "Terminé",
+      "cancelled": "Annulé",
+      "error": "Erreur",
+      "processing_modloader": "Traitement du ModLoader..."
+    },
+    "log": {
+      "downloading_file": "Téléchargement : {file}"
+    },
+    "errors": {
+      "installation": "Erreur d'installation",
+      "session": "Erreur de session",
+      "unknown": "Erreur au démarrage du téléchargement",
+      "connecting_engine": "Erreur de connexion au moteur",
+      "unknown_launch": "Erreur inconnue"
+    },
+    "default_instance_name": "Installation",
+    "friend_request": "Tu as {count} nouvelle demande d'ami",
+    "friend_request_plural": "Tu as {count} nouvelles demandes d'ami",
+    "library_cloned": "Bibliothèque \"{title}\" ajoutée à ton compte"
+  },
+  "electron": {
+    "system_gpu_not_detected": "Non détecté",
+    "file_dialog_java": "Java",
+    "file_dialog_all_files": "Tous les fichiers",
+    "default_username": "Player"
+  },
+  "skin_card": {
+    "badge_active": "Active"
+  },
+  "general": {
+    "back": "Retour",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "close": "Fermer",
+    "delete": "Supprimer",
+    "search": "Rechercher",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "confirm": "Confirmer",
+    "accept": "Accepter",
+    "reject": "Refuser",
+    "off": "Off",
+    "on": "On",
+    "yes": "Oui",
+    "no": "Non",
+    "none": "Aucun"
+  }
+}

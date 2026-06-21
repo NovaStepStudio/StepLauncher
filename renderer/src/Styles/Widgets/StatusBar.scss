@@ -1,0 +1,239 @@
+@use '../variables' as *;
+@use '../mixins' as *;
+
+.status-bar {
+  z-index: 9997;
+  gap: 3px;
+  display: flex;
+  position: fixed;
+  top: calc(1.75rem + 6px);
+  left: 8px;
+
+  .status-item {
+    @include flex-center;
+    -webkit-backdrop-filter: var(--blur-light,blur(6px));
+    backdrop-filter: var(--blur-light,blur(6px));
+    border: 1px solid var(--border-subtle,$border-subtle);
+    background: #00000080;
+    border-radius: 5px;
+    gap: 3px;
+    padding: 2px 6px 2px 5px;
+    transition: all .2s;
+
+    .dot {
+      border-radius: 50%;
+      flex-shrink: 0;
+      width: 5px;
+      height: 5px;
+      transition: background .2s,box-shadow .2s;
+      display: block;
+    }
+
+    .label {
+      font-family: $font, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      color: #ffffff80;
+      font-size: .55rem;
+      font-weight: 600;
+    }
+
+    &.online .dot {
+      background: #55efc4;
+      box-shadow: 0 0 5px #55efc466;
+    }
+
+    &.starting .dot,
+    &.checking .dot {
+      background: #faa81a;
+      animation: 1s infinite pulse-ebd56f37;
+      box-shadow: 0 0 5px #faa81a4d;
+    }
+
+    &.offline .dot {
+      background: #ff7675;
+      box-shadow: 0 0 5px #ff76754d;
+    }
+  }
+}
+
+.status-popup {
+  background: var(--modal-bg,#12121ef7);
+  width: 180px;
+  -webkit-backdrop-filter: var(--blur-glass,blur(14px));
+  border: 1px solid var(--border-default,$border);
+  border-radius: 8px;
+  @include flex-column;
+  gap: 6px;
+  padding: 8px;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  box-shadow: 0 8px 32px #0009;
+}
+
+.popup-header {
+  font-family: $font-heading, sans-serif;
+  color: #ffffff80;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-size: .55rem;
+  font-weight: 700;
+}
+
+.popup-graph {
+  @include flex-column;
+  gap: 6px;
+}
+
+.graph-labels {
+  @include flex-column;
+  gap: 3px;
+}
+
+.graph-label {
+  @include flex-center;
+  font-family: $font, sans-serif;
+  gap: 5px;
+  font-size: .6rem;
+
+  .gl-dot {
+    border-radius: 50%;
+    flex-shrink: 0;
+    width: 5px;
+    height: 5px;
+
+    &.online {
+      background: #55efc4;
+    }
+
+    &.starting,
+    &.checking {
+      background: #faa81a;
+      animation: 1s infinite pulse-ebd56f37;
+    }
+
+    &.offline {
+      background: #ff7675;
+    }
+  }
+
+  .gl-text {
+    color: #ffffffb3;
+    font-weight: 600;
+  }
+
+  .gl-badge {
+    border-radius: 3px;
+    margin-left: auto;
+    padding: 0 4px;
+    font-size: .5rem;
+    font-weight: 600;
+    line-height: 1.4;
+
+    &.online {
+      color: #55efc4;
+      background: #55efc426;
+    }
+
+    &.starting,
+    &.checking {
+      color: #faa81a;
+      background: #faa81a26;
+    }
+
+    &.offline {
+      color: #ff7675;
+      background: #ff767526;
+    }
+  }
+}
+
+.graph-chart {
+  @include flex-column;
+  gap: 3px;
+}
+
+.chart-legend {
+  font-family: $font, sans-serif;
+  color: #ffffff4d;
+  gap: 6px;
+  font-size: .45rem;
+  display: flex;
+}
+
+.legend-item {
+  @include flex-center;
+  gap: 2px;
+
+  .legend-dot {
+    border-radius: 50%;
+    width: 4px;
+    height: 4px;
+
+    &.online {
+      background: #55efc4;
+    }
+
+    &.checking {
+      background: #faa81a;
+    }
+
+    &.offline {
+      background: #ff7675;
+    }
+  }
+}
+
+.chart-bars {
+  align-items: flex-end;
+  gap: 1.5px;
+  height: 20px;
+  display: flex;
+
+  .chart-bar {
+    border-radius: 1.5px 1.5px 0 0;
+    width: 3px;
+    transition: height .3s,background .2s;
+
+    &.online {
+      background: #55efc4;
+    }
+
+    &.checking {
+      background: #faa81a;
+    }
+
+    &.offline {
+      background: #ff7675;
+    }
+  }
+}
+
+.chart-time {
+  font-family: $font, sans-serif;
+  color: #fff3;
+  justify-content: space-between;
+  font-size: .45rem;
+  display: flex;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity .15s,transform .15s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+@keyframes pulse-ebd56f37 {
+  0%,to {
+    opacity: 1;
+  }
+  50% {
+    opacity: .4;
+  }
+}

@@ -1,0 +1,92 @@
+@use './variables' as *;
+@use './Base/CssVariables';
+@use './Base/Fonts';
+@use './Base/Splash';
+
+* {
+  -webkit-user-select: none;
+  user-select: none;
+  outline: none;
+}
+
+img { pointer-events: none !important; }
+
+body {
+  background: var(--background-main-app, url('../ui/19.webp'));
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-family: $font, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #ffffff05;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $border;
+  border-radius: 3px;
+  transition: background .2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba($accent, 0.30);
+}
+
+.TitleBar {
+  background: var(--background-title-bar);
+  width: 100%;
+  height: 1.75rem;
+  font-family: $font-heading, Arial, Helvetica, sans-serif;
+  -webkit-app-region: drag;
+  z-index: 9999;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .35rem;
+  display: flex;
+  position: fixed;
+  inset: 0;
+  color: #fff;
+
+  .Logo {
+    margin: 0 .2rem;
+    width: 1.7rem;
+  }
+
+  div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    &:first-child { pointer-events: none; }
+  }
+
+  button {
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    background-color: transparent;
+    display: inherit;
+    justify-content: inherit;
+    align-items: inherit;
+    -webkit-app-region: no-drag;
+    transition: background .15s;
+
+    &:hover { background: #ffffff14; }
+
+    img { object-fit: cover; width: 1rem; }
+  }
+
+  #btn-close:hover { background: #c00; }
+}
