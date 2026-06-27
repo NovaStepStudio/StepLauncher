@@ -24,6 +24,9 @@
     <a href="https://discord.gg/37dYy9apwE">
       <img src="https://img.shields.io/badge/discord-5865f2?style=for-the-badge&logo=discord&logoColor=white&labelColor=1a1a1a" alt="Discord">
     </a>
+    <a href="https://steplauncher.pages.dev/Download">
+      <img src="https://img.shields.io/github/downloads/NovaStepStudio/StepLauncher/total.svg?style=for-the-badge" alt="Downloads">
+    </a>
   </p>
 </div>
 
