@@ -1,0 +1,14 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "StepLauncher",
+  "version": "2.3.0",
+  "outputfilename": "StepLauncher",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "NovaStepStudio",
+    "email": "stepnicka012@gmail.com"
+  }
+}

@@ -1,0 +1,108 @@
+@font-face {
+    font-family: 'Inter';
+    src: url('./assets/fonts/Inter.woff2');
+}
+
+@font-face {
+    font-family: 'Lexend';
+    src: url('./assets/fonts/Lexend.woff2');
+}
+
+@font-face {
+    font-family: 'Fredoka';
+    src: url('./assets/fonts/Fredoka.woff2');
+}
+
+*{
+    outline: none;
+    user-select: none;
+    img{
+        pointer-events: none;
+        image-rendering: optimizeSpeed, optimizeQuality;
+        object-fit: cover;
+    }
+}
+
+:root{
+    --background-body: url('./assets/background/bg.webp');
+    --background-sidebar: #0005;
+    --background-sidebar-items: #0008;
+    --background-bottom-control-version: #0005;
+    --background-play-button: #111;
+    --background-button-primary: #111;
+    --background-modal-primray: #111;
+
+    --border-modal-style: 1px solid color-mix(in srgb, var(--background-modal-primray) 50%, gray 25%);
+    --border-style: 1px solid color-mix(in srgb, var(--background-sidebar) 50%, gray 20%);
+
+    --transition-play-button: background 100ms ease-in-out;
+    --transition-sidebar-item: background 50ms ease-in-out, border 150ms ease-in-out, scale 100ms ease;
+    --transition-icon-item: width 100ms ease-in-out;
+    --transition-label-item: opacity 250ms ease-in-out, inset 300ms cubic-bezier(0.165, 0.84, 0.44, 1);
+
+    --filter-blur: blur(4px);
+
+    --shadow-settings-normal: 0 0 .5rem;
+
+    --text-primary: #fff;
+    --text-secondary: #cfcfd6;
+
+    --font-primary: 'Lexend';
+    --font-secundary: 'Inter';
+
+    /* Colores configurables desde Personalizacion.
+       Sus defaults reproducen los valores base del launcher. */
+    --color-sidebar: #0005;
+    --color-modal: #111;
+    --color-button: #111;
+    --color-border-modal: #494949;
+    --color-border: rgba(37, 37, 37, 0.3);
+}
+
+:root[data-anim="off"] *,
+:root[data-anim="off"] *::before,
+:root[data-anim="off"] *::after {
+    transition: none !important;
+    animation: none !important;
+}
+
+:root[data-blur="off"]{
+    --filter-blur: blur(0px);
+}
+
+:root[data-shadows="off"]{
+    --shadow-settings-normal: none;
+}
+
+html{
+    overflow: hidden;
+}
+
+body{
+    background: var(--background-body);
+    background-position: center center;
+    background-attachment: fixed;
+    background-size: cover;
+    color: var(--text-primary);
+    padding:0;
+    margin:0;
+    font-family: var(--font-secundary), Arial, Helvetica, sans-serif;
+}
+
+::-webkit-scrollbar{
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track{
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb{
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover{
+    background: rgba(255, 255, 255, 0.25);
+}

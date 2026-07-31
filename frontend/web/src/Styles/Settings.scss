@@ -1,0 +1,362 @@
+// Estilos compartidos para las secciones de Configuracion.
+// Diseno plano: sin tarjetas, sin divisores internos, con aire y headers de banda.
+
+$accent: #4a9eff;
+
+.Ss {
+    display: flex;
+    flex-direction: column;
+}
+
+.SsGroupHead {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: calc(100% - 4rem);
+    margin: 0 auto;
+    padding: 0.7rem 2rem;
+    background: #0005;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    color: var(--text-secondary);
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+
+    svg {
+        opacity: 0.45;
+        flex-shrink: 0;
+    }
+}
+
+.SsRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    padding: 1.05rem 2rem;
+}
+
+.SsColorRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    padding: 1.05rem 2rem;
+
+    .SsInfo {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+.SsInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.SsLabel {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.SsDesc {
+    display: block;
+    font-size: 0.7rem;
+    opacity: 0.45;
+    margin-top: 0.25rem;
+    line-height: 1.4;
+}
+
+.SsTip {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    font-size: 0.68rem;
+    opacity: 0.45;
+    line-height: 1.45;
+    padding: 0.1rem 2rem 1rem;
+
+    svg {
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+        opacity: 0.6;
+    }
+
+    strong {
+        opacity: 0.8;
+    }
+}
+
+.SsArg {
+    padding: 0.25rem 2rem 1.1rem;
+}
+
+// Controles
+
+.SsCtrl {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+.SsStep {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.45rem;
+    overflow: hidden;
+}
+
+.SsStepBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    width: 2.3rem;
+    height: 2.3rem;
+    font-size: 1.15rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 120ms, color 120ms;
+    font-family: var(--font-secundary), Arial, sans-serif;
+
+    &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-primary);
+    }
+
+    &:disabled {
+        opacity: 0.2;
+        cursor: not-allowed;
+    }
+}
+
+.SsStepVal {
+    min-width: 5.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    font-family: var(--font-secundary), Courier New, monospace;
+    opacity: 0.9;
+    padding: 0 0.3rem;
+    white-space: nowrap;
+}
+
+.SsTg {
+    position: relative;
+    display: inline-block;
+    width: 2rem;
+    height: 1.1rem;
+    flex-shrink: 0;
+
+    input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        position: absolute;
+
+        &:checked + .SsTgS {
+            background: rgba($accent, 0.5);
+            border-color: rgba($accent, 0.6);
+
+            &::before {
+                transform: translateX(0.96rem);
+            }
+        }
+    }
+}
+
+.SsTgS {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 2rem;
+    transition: background 100ms, border-color 100ms;
+
+    &::before {
+        content: '';
+        position: absolute;
+        width: 0.76rem;
+        height: 0.76rem;
+        left: 0.14rem;
+        bottom: 0.1rem;
+        background: #fff;
+        border-radius: 50%;
+        transition: transform 100ms;
+    }
+}
+
+.SsSel {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.45rem;
+    color: var(--text-primary);
+    font-family: var(--font-secundary), Arial, sans-serif;
+    font-size: 0.75rem;
+    padding: 0.45rem 0.5rem;
+    min-width: 10rem;
+    max-width: 16rem;
+    cursor: pointer;
+    transition: border-color 120ms;
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.14);
+    }
+
+    &:focus {
+        outline: none;
+        border-color: rgba($accent, 0.4);
+    }
+
+    option {
+        background: #1a1a2e;
+        color: var(--text-primary);
+    }
+}
+
+.SsSelJava {
+    min-width: 8rem;
+    max-width: 13rem;
+}
+
+.SsIn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.45rem;
+    color: var(--text-primary);
+    font-family: var(--font-secundary), Arial, sans-serif;
+    font-size: 0.75rem;
+    padding: 0.45rem 0.55rem;
+    flex: 1;
+    min-width: 0;
+
+    &:focus {
+        outline: none;
+        border-color: rgba($accent, 0.4);
+    }
+
+    &::placeholder {
+        opacity: 0.25;
+    }
+}
+
+.SsInW {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.SsBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.45rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-family: var(--font-secundary), Arial, sans-serif;
+    cursor: pointer;
+    transition: background 150ms, border-color 150ms, color 150ms;
+    white-space: nowrap;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.14);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+    }
+}
+
+.SsBtnPrimary {
+    background: rgba($accent, 0.12);
+    border-color: rgba($accent, 0.25);
+    color: #6ab0ff;
+
+    &:hover {
+        background: rgba($accent, 0.2);
+        border-color: rgba($accent, 0.4);
+    }
+}
+
+.SsBtnDanger {
+    background: rgba(255, 70, 70, 0.08);
+    border-color: rgba(255, 70, 70, 0.2);
+    color: #ff6b6b;
+
+    &:hover {
+        background: rgba(255, 70, 70, 0.15);
+        border-color: rgba(255, 70, 70, 0.35);
+    }
+}
+
+.SsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    min-width: 15rem;
+    max-width: 19rem;
+    flex-shrink: 0;
+    margin-right: 5rem;
+}
+
+.SsField {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    .SsLabel {
+        font-size: 0.72rem;
+        opacity: 0.6;
+    }
+}
+
+.SsValue {
+    font-size: 0.8rem;
+    font-family: var(--font-secundary), Courier New, monospace;
+    opacity: 0.65;
+    text-align: right;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.SsBgThumb {
+    width: 3rem;
+    height: 2rem;
+    border-radius: 0.35rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+    flex-shrink: 0;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.SsTipDanger {
+    color: #ff8b8b;
+
+    svg {
+        color: #ff6b6b;
+    }
+}
