@@ -1,6 +1,56 @@
 # Changelogs
 
-Historial oficial y **auditoría interna** del launcher **StepLauncher**. Esta carpeta NO es contenido generado "porque sí": cada entrada documenta un **error** (bug, incidente, deadlock) o un **cambio** (funcionalidad, mejora, refactor) que **le pasó de verdad al owner del repositorio durante el desarrollo** — por qué se hizo, qué se rompió, cómo se arregló y en qué release salió. Es la trazabilidad completa del proyecto: quien trabaje aquí después debe consultarla ANTES de diagnosticar o modificar cualquier cosa.
+Historial oficial y **auditoría interna** del launcher **StepLauncher**. Esta carpeta NO es contenido generado "porque sí": cada entrada documenta un **error** (bug, incidente, deadlock) o un **cambio** (funcionalidad, mejora, refactor) que **le pasó de verdad al owner del repositorio durante el desarrollo** — por qué se hizo, qué se rompió, cómo se arregló y en qué release salió. Es la trazabilidad completa del proyecto: quien trabaje aquí después —desarrollador o agente de IA— debe consultarla ANTES de diagnosticar o modificar cualquier cosa.
+
+## Los changelogs representan hechos reales
+
+Las entradas de `Errors/`, `Changes/` y `Releases/` documentan cosas que **realmente ocurrieron** en el desarrollo del proyecto. No se generan entradas ficticias, inventadas o especulativas: un error se documenta cuando ocurrió, un cambio cuando se implementó, una release cuando se publicó. El historial no es un registro aspiracional.
+
+Un agente de IA puede ayudar a redactar, investigar o estructurar una entrada, pero la información debe provenir siempre de una fuente real:
+
+- código;
+- logs y trazas;
+- cambios efectivamente realizados;
+- comportamiento reproducible;
+- documentación existente;
+- evidencia del repositorio;
+- o información proporcionada por el desarrollador.
+
+Si durante la investigación de una tarea aparece un error o un cambio nuevo, se documenta con la misma evidencia; lo que no puede documentarse son "casos hipotéticos" o problemas que solo la IA especuló.
+
+## Esta carpeta también es la memoria de los agentes
+
+StepLauncher es un proyecto grande y sus componentes están fuertemente conectados. Un agente de IA (o un desarrollador nuevo) que entre al repositorio después no tiene el contexto del owner: `Changelogs/` es lo que le permite reconstruirlo y trabajar sin empezar de cero.
+
+Consultando `Changelogs/` se puede descubrir:
+
+- bugs que ya ocurrieron;
+- causas raíz conocidas;
+- soluciones aplicadas;
+- decisiones arquitectónicas;
+- reglas aprendidas;
+- cambios relevantes;
+- posibles regresiones;
+- y el comportamiento histórico de sistemas complejos.
+
+Esto permite que una IA posterior **no vuelva a investigar desde cero problemas que ya fueron diagnosticados**: si una causa raíz y su solución ya están documentadas, se usan como punto de partida, no se re-descubren.
+
+## Roles de la documentación
+
+| Documento   | Rol                                                                                                        |
+|-------------|------------------------------------------------------------------------------------------------------------|
+| `AGENTS.md` | **Reglas actuales**: lo que los agentes y desarrolladores deben cumplir hoy al trabajar sobre el proyecto. |
+| `Changelogs/` | **Memoria histórica**: lo que ocurrió en el desarrollo (errores, cambios, releases).                     |
+| `Errors/`   | Auditoría técnica de errores reales. Puede contener: síntoma, reproducción, causa raíz, evidencia, flujo afectado, solución, verificación y regla aprendida. |
+| `Changes/`  | Registro técnico de modificaciones reales. Puede contener: qué cambió, archivos/componentes afectados, motivo, APIs afectadas, comportamiento anterior/nuevo y cómo verificarlo. |
+| `Releases/` | Historial orientado a la versión publicada y al usuario; no es documentación interna de build.             |
+
+La relación conceptual es la siguiente:
+
+- `AGENTS.md` = **reglas actuales**;
+- `Changelogs/` = **memoria histórica**.
+
+Un agente debe utilizar ambos: las reglas para saber qué hacer hoy y el historial para no repetir errores del pasado.
 
 ## Estructura de carpetas
 
@@ -224,6 +274,9 @@ Motivación del cambio o mejora.
 ## API afectada
 Bindings, funciones públicas, modelos o eventos —si hay.
 
+## Comportamiento anterior/nuevo
+Qué hacía antes y qué hace ahora (solo si aplica).
+
 ## Cómo verificar
 Comandos de build/dev (`bun run build`, `go build ./...`, `wails dev`...).
 ```
@@ -250,6 +303,21 @@ Actualizador automático, migraciones de config, etc. (sin instrucciones de buil
 ```
 
 Y el `news.json` descrito arriba.
+
+## Auditoría de bugs complejos (reglas para agentes)
+
+Cuando un agente investiga un bug complejo, el flujo obligatorio es:
+
+1. **Consultar primero `Changelogs/`** (y `AGENTS.md`) antes de diagnosticar o modificar.
+2. **Identificar entradas relacionadas**: mismo módulo, misma versión, misma causa raíz, mismas reglas aprendidas.
+3. **Inspeccionar el código actual**: el historial documenta, no sustituye al código.
+4. **Rastrear dependencias relevantes** (callers/callees, bindings, sistemas compartidos).
+5. **Determinar si el comportamiento actual coincide con la documentación histórica**: si el bug ya está documentado, usar la entrada como punto de partida y no re-investigarlo desde cero.
+6. **No reutilizar automáticamente una solución antigua si la arquitectura cambió**: verificar que el fix documentado siga siendo válido contra el código actual.
+7. **Verificar la causa raíz antes de aplicar un fix**: una hipótesis no es una causa raíz.
+8. **Documentar el problema en `Changelogs/` si es nuevo** (ver "Ciclo de vida de un Error").
+9. **Actualizar `AGENTS.md` solamente** cuando se descubra una regla permanente que deba aplicarse en futuras tareas.
+10. **No convertir una hipótesis de la IA en una "causa raíz" sin evidencia**: distinguir entre hechos observados, hipótesis y conclusiones verificadas.
 
 ## Reglas
 

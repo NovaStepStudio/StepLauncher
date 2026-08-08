@@ -56,16 +56,15 @@
   `Launcher.go/buildJVMArgs`: cuando `hardwareAcceleration` está deshabilitado
   (o sin configurar), **no se añade ningún argumento** al comando del juego.
 - Eliminada la función `helpers.HWAccelDisableFlags` (muerta).
-- Misma política que pedía el usuario para los tres campos relacionados:
+- Se aplica la misma política a los tres campos relacionados:
   `gcPreset` vacío → sin flags de GC (ya era así), `gpuPreference` vacío → sin
   env vars de GPU (ya era así), `hardwareAcceleration` deshabilitado → sin
   flags de Java2D (este cambio).
 
 ## Por qué
 
-- Re-extract total en cada inicio era desperdicio (I/O y borrado de carpetas
-  de trabajo que otros procesos usan en runtime) y el usuario lo marcó como
-  inaceptable.
+- La re-extracción total en cada inicio era un desperdicio inaceptable (I/O y
+  borrado de carpetas de trabajo que otros procesos usan en runtime por partida).
 - El resolutor con `HasPrefix` podía instalar DLL de la arquitectura
   equivocada al coexistir `-arm64`/`-x86` en disco.
 - Los flags `sun.java2d.*` aparecían en el comando con solo no configurar la

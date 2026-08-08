@@ -34,8 +34,8 @@ se cae.
 
 ## Por qué
 
-Al abrir Minecraft la ventana del launcher estorbaba en pantalla. Se pidió que
-el launcher se oculte automáticamente durante el juego y reaparezca al salir.
+Al abrir Minecraft la ventana del launcher estorbaba en pantalla. Ahora el
+launcher se oculta automáticamente durante el juego y reaparece al salir.
 
 ## API afectada
 

@@ -38,8 +38,8 @@
 ## Por qué
 
 - En "verificando" el progreso llegaba al 100% antes de acabar y el único
-  cambio era un label pequeño: el usuario pedía que el contenido del círculo
-  cambiase (spinner/check) y el estado se viera claramente bajo el círculo.
+  cambio era un label pequeño: el contenido del círculo debía cambiar
+  (spinner/check) y el estado debía verse claramente bajo el círculo.
 - El zoom del visor estaba roto y dejaba al usuario atrapado sin saber cómo
   salir ni cómo moverse por la imagen ampliada.
 

@@ -25,9 +25,9 @@ su comportamiento de centrado y preview en vivo.
 
 ## Por qué
 
-El centrado en preview del campo de progreso resultaba molesto: el selector
-saltaba al centro de la pantalla mientras se arrastraba. Se pidió que se quedara
-quieto en su sitio, exactamente igual que el ColorField de "Modal".
+El centrado en el preview del campo de progreso resultaba molesto: el selector
+saltaba al centro de la pantalla mientras se arrastraba. Ahora se queda quieto
+en su sitio, exactamente igual que el ColorField de "Modal".
 
 ## Cómo verificar
 

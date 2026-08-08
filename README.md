@@ -133,6 +133,14 @@ El build regenera los bindings `frontend/wailsjs`, ejecuta el type-check (`vue-t
 
 Para las condiciones de **distribución y redistribución**, consulta el [Código de Conducta](CODE_OF_CONDUCT.md).
 
+## 🤖 Uso de inteligencia artificial
+
+StepLauncher utiliza herramientas de inteligencia artificial como parte del proceso de desarrollo. Se emplean principalmente para análisis de código, auditoría, debugging, revisión de arquitectura y asistencia durante la implementación.
+
+La IA no reemplaza al creador del proyecto ni toma las decisiones finales sobre su arquitectura o funcionamiento. Todo cambio asistido por IA debe ser revisado, probado y validado antes de considerarse parte del proyecto.
+
+El desarrollo, la dirección técnica y la responsabilidad final sobre StepLauncher corresponden al creador del proyecto.
+
 ## 📄 Licencia
 
 Este proyecto se distribuye bajo la **GNU General Public License v3.0**. Consulta [`LICENSE.md`](LICENSE.md) para más detalles.

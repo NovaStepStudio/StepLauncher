@@ -7,7 +7,7 @@ Agosto 2026
 StepLauncher-2.3.0 — se mencionó por primera vez en esta release.
 
 ## Contexto
-El usuario pidió que **todo el contenido de la carpeta `frontend/web/src`** empiece con mayúscula (carpetas y archivos). Quedan excluidas de esta regla: `index.html`, `index.css`, `env.d.ts` (nombres canónicos del toolchain), `node_modules/`, `wailsjs/` (generado por Wails) y `dist/`. La carpeta raíz `src` **conserva su nombre en minúsculas** (no se renombra a `Src`). `assets/` y todos sus archivos **no se tocan** (siguen en minúsculas).
+**Todo el contenido de la carpeta `frontend/web/src`** pasa a usar inicial mayúscula (carpetas y archivos). Quedan excluidas de esta regla: `index.html`, `index.css`, `env.d.ts` (nombres canónicos del toolchain), `node_modules/`, `wailsjs/` (generado por Wails) y `dist/`. La carpeta raíz `src` **conserva su nombre en minúsculas** (no se renombra a `Src`). `assets/` y todos sus archivos **no se tocan** (siguen en minúsculas).
 
 ## Qué se hizo
 - `web/src/Renamos all contenido:

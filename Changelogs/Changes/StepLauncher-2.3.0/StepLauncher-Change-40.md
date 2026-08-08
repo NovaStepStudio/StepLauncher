@@ -7,7 +7,7 @@ Agosto 2026
 StepLauncher-2.3.0
 
 ## Contexto
-El usuario pidió mejorar el apartado de Noticias (`frontend/web/src/Modals/NewsModal.vue` + `frontend/web/src/Stores/News.ts`): mejor estilo visual, adaptación a ventanas pequeñas (escritorio, no móviles), navegación coherente (el botón de regresar no volvía al panel principal), carga más rápida desde el renderer (no backend) y contenido mejor alineado (los títulos del markdown tenían margen distinto al texto y los links usaban el color del fondo del modal).
+Se rediseñó el apartado de Noticias (`frontend/web/src/Modals/NewsModal.vue` + `frontend/web/src/Stores/News.ts`): mejor estilo visual, adaptación a ventanas pequeñas (escritorio, no móviles), navegación coherente (el botón de regresar no volvía al panel principal), carga más rápida desde el renderer (no backend) y contenido mejor alineado (los títulos del markdown tenían margen distinto al texto y los links usaban el color del fondo del modal).
 
 ## Qué se hizo
 

@@ -48,7 +48,7 @@ coincidía con el contrato del template:
 El core del error: **el launcher imponía su propio layout de natives en vez de
 leer el que indica el propio template de la versión**.
 
-## 3. Solución aplicada (propuesta del usuario: leer la ruta del template)
+## 3. Solución aplicada (leer la ruta que indica el template)
 
 En `internal/Core/Launcher/Helpers/Natives.go`:
 
@@ -86,10 +86,10 @@ Los natives de versions modernas de Mojang ya NO van todos a la raíz: el
 que el template indica y concatenarla con el `nativesDir` base**, nunca decidir
 el layout por heurística de librería ni mapeo de versiones.
 
-## 6. Refinamiento posterior (feedback del usuario)
+## 6. Refinamiento posterior
 
-La primera corrección se rehizo al revisar el código de extracción (el usuario
-reportó que era "un desastre" y que "borraba y re-extraía todo en cada inicio"):
+La primera corrección se rehizo al revisar el código de extracción: borraba y
+re-extraía todo en cada inicio.
 
 - **Se eliminó `os.RemoveAll(nativesDir)` del camino de lanzamiento.** Antes
   cada inicio borraba `natives/` entero y lo volvía a extraer. Ahora la
@@ -115,5 +115,5 @@ reportó que era "un desastre" y que "borraba y re-extraía todo en cada inicio"
 - Se eliminó la obligación de flags `-Dsun.java2d.*` forzados
   (`helpers.HWAccelDisableFlags`): cuando `hardwareAcceleration`/`gcPreset`/
   `gpuPreference` están deshabilitados, el comando final no debe llevar NINGÚN
-  flag derivado de ellos (regla del usuario: configuración deshabilitada → no
+  flag derivado de ellos (regla: configuración deshabilitada → no
   inyectar, ni variables ni argumentos).

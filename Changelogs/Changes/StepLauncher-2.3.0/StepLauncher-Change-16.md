@@ -64,4 +64,4 @@ el panel de progreso, el estado de loader y la pantalla de "listo".
 ## Cómo verificar
 
 - `bun run type-check` (dentro de `frontend/`) → OK (exit 0).
-- Pendiente de comprobación visual con `wails dev` cuando el usuario lo pida.
+- Pendiente de comprobación visual con `wails dev`.

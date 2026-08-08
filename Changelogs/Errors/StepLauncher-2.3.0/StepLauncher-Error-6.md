@@ -13,7 +13,7 @@ El ColorField guardaba el color en cada movimiento del ratón durante el
 arrastre (Change-11 llamaba a `commit()` dentro de `onSVDrag`, `onHueDrag` y
 `onAlphaDrag`). Eso disparaba `save()` → `UpdatePersonalization` (persistencia
 en disco vía Go) a ráfaga de eventos, con tirones y escrituras continuas. El
-comportamiento pedido es: **guardar SOLO al soltar** el arrastre.
+comportamiento esperado es: **guardar SOLO al soltar** el arrastre.
 
 ## 2. Causa raíz
 
@@ -43,5 +43,5 @@ continuos durante el arrastre con escrituras a disco cada frame.
 
 No persistir por cada `pointermove`: el arrastre debe emitir solamente
 `preview` (vista previa efímera) y diferir el guardado al `pointerup`. Antes
-de volver a añadir un commit en un drag, confirmar con el usuario si quiere
-guardado continuo o al soltar.
+de volver a añadir un commit en un drag, verificar cuál es el comportamiento
+esperado: guardado continuo o al soltar.

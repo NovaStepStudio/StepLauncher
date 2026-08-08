@@ -42,8 +42,8 @@ moviera. Con el anclaje, el thumb solo cambia con el movimiento real del ratón.
 
 ## Por qué
 
-- Se pedía que el cursor quedara capturado y centrado sobre el ColorField al
-  arrastrar (con APIs del navegador) y que así el arrastre no se "fuera" de
+- El cursor debía quedar capturado y centrado sobre el ColorField al
+  arrastrar (con APIs del navegador) para que el arrastre no se "fuera" de
   los límites del selector.
 - El thumb se desplazaba muy rápido / de forma errática al centrarse el
   selector en preview por mapear coordenadas absolutas contra un elemento en

@@ -20,6 +20,34 @@ Launcher de Minecraft (Wails v2 + Vue 3 + TS). Frontend en `frontend/web/src`, b
 - **Assets personalizables**: `internal/Core/Assets` gestiona `launcher_assets.json` (rutas relativas `launcher/...`; `sanitize` normaliza y garantiza placeholders).
 - **El sistema de instancias (`internal/Core/Launcher` y el resto de `internal/Core/`) es OPCIONAL**: es una implementación adicional, NO es el núcleo del launcher. Nada debe asumirlo como requisito ni el flujo principal depender de él.
 
+## Uso de IA y agentes (obligatorio)
+
+StepLauncher es un proyecto grande (más de 80 archivos Go interconectados, algunos de más de 1000 líneas) y sus sistemas están fuertemente acoplados (handlers, bindings de Wails, config, personalización, instancias, descargas, cuentas, noticias). Debido a ese tamaño y acoplamiento, los agentes de IA se utilizan como herramienta de análisis, auditoría y asistencia durante el desarrollo: pueden analizar el código, rastrear dependencias, diagnosticar bugs y colaborar en la implementación de cambios. La IA es una herramienta de desarrollo y análisis, no una autoridad absoluta: el resultado de su trabajo debe verificarse igual que cualquier otro cambio.
+
+### Cómo trabaja un agente en este repositorio
+
+- Puede analizar y modificar código cuando la tarea lo requiere; no está limitado a leer.
+- Antes de modificar, debe comprender la arquitectura existente (ver sección anterior) y consultar `Changelogs/` si el área afectada tiene historial (ver sección "Registro de errores y cambios").
+- Puede usar `Changelogs/` como contexto histórico: bugs ya diagnosticados, causas raíz conocidas, soluciones aplicadas, reglas aprendidas y regresiones posibles.
+- No debe asumir que una implementación aislada representa toda la arquitectura: existen muchos subsistemas conectados (p. ej. `internal/Core/` es opcional, pero otros sistemas forman parte del flujo principal).
+- Antes de modificar APIs, handlers, bindings o sistemas compartidos, debe rastrear las conexiones entre componentes: revisar callers/callees y dependencias antes de cambiar funciones públicas o estructuras compartidas.
+- Debe considerar que el backend tiene más de 80 archivos Go interdependientes: un cambio local puede afectar módulos lejanos.
+- No debe inventar comportamiento, APIs, archivos, dependencias ni reglas que no existan en el repositorio.
+- Sin evidencia suficiente, debe inspeccionar el código antes de afirmar una causa.
+- Debe distinguir siempre entre **hechos observados**, **hipótesis** y **conclusiones verificadas**.
+
+### Flujo de trabajo obligatorio de un agente
+
+1. Inspeccionar el repositorio (código, estructura, dependencias).
+2. Consultar documentación e historial cuando corresponda (`AGENTS.md`, `Changelogs/`, documentación oficial de Wails).
+3. Analizar dependencias y conexiones del área afectada.
+4. Implementar el cambio siguiendo las reglas de este archivo.
+5. Verificarlo (build y type-check de Go y frontend, según corresponda).
+6. Documentar errores o cambios relevantes en `Changelogs/` (ver sección "Registro de errores y cambios").
+7. Reportar incertidumbres si existen (hipótesis sin verificar, comportamiento no confirmado).
+
+Usar IA no elimina la obligación de verificar el resultado: todo cambio debe comprobarse antes de darse por terminado.
+
 ## Concurrencia y deadlocks (obligatorio)
 
 - **Nunca bloquear el hilo principal ni los bindings de Wails**: las funciones expuestas en `app.go`/bindings deben ser rápidas. Cualquier trabajo lento (I/O, red, procesamiento) DEBE ejecutarse en una goroutine propia y devolver inmediatamente (callback/evento o `chan`), nunca por un `sync.WaitGroup` o `chan` que se espere a la espera de la misma goroutine.
@@ -48,8 +76,8 @@ Launcher de Minecraft (Wails v2 + Vue 3 + TS). Frontend en `frontend/web/src`, b
 ## Resolución de alias de import (vite.config.ts) (obligatorio)
 
 - **Los `alias` de `frontend/vite.config.ts` definen TODOS los resolucivos de import permitidos en el frontend**: usarlos SIEMPRE en lugar de rutas relativas largas del estilo `../../../../wailsjs/go/main/models.ts`.
-- **Solo se puede usar cualquier alias/path que esté explícitamente expuesto/definido en el bloque `resolve.alias` de `frontend/vite.config.ts`** (p. ej. `@wails` → `./bindings`). No inventar ni usar atajos que no estén declarados ahí; si un path no está, primero añadirlo al `vite.config.ts` y luego usarlo.
-- **Añadir nuevos alias cuando algo se reutiliza mucho**: si se detecta un import o un fragmento de código que se repite bastante (p. ej. rutas hacia `bindings`, `src`, subcarpetas de `src`, utilidades, etc.), crear un nuevo alias en `resolve.alias` de `vite.config.ts` y usarlo en el frontend. El alias debe nombrarse con el prefijo `@` (p. ej. `@wails`, `@components`, `@meverage`) y apuntar a la carpeta correcta con `fileURLToPath(new URL(...))` siguiendo el patrón existente.
+- **Solo se puede usar cualquier alias/path que esté explícitamente expuesto/definido en el bloque `resolve.alias` de `frontend/vite.config.ts`** (p. ej. `@wailsjs` → `./wailsjs`, `@` → `./web/src`). No inventar ni usar atajos que no estén declarados ahí; si un path no está, primero añadirlo al `vite.config.ts` y luego usarlo.
+- **Añadir nuevos alias cuando algo se reutiliza mucho**: si se detecta un import o un fragmento de código que se repite bastante (p. ej. rutas hacia `wailsjs`, `src`, subcarpetas de `src`, utilidades, etc.), crear un nuevo alias en `resolve.alias` de `vite.config.ts` y usarlo en el frontend. El alias debe nombrarse con el prefijo `@` (p. ej. `@wailsjs`) y apuntar a la carpeta correcta con `fileURLToPath(new URL(...))` siguiendo el patrón existente.
 - No romper los alias existentes: cuando se añada uno nuevo, respetar y conservar los que ya están definidos.
 
 ## Estilo (obligatorio)

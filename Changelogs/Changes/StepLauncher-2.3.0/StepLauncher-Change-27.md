@@ -7,8 +7,8 @@
 
 ### 1. Mapeo de códigos de salida oficiales del cliente
 
-El usuario facilitó la clase decompilada `net.minecraft.ExitCodes` del cliente
-actual. Se incorpora a `internal/Core/Launcher/Helpers/System.go`:
+La clase decompilada `net.minecraft.ExitCodes` del cliente actual se incorpora
+en `internal/Core/Launcher/Helpers/System.go`:
 
 | Código | Constante del cliente            | Motivo (`CrashReasonLabel`) | Categoría (`CrashCategory`) |
 |--------|----------------------------------|------------------------------|------------------------------|
@@ -42,7 +42,7 @@ patrones de log (`oom`, `jvm_launch`).
 
 ## Por qué
 
-El usuario estaba descompilando Minecraft y aportó la lista real de exit codes:
+La lista real de exit codes se obtuvo descompilando el cliente de Minecraft:
 sin ella el launcher clasificaba los crashes del cliente moderno como
 "código inesperado". Con el mapeo, el modal de crash da un motivo concreto
 (p. ej. `-7` = no se pudo interpretar la versión → cliente corrupto, `-3/4/5` =

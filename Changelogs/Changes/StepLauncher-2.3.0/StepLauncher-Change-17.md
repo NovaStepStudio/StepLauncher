@@ -49,4 +49,4 @@ solo las Releases). Se quita la rama `default: return true` muerta de
 - `bun run build` (dentro de `frontend/`) → OK: `vue-tsc --build` y `vite build` sin
   errores.
 - CSS compilado contiene `.InstallationModal_Loaders[data-v-*]{flex-direction:column;...}`.
-- Pendiente de comprobación visual con `wails dev` cuando el usuario lo pida.
+- Pendiente de comprobación visual con `wails dev`.

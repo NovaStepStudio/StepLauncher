@@ -50,7 +50,7 @@ usa `fill: both` y la salida `fill: none` para no dejar transform residual.
 
 ## Por qué
 
-- Cumplir el flujo pedido: solo mientras se manipula el color, solo en algunos
+- Flujo del preview: solo mientras se manipula el color, solo en algunos
   campos, con animación hacia el centro y de regreso, y con vista previa en
   vivo sin persistir hasta soltar el cursor.
 

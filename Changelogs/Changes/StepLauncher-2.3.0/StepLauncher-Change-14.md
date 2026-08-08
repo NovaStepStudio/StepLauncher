@@ -63,5 +63,4 @@ así los dos bordes se configuran como cualquier otro color.
 - `bun run build` (dentro de `frontend/`) → OK (type-check incluido).
 - En Configuración → Colores hay dos filas de bordes; al cambiar cualquiera,
   `launcher_config.json` guarda el nuevo color y los elementos con
-  `--border-style` / `--border-modal-style` lo reflejan (la puesta en la
-  interfaz la hace el usuario, como acordado).
+  `--border-style` / `--border-modal-style` lo reflejan en la interfaz.

@@ -39,8 +39,8 @@ lado**, aparece una réplica en miniatura del modal de descarga:
 
 La réplica usa las variables CSS reales del modal (`--background-modal-primary`,
 `--border-modal-style`, etc.) y se repinta en tiempo real mientras se arrastra.
-Se retiró el mini-ejemplo que se había colocado dentro del panel (no era lo
-pedido: el ejemplo debe verse AL LADO del selector centrado).
+Se retiró el mini-ejemplo que se había colocado dentro del panel (el ejemplo
+debe verse AL LADO del selector centrado).
 
 ### 3. Detalles técnicos sin corte ni doble scroll
 

@@ -56,4 +56,4 @@ vivo.
 ## Cómo verificar
 
 - `bun run type-check` (dentro de `frontend/`) → OK (exit 0). No se ha ejecutado
-  `wails build` (pendiente de confirmar visualmente con `wails dev` cuando el usuario lo pida).
+  `wails build` (pendiente de confirmación visual con `wails dev`).
