@@ -61,6 +61,19 @@ type Download struct {
 	onProgress   func(*DownloadProgress)
 	doneCh       chan struct{}
 
+	fileStates   map[string]string
+	fileBytes    map[string]int64
+	fileSizes    map[string]int64
+	fileSections map[string]string
+	fileOrder    []string
+	sectionOrder []string
+	sectionStats map[string]*SectionProgress
+	liveBytes    int64
+
+	speedMbps     float64
+	lastSpeedMB   float64
+	lastSpeedTime time.Time
+
 	lastEmittedState DownloadState
 	lastEmitTime     time.Time
 
@@ -142,13 +155,18 @@ func (m *Manager) Start(version string, filter DownloadFilter, maxRetries int, m
 		skipVerify:      skipVerify,
 		stallTimeout:    stallTimeout,
 		maxStallRetries: maxStallRetries,
-		ctx:            ctx,
-		cancel:         cancel,
-		startTime:      time.Now(),
-		doneCh:         make(chan struct{}),
+		ctx:             ctx,
+		cancel:          cancel,
+		startTime:       time.Now(),
+		lastSpeedTime:   time.Now(),
+		doneCh:          make(chan struct{}),
 		Progress: DownloadProgress{
-			State:         StatePending,
-			SectionsTotal: countSections(filter),
+			State:             StatePending,
+			SectionsTotal:     countSections(filter),
+			Sections:          []SectionProgress{},
+			SectionsCompleted: []string{},
+			ActiveFiles:       []FileProgress{},
+			QueuedPreview:     []string{},
 		},
 	}
 	dl.pauseCond = sync.NewCond(&dl.mu)
@@ -230,6 +248,24 @@ func (m *Manager) Resume(id string) error {
 	return nil
 }
 
+func (m *Manager) CancelActive() {
+	m.mu.RLock()
+	ids := make([]string, 0, len(m.downloads))
+	for id, dl := range m.downloads {
+		dl.mu.Lock()
+		st := dl.State
+		dl.mu.Unlock()
+		switch st {
+		case StatePending, StateDownloading, StatePaused, StateVerifying, StateReDownload:
+			ids = append(ids, id)
+		}
+	}
+	m.mu.RUnlock()
+	for _, id := range ids {
+		_ = m.Cancel(id)
+	}
+}
+
 func (m *Manager) Cancel(id string) error {
 	dl := m.Get(id)
 	if dl == nil {
@@ -252,6 +288,7 @@ func (m *Manager) Cancel(id string) error {
 	dl.mu.Lock()
 	dl.State = StateCancelled
 	dl.Progress.State = StateCancelled
+	dl.liveBytes = 0
 	dl.mu.Unlock()
 
 	BroadcastState(m.cfg.BroadcastFn, id, StateCancelled)
@@ -345,6 +382,12 @@ func (m *Manager) runDownload(dl *Download) {
 	}
 
 	dl.mu.Lock()
+	if dl.ctx.Err() != nil {
+		dl.State = StateCancelled
+		dl.Progress.State = StateCancelled
+		dl.mu.Unlock()
+		return
+	}
 	dl.State = StateDownloading
 	dl.Progress.State = StateDownloading
 	dl.Progress.SectionsTotal = countSections(dl.Filter)
@@ -413,6 +456,29 @@ func (m *Manager) runDownload(dl *Download) {
 	dl.Progress.FilesExisting = 0
 	dl.Progress.SectionsCompleted = []string{}
 	dl.Progress.SectionsTotal = countSections(dl.Filter)
+	dl.fileStates = make(map[string]string, len(allTasks))
+	dl.fileBytes = make(map[string]int64, len(allTasks))
+	dl.fileSizes = make(map[string]int64, len(allTasks))
+	dl.fileSections = make(map[string]string, len(allTasks))
+	dl.fileOrder = make([]string, 0, len(allTasks))
+	dl.sectionOrder = nil
+	dl.sectionStats = make(map[string]*SectionProgress)
+	dl.liveBytes = 0
+	for _, t := range allTasks {
+		dl.fileOrder = append(dl.fileOrder, t.Dest)
+		dl.fileStates[t.Dest] = FilePending
+		dl.fileSizes[t.Dest] = t.Size
+		dl.fileSections[t.Dest] = t.Section
+		if _, ok := dl.sectionStats[t.Section]; !ok {
+			dl.sectionStats[t.Section] = &SectionProgress{Name: t.Section}
+			dl.sectionOrder = append(dl.sectionOrder, t.Section)
+		}
+		s := dl.sectionStats[t.Section]
+		s.TotalFiles++
+		if t.Size > 0 {
+			s.MBTotal += float64(t.Size) / 1024 / 1024
+		}
+	}
 	dl.mu.Unlock()
 
 	if len(allTasks) == 0 {
@@ -452,21 +518,19 @@ func (m *Manager) runDownload(dl *Download) {
 	dl.mu.Lock()
 	shouldComplete := dl.State == StateDownloading || dl.State == StateVerifying
 	hasFailed := dl.failed
+	hasError := dl.State == StateError
+	dl.mu.Unlock()
+
 	if !shouldComplete {
-		hasError := dl.State == StateError
-		dl.mu.Unlock()
 		if hasError {
 			return
 		}
+		return
 	}
-	dl.mu.Unlock()
-
-	if shouldComplete {
-		if hasFailed > 0 {
-			m.setError(dl, fmt.Errorf("%d files failed to download", hasFailed))
-		} else {
-			m.setCompleted(dl)
-		}
+	if hasFailed > 0 {
+		m.setError(dl, fmt.Errorf("%d files failed to download", hasFailed))
+	} else {
+		m.setCompleted(dl)
 	}
 }
 
@@ -518,7 +582,10 @@ func (m *Manager) processTask(dl *Download, task DownloadTask, nativeMu *sync.Mu
 	dl.Progress.CurrentFile = filepath.Base(task.Dest)
 	dl.Progress.CurrentURL = task.URL
 	dl.Progress.CurrentDest = task.Dest
+	dl.fileStates[task.Dest] = FileDownloading
+	dl.fileBytes[task.Dest] = 0
 	dl.mu.Unlock()
+	m.emitProgress(dl)
 
 	if FileExists(task.Dest) {
 		dl.mu.Lock()
@@ -532,6 +599,14 @@ func (m *Manager) processTask(dl *Download, task DownloadTask, nativeMu *sync.Mu
 		}
 		dl.Progress.Percent = CalcPercent(dl.mbDownloaded, dl.mbTotal, dl.done, len(dl.tasks))
 		dl.Progress.CurrentProgress = 100
+		dl.fileStates[task.Dest] = FileExisting
+		dl.fileBytes[task.Dest] = task.Size
+		if s := dl.sectionStats[task.Section]; s != nil {
+			s.DoneFiles++
+			if task.Size > 0 {
+				s.MBDownloaded += float64(task.Size) / 1024 / 1024
+			}
+		}
 		dl.mu.Unlock()
 		m.emitProgress(dl)
 
@@ -543,10 +618,19 @@ func (m *Manager) processTask(dl *Download, task DownloadTask, nativeMu *sync.Mu
 		return
 	}
 
-	err := DownloadFile(dl.ctx, task, m.cfg.HTTPClient, dl.maxRetries, nil, dl.stallTimeout, dl.maxStallRetries)
+	err := DownloadFile(dl.ctx, task, m.cfg.HTTPClient, dl.maxRetries, func(done, total int64) {
+		dl.mu.Lock()
+		prev := dl.fileBytes[task.Dest]
+		dl.fileBytes[task.Dest] = done
+		dl.liveBytes += done - prev
+		dl.mu.Unlock()
+		m.emitProgress(dl)
+	}, dl.stallTimeout, dl.maxStallRetries)
 	if err != nil {
 		dl.mu.Lock()
 		dl.failed++
+		dl.fileStates[task.Dest] = FileError
+		dl.liveBytes -= dl.fileBytes[task.Dest]
 		dl.mu.Unlock()
 		m.log(dl, "FAIL: %s | %s -> %s (%d B)", task.URL, err.Error(), task.Dest, task.Size)
 		return
@@ -561,12 +645,21 @@ func (m *Manager) processTask(dl *Download, task DownloadTask, nativeMu *sync.Mu
 	dl.mu.Lock()
 	dl.done++
 	dl.Progress.FilesDownloaded = dl.done
+	dl.liveBytes -= dl.fileBytes[task.Dest]
+	dl.fileBytes[task.Dest] = task.Size
 	if task.Size > 0 {
 		dl.mbDownloaded += float64(task.Size) / 1024 / 1024
 		dl.Progress.MBDownloaded = dl.mbDownloaded
 	}
 	dl.Progress.Percent = CalcPercent(dl.mbDownloaded, dl.mbTotal, dl.done, len(dl.tasks))
 	dl.Progress.CurrentProgress = 100
+	dl.fileStates[task.Dest] = FileDone
+	if s := dl.sectionStats[task.Section]; s != nil {
+		s.DoneFiles++
+		if task.Size > 0 {
+			s.MBDownloaded += float64(task.Size) / 1024 / 1024
+		}
+	}
 	dl.mu.Unlock()
 	m.emitProgress(dl)
 }
@@ -657,6 +750,7 @@ func (m *Manager) setCompleted(dl *Download) {
 	dl.Progress.State = StateCompleted
 	dl.Progress.Percent = 100
 	dl.Progress.CurrentProgress = 100
+	dl.liveBytes = 0
 	mbAvg := float64(0)
 	if elapsed.Seconds() > 0 && dl.mbDownloaded > 0 {
 		mbAvg = dl.mbDownloaded / elapsed.Seconds()
@@ -692,7 +786,78 @@ func (m *Manager) log(dl *Download, f string, a ...interface{}) {
 func (m *Manager) emitProgress(dl *Download) {
 	dl.mu.Lock()
 
+	totalMB := dl.mbDownloaded + float64(dl.liveBytes)/1024/1024
+	dl.Progress.MBDownloaded = totalMB
+
 	now := time.Now()
+	dt := now.Sub(dl.lastSpeedTime).Seconds()
+	if dt >= 0.4 {
+		if dt <= 2.5 && dl.Progress.State == StateDownloading {
+			inst := (totalMB - dl.lastSpeedMB) / dt
+			if inst < 0 {
+				inst = 0
+			}
+			if dl.speedMbps <= 0 {
+				dl.speedMbps = inst
+			} else {
+				dl.speedMbps = 0.7*dl.speedMbps + 0.3*inst
+			}
+		} else {
+			dl.speedMbps = 0
+		}
+		dl.lastSpeedMB = totalMB
+		dl.lastSpeedTime = now
+	}
+	dl.Progress.SpeedMbps = dl.speedMbps
+
+	sections := make([]SectionProgress, 0, len(dl.sectionOrder))
+	for _, name := range dl.sectionOrder {
+		if s := dl.sectionStats[name]; s != nil {
+			c := *s
+			sections = append(sections, c)
+		}
+	}
+	dl.Progress.Sections = sections
+
+	completed := make([]string, 0, len(sections))
+	for _, s := range sections {
+		if s.TotalFiles > 0 && s.DoneFiles >= s.TotalFiles {
+			completed = append(completed, s.Name)
+		}
+	}
+	dl.Progress.SectionsCompleted = completed
+
+	active := make([]FileProgress, 0, 8)
+	queued := 0
+	preview := make([]string, 0, 5)
+	for _, dest := range dl.fileOrder {
+		st := dl.fileStates[dest]
+		switch st {
+		case FileDownloading:
+			if len(active) >= 8 {
+				continue
+			}
+			size := dl.fileSizes[dest]
+			bytes := dl.fileBytes[dest]
+			percent := 0.0
+			if size > 0 {
+				percent = float64(bytes) / float64(size) * 100
+			}
+			active = append(active, FileProgress{
+				Name: filepath.Base(dest), Section: dl.fileSections[dest],
+				Size: size, Downloaded: bytes, Percent: percent, State: st,
+			})
+		case FilePending:
+			queued++
+			if len(preview) < 5 {
+				preview = append(preview, filepath.Base(dest))
+			}
+		}
+	}
+	dl.Progress.ActiveFiles = active
+	dl.Progress.QueuedCount = queued
+	dl.Progress.QueuedPreview = preview
+
 	stateChanged := dl.Progress.State != dl.lastEmittedState
 	timeElapsed := now.Sub(dl.lastEmitTime) >= 200*time.Millisecond
 	shouldEmit := stateChanged || timeElapsed || dl.Progress.Percent >= 100

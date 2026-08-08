@@ -1,6 +1,6 @@
 {
   "name": "steplauncher",
-  "version": "0.0.0",
+  "version": "2.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,6 +12,7 @@
     "format": "oxfmt src/"
   },
   "dependencies": {
+    "marked": "^18.0.9",
     "sass-embedded": "^1.100.0",
     "vue": "^3.5.40"
   },

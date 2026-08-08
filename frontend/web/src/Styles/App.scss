@@ -49,24 +49,30 @@
     width: 100%;
 }
 .Sidebar{
-    position: relative;
+    position: absolute;
+    inset: 50% .5rem;
     width: 3.25rem;
-    height: 100%;
-    border-right: 1px solid color-mix(in srgb, var(--background-sidebar) 50%, gray 40%);
+    transform: translateY(-50%);
+    height: max-content;
+    border: var(--border-style);
+    padding: .5rem 0;
+    border-radius: .5rem;
     background-color: var(--background-sidebar);
     backdrop-filter: var(--filter-blur);
     display: flex;
     justify-content: start;
     align-items: center;
     flex-direction: column;
+    z-index: 1;
     div > .Item,
     .Item{
         position:relative;
         width: 2.5rem;
         height: 2.5rem;
         border-radius: .5rem;
-        background-color: var(--background-sidebar-items);
-        border: 1px solid color-mix(in srgb, var(--background-sidebar-items) 50%, gray 20%);
+        background-color: var(--background-button-primary);
+        border: var(--border-style);
+        color: var(--text-primary);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -75,12 +81,10 @@
         opacity: 0.8;
         scale: .9;
         &:hover{
-            background-color: color-mix(in srgb, var(--background-sidebar-items) 50%, gray 20%);
-            border: 1px solid color-mix(in srgb, var(--background-sidebar-items) 50%, gray 50%);
+            background-color: color-mix(in srgb, var(--background-button-primary) 50%, gray 20%);
             scale: 1;
             &:active{
-                background-color: color-mix(in srgb, var(--background-sidebar-items) 60%, gray 40%);
-                border: 1px solid color-mix(in srgb, var(--background-sidebar-items) 60%, gray 40%);
+                background-color: color-mix(in srgb, var(--background-button-primary) 60%, gray 40%);
                 .Item_Icon{
                     width: 1rem;
                 }
@@ -102,15 +106,17 @@
             position: absolute;
             inset: 50% 10rem;
             transform: translateY(-50%);
-            background-color: color-mix(in srgb, var(--background-sidebar) 20%, black 30%);
-            border: 1px solid color-mix(in srgb, var(--background-sidebar) 50%, gray 30%);
+            background-color: color-mix(in srgb, var(--background-button-primary) 20%, black 30%);
+            border: 1px solid color-mix(in srgb, var(--background-button-primary) 50%, gray 30%);
             height: max-content;
             width: max-content;
             padding: .2rem .5rem;
             border-radius: .5rem;
             pointer-events: none;
-            font-size: 0.8rem;
-            font-family: 'Fredoka',Arial, Helvetica, sans-serif;
+            font-size: calc(.8rem * var(--font-size-primary, 1));
+            font-family: var(--font-primary), 'Fredoka', Arial, Helvetica, sans-serif;
+            color: var(--text-primary);
+            text-shadow: var(--text-shadow-primary, none);
             opacity: 0;
             transition: var(--transition-label-item);
         }
@@ -127,14 +133,10 @@
     width: calc(100% - 1rem);
     height: 4rem;
     margin:.5rem .5rem;
-    border: var(--border-style);
-    background-color: var(--background-bottom-control-version);
-    backdrop-filter: var(--filter-blur);
     border-radius: .5rem;
     display:flex;
     justify-content: space-between;
     align-items: center;
-    overflow: hidden;
     .VersionSelected{
         display: inherit;
         justify-content: center;
@@ -142,10 +144,14 @@
         font-size: 1rem;
         gap: .5rem;
         height: 100%;
+        border-radius: .5rem;
         padding: 0 .25rem;
         cursor: pointer;
+        background-color: color-mix(in srgb, var(--background-button-primary) 50%, transparent 50%);
+        border: var(--border-style);
+        backdrop-filter: var(--filter-blur);
         &:hover{
-            background:#5555;
+            background: color-mix(in srgb, var(--background-button-primary) 50%, gray 15%);
         }
         .InfoVersion{
             pointer-events: none;
@@ -159,11 +165,23 @@
             flex-direction: column;
             p{
                 color: var(--text-primary);
+                text-shadow: var(--text-shadow-primary, none);
                 opacity: .85;
-                font-size: .65rem;
+                font-size: calc(.65rem * var(--font-size-primary, 1));
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
             }
             h5{
-                font-size: .85rem;
+                color: var(--text-primary);
+                text-shadow: var(--text-shadow-primary, none);
+                font-size: calc(.85rem * var(--font-size-primary, 1));
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+                line-height: 1.2;
             }
             *{margin:0;}
         }
@@ -186,20 +204,20 @@
         }
     }
     .PlayButton {
-        position: absolute;
-        inset: auto 50%;
-        transform: translateX(-50%);
+        position: relative;
         width: 15rem;
         height: 3.25rem;
         display: inherit;
         justify-content: center;
         align-items: inherit;
         gap: 0.5rem;
-        border-radius: 0.5rem;
+        border-top-left-radius: 2rem;
+        border-bottom-right-radius: 2rem;
         border: var(--border-style);
         background: var(--background-play-button);
         color: var(--text-primary);
-        font-size:.5rem;
+        text-shadow: var(--text-shadow-primary, none);
+        font-size: calc(.5rem * var(--font-size-primary, 1));
         font-family: var(--font-primary), Arial, Helvetica, sans-serif;
         cursor: pointer;
         overflow: hidden;
@@ -207,7 +225,7 @@
         &:hover {
             background: color-mix(in srgb, var(--background-play-button) 50%, gray 15%);
             .Decoration{
-                opacity: .5;
+                opacity: .85;
                 inset: -1rem 50%;
             }
             .Icon{
@@ -242,39 +260,6 @@
             }
         }
     }
-    .Options{
-        width: 10rem;
-        height: 4rem;
-        margin: 0 .5rem;
-        display:inherit;
-        justify-content: end;
-        align-items: inherit;
-        gap: .25rem;
-        button{
-            width: max-content;
-            padding:.3em .5rem;
-            border-radius: .5rem;
-            border:none;
-            color: var(--text-primary);
-            font-family: var(--font-secundary), Arial, Helvetica, sans-serif;
-            font-size: .85rem;
-            background: color-mix(in srgb, var(--background-button-primary) 50%, transparent 25%);
-            display: inherit;
-            justify-content: inherit;
-            align-items: inherit;
-            gap:.2rem;
-            cursor: pointer;
-            & > *{
-                pointer-events: none;
-            }
-            svg{
-                width: 1rem;
-            }
-            &:hover{
-                background: color-mix(in srgb, var(--background-button-primary) 50%, gray 25%);
-            }
-        }
-    }
 }
 .TopOptions{
     position: absolute;
@@ -286,6 +271,65 @@
     justify-content: end;
     align-items: center;
     gap: .5rem;
+    .Others{
+        width: max-content;
+        padding: 0 .5rem;
+        height: 100%;
+        background-color: color-mix(in srgb, var(--background-button-primary) 50%, transparent 15%);
+        border: var(--border-style);
+        backdrop-filter: var(--filter-blur);
+        border-radius: .5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: .5rem;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+        .OptionOther{
+            position: relative;
+            width: 2rem;
+            border-radius: 50%;
+            aspect-ratio: 1 / 1;
+            background-color: color-mix(in srgb, var(--background-button-primary) 90%, black 10%);
+            border: var(--border-style);
+            display: inherit;
+            justify-content: inherit;
+            align-items: inherit;
+            cursor: pointer;
+            transition: var(--transition-sidebar-item);
+            svg{
+                width: 1rem;
+                pointer-events: none;
+                color: var(--text-primary);
+            }
+            .OptionLabel{
+                position: absolute;
+                top: calc(100% + .5rem);
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: color-mix(in srgb, var(--background-sidebar) 20%, black 30%);
+                border: 1px solid color-mix(in srgb, var(--background-sidebar) 50%, gray 30%);
+                height: max-content;
+                width: max-content;
+                padding: .2rem .5rem;
+                border-radius: .5rem;
+                pointer-events: none;
+                font-size: calc(.8rem * var(--font-size-primary, 1));
+                font-family: var(--font-primary), 'Fredoka',Arial, Helvetica, sans-serif;
+                color: var(--text-primary);
+                text-shadow: var(--text-shadow-primary, none);
+                opacity: 0;
+                transition: var(--transition-label-item);
+                z-index: 20;
+            }
+            &:hover{
+                background-color: color-mix(in srgb, var(--background-button-primary) 90%, gray 15%);
+                .OptionLabel{
+                    opacity: 1;
+                }
+            }
+        }
+    }
     .UserCard{
         width: 13rem;
         height: 3rem;
@@ -325,14 +369,29 @@
             flex-direction: column;
             overflow: hidden;
             pointer-events: none;
+            min-width: 0;
             h1{
-                font-size: .85rem;
+                color: var(--text-primary);
+                text-shadow: var(--text-shadow-primary, none);
+                font-size: calc(.85rem * var(--font-size-primary, 1));
                 font-family: var(--font-primary), Arial, Helvetica, sans-serif;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+                width: 100%;
             }
             p{
+                color: var(--text-secondary);
+                text-shadow: var(--text-shadow-secundary, none);
                 opacity: .7;
-                font-size: .65rem;
+                font-size: calc(.65rem * var(--font-size-secundary, 1));
                 font-family: var(--font-secundary), Arial, Helvetica, sans-serif;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+                width: 100%;
             }
             & > * {
                 margin: 0;

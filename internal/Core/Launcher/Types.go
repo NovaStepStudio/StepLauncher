@@ -26,10 +26,11 @@ type GameInstance struct {
 	StartTime     time.Time
 	Status        GameStatus
 	ExitCode      int
-	LogPath       string
-	CrashLog      string
-	CrashReason   string
-	CrashCategory string
+	LogPath         string
+	CrashLog        string
+	CrashLogContent string
+	CrashReason     string
+	CrashCategory   string
 	cmd           *exec.Cmd
 	done          chan struct{}
 	eventBuf      []GameEvent

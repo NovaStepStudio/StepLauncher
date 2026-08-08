@@ -1,8 +1,3 @@
-// Estilos compartidos para las secciones de Configuracion.
-// Diseno plano: sin tarjetas, sin divisores internos, con aire y headers de banda.
-
-$accent: #4a9eff;
-
 .Ss {
     display: flex;
     flex-direction: column;
@@ -16,11 +11,12 @@ $accent: #4a9eff;
     margin: 0 auto;
     padding: 0.7rem 2rem;
     background: #0005;
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-    color: var(--text-secondary);
+    border-top: var(--border-style);
+    border-bottom: var(--border-style);
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
     font-family: var(--font-primary), Arial, sans-serif;
-    font-size: 0.72rem;
+    font-size: calc(0.72rem * var(--font-size-primary, 1));
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -63,6 +59,9 @@ $accent: #4a9eff;
     display: block;
     font-size: 0.85rem;
     font-weight: 500;
+    font-family: var(--font-primary);
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
 }
 
 .SsDesc {
@@ -71,6 +70,9 @@ $accent: #4a9eff;
     opacity: 0.45;
     margin-top: 0.25rem;
     line-height: 1.4;
+    font-family: var(--font-secundary);
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
 }
 
 .SsTip {
@@ -97,8 +99,6 @@ $accent: #4a9eff;
     padding: 0.25rem 2rem 1.1rem;
 }
 
-// Controles
-
 .SsCtrl {
     display: flex;
     align-items: center;
@@ -109,8 +109,8 @@ $accent: #4a9eff;
 .SsStep {
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--control-bg);
+    border: var(--border-style);
     border-radius: 0.45rem;
     overflow: hidden;
 }
@@ -119,9 +119,10 @@ $accent: #4a9eff;
     background: transparent;
     border: none;
     color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
     width: 2.3rem;
     height: 2.3rem;
-    font-size: 1.15rem;
+    font-size: calc(1.15rem * var(--font-size-secundary, 1));
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -132,6 +133,7 @@ $accent: #4a9eff;
     &:hover:not(:disabled) {
         background: rgba(255, 255, 255, 0.08);
         color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
     }
 
     &:disabled {
@@ -143,7 +145,7 @@ $accent: #4a9eff;
 .SsStepVal {
     min-width: 5.5rem;
     text-align: center;
-    font-size: 0.8rem;
+    font-size: calc(0.8rem * var(--font-size-secundary, 1));
     font-family: var(--font-secundary), Courier New, monospace;
     opacity: 0.9;
     padding: 0 0.3rem;
@@ -164,8 +166,8 @@ $accent: #4a9eff;
         position: absolute;
 
         &:checked + .SsTgS {
-            background: rgba($accent, 0.5);
-            border-color: rgba($accent, 0.6);
+            background: color-mix(in srgb, var(--background-button-primary) 50%, gray 15%);
+            border-color: color-mix(in srgb, var(--background-button-primary) 60%, white 20%);
 
             &::before {
                 transform: translateX(0.96rem);
@@ -178,8 +180,8 @@ $accent: #4a9eff;
     position: absolute;
     cursor: pointer;
     inset: 0;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--control-bg-soft);
+    border: 1px solid var(--control-border-strong);
     border-radius: 2rem;
     transition: background 100ms, border-color 100ms;
 
@@ -190,19 +192,20 @@ $accent: #4a9eff;
         height: 0.76rem;
         left: 0.14rem;
         bottom: 0.1rem;
-        background: #fff;
+        background: var(--control-toggle-thumb);
         border-radius: 50%;
         transition: transform 100ms;
     }
 }
 
 .SsSel {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--background-button-primary);
+    border: var(--border-style);
     border-radius: 0.45rem;
     color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
     font-family: var(--font-secundary), Arial, sans-serif;
-    font-size: 0.75rem;
+    font-size: calc(0.75rem * var(--font-size-secundary, 1));
     padding: 0.45rem 0.5rem;
     min-width: 10rem;
     max-width: 16rem;
@@ -210,16 +213,15 @@ $accent: #4a9eff;
     transition: border-color 120ms;
 
     &:hover {
-        border-color: rgba(255, 255, 255, 0.14);
+        background-color: color-mix(in srgb, var(--background-button-primary) 40%, gray 20%);
     }
 
     &:focus {
         outline: none;
-        border-color: rgba($accent, 0.4);
     }
 
     option {
-        background: #1a1a2e;
+        background: var(--control-option-bg);
         color: var(--text-primary);
     }
 }
@@ -230,19 +232,19 @@ $accent: #4a9eff;
 }
 
 .SsIn {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--background-button-primary);
+    border: var(--border-style);
     border-radius: 0.45rem;
     color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
     font-family: var(--font-secundary), Arial, sans-serif;
-    font-size: 0.75rem;
+    font-size: calc(0.75rem * var(--font-size-secundary, 1));
     padding: 0.45rem 0.55rem;
     flex: 1;
     min-width: 0;
 
     &:focus {
         outline: none;
-        border-color: rgba($accent, 0.4);
     }
 
     &::placeholder {
@@ -261,10 +263,11 @@ $accent: #4a9eff;
     gap: 0.45rem;
     padding: 0.5rem 1rem;
     border-radius: 0.45rem;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.04);
+    border: var(--border-style);
+    background: var(--control-bg);
     color: var(--text-primary);
-    font-size: 0.75rem;
+    text-shadow: var(--text-shadow-primary, none);
+    font-size: calc(0.75rem * var(--font-size-secundary, 1));
     font-family: var(--font-secundary), Arial, sans-serif;
     cursor: pointer;
     transition: background 150ms, border-color 150ms, color 150ms;
@@ -272,7 +275,6 @@ $accent: #4a9eff;
 
     &:hover {
         background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.14);
     }
 
     &:disabled {
@@ -281,30 +283,40 @@ $accent: #4a9eff;
 
         &:hover {
             background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 255, 255, 0.08);
         }
     }
 }
 
 .SsBtnPrimary {
-    background: rgba($accent, 0.12);
-    border-color: rgba($accent, 0.25);
-    color: #6ab0ff;
+    background: color-mix(in srgb, var(--background-button-primary) 12%, transparent);
+    border-color: color-mix(in srgb, var(--background-button-primary) 25%, transparent);
+    color: color-mix(in srgb, var(--background-button-primary) 55%, white 45%);
 
     &:hover {
-        background: rgba($accent, 0.2);
-        border-color: rgba($accent, 0.4);
+        background: color-mix(in srgb, var(--background-button-primary) 20%, transparent);
+        border-color: color-mix(in srgb, var(--background-button-primary) 40%, transparent);
     }
 }
 
 .SsBtnDanger {
-    background: rgba(255, 70, 70, 0.08);
-    border-color: rgba(255, 70, 70, 0.2);
-    color: #ff6b6b;
+    background: color-mix(in srgb, var(--color-error) 8%, transparent);
+    border-color: color-mix(in srgb, var(--color-error) 20%, transparent);
+    color: var(--color-error);
 
     &:hover {
-        background: rgba(255, 70, 70, 0.15);
-        border-color: rgba(255, 70, 70, 0.35);
+        background: color-mix(in srgb, var(--color-error) 15%, transparent);
+        border-color: color-mix(in srgb, var(--color-error) 35%, transparent);
+    }
+}
+
+.SsBtnDanger {
+    background: color-mix(in srgb, var(--color-error) 8%, transparent);
+    border-color: color-mix(in srgb, var(--color-error) 20%, transparent);
+    color: var(--color-error);
+
+    &:hover {
+        background: color-mix(in srgb, var(--color-error) 15%, transparent);
+        border-color: color-mix(in srgb, var(--color-error) 35%, transparent);
     }
 }
 
@@ -330,7 +342,7 @@ $accent: #4a9eff;
 }
 
 .SsValue {
-    font-size: 0.8rem;
+    font-size: calc(0.8rem * var(--font-size-secundary, 1));
     font-family: var(--font-secundary), Courier New, monospace;
     opacity: 0.65;
     text-align: right;
@@ -354,9 +366,9 @@ $accent: #4a9eff;
 }
 
 .SsTipDanger {
-    color: #ff8b8b;
+    color: color-mix(in srgb, var(--color-error) 55%, white 45%);
 
     svg {
-        color: #ff6b6b;
+        color: var(--color-error);
     }
 }

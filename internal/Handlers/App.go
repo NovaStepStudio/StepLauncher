@@ -1,47 +1,106 @@
-// Package Handlers expone las APIs del launcher al frontend (bindings Wails).
-// Solo delegacion: config gestionada por internal/Config y motor por internal/Core.
 package Handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	goruntime "runtime"
+	"sort"
 	"strings"
 	"time"
 
 	"StepLauncher/internal/Config"
+	assets "StepLauncher/internal/Core/Assets"
+	news "StepLauncher/internal/Core/News"
 	engine "StepLauncher/internal/Handlers/Engine"
+	RichPresence "StepLauncher/internal/RichPresence"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type App struct {
 	ctx    context.Context
 	engine *engine.Engine
 	config *Config.Manager
+	assets *assets.Manager
+	news   *news.Manager
+	rp     *RichPresence.Manager
 }
 
 func NewApp(eng *engine.Engine, configPath string) *App {
-	return &App{
+	cfgMgr := Config.NewManager(configPath)
+	if eng != nil && eng.Logger() != nil {
+		cfgMgr.SetLogFn(func(f string, a ...interface{}) { eng.Logger().Info(f, a...) })
+	}
+	rootDir := filepath.Dir(configPath)
+	if eng != nil && eng.ConfigManager() != nil {
+		rootDir = eng.ConfigManager().RootDir()
+	}
+	a := &App{
 		engine: eng,
-		config: Config.NewManager(configPath),
+		config: cfgMgr,
+		rp:     RichPresence.NewManager(),
+	}
+	a.rp.SetLogFn(func(f string, args ...interface{}) {
+		a.logf("[RichPresence] "+f, args...)
+	})
+	a.news = news.NewManager(rootDir, func(f string, args ...interface{}) {
+		a.logf(f, args...)
+	})
+	a.initAssets(rootDir)
+	return a
+}
+
+func (a *App) logf(format string, args ...interface{}) {
+	if a.engine == nil || a.engine.Logger() == nil {
+		return
+	}
+	a.engine.Logger().Info(format, args...)
+}
+
+func (a *App) initAssets(rootDir string) {
+	a.assets = assets.NewManager(rootDir)
+	if err := a.assets.Ensure(); err != nil {
+		a.logf("[Assets] WARN: no se pudo crear launcher_assets.json: %v", err)
+		return
+	}
+	if a.config != nil {
+		for _, reg := range []struct{ key, file string }{
+			{Config.ExtraKeyAssets, Config.FileAssets},
+			{Config.ExtraKeyAccounts, Config.FileAccounts},
+			{Config.ExtraKeyHistory, Config.FileHistory},
+			{Config.ExtraKeyProfiles, Config.FileProfiles},
+			{Config.ExtraKeyCrashHistory, Config.FileCrashHistory},
+		} {
+			if err := a.config.RegisterExtraFile(reg.key, reg.file); err != nil {
+				a.logf("[Config] WARN: no se pudo registrar extraData %s: %v", reg.file, err)
+			}
+		}
 	}
 }
 
-// Engine devuelve el motor NovaCore subyacente.
 func (a *App) Engine() *engine.Engine {
 	return a.engine
 }
 
-// SetEventCallback conecta el callback de eventos del motor (descargas,
-// logs, juegos) para poder reenviarlos al frontend.
 func (a *App) SetEventCallback(cb engine.EventHandler) {
-	if a.engine != nil {
-		a.engine.SetEventCallback(cb)
+	if a.news != nil {
+		a.news.SetEventCallback(news.EventHandler(cb))
 	}
+	if a.engine == nil {
+		return
+	}
+	a.engine.SetEventCallback(func(eventType string, data []byte) {
+		a.handleRichPresenceEvent(eventType, data)
+		if cb != nil {
+			cb(eventType, data)
+		}
+	})
 }
 
-// Startup aplica la configuracion guardada al motor al arrancar.
 func (a *App) Startup() {
 	if a.config == nil || a.engine == nil {
 		return
@@ -50,7 +109,159 @@ func (a *App) Startup() {
 	a.engine.SetMaxRAM(cfg.Launcher.MaxRAMGB)
 	a.engine.SetMaxMbps(cfg.Launcher.MaxMbps)
 	a.engine.SetConcurrentDownloads(cfg.Launcher.ConcurrentDownloads)
+	a.engine.SetVerifyIntegrity(cfg.Launcher.VerifyEnabled())
 	a.applyMinecraft(cfg.MinecraftConfig)
+	a.applyRichPresence(cfg)
+}
+
+func (a *App) applyRichPresence(cfg Config.Config) {
+	if a.rp == nil {
+		return
+	}
+	a.rp.SetEnabled(cfg.RichPresence.EnabledValue())
+	if cfg.RichPresence.EnabledValue() {
+		a.rp.SetActivity("StepLauncher", "Navegando por el menú", 0)
+	}
+}
+
+func (a *App) handleRichPresenceEvent(eventType string, data []byte) {
+	if a.rp == nil {
+		return
+	}
+	switch eventType {
+	case "game_starting", "game_started", "game_exited", "game_crashed", "game_stopped":
+	default:
+		return
+	}
+	var evt struct {
+		Type string `json:"type"`
+		Data struct {
+			Version string `json:"version"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(data, &evt); err != nil {
+		return
+	}
+	version := evt.Data.Version
+	switch eventType {
+	case "game_starting":
+		a.rp.SetActivity("StepLauncher "+version, "Lanzando Minecraft", 0)
+	case "game_started":
+		a.rp.SetActivity("StepLauncher "+version, "Jugando Minecraft", time.Now().UnixMilli())
+	default:
+		still := a.runningGameVersion()
+		if still != "" {
+			a.rp.SetActivity("StepLauncher "+still, "Jugando Minecraft", time.Now().UnixMilli())
+		} else {
+			a.rp.SetActivity("StepLauncher", "Navegando por el menú", 0)
+		}
+	}
+}
+
+func (a *App) runningGameVersion() string {
+	if a.engine == nil {
+		return ""
+	}
+	for _, g := range a.engine.ListGames() {
+		if g.Status == engine.GameRunning || g.Status == engine.GameStarting {
+			return g.Version
+		}
+	}
+	return ""
+}
+
+func (a *App) GetRichPresenceConfig() Config.RichPresenceConfig {
+	if a.config == nil {
+		return Config.RichPresenceConfig{}
+	}
+	return a.config.Get().RichPresence
+}
+
+func (a *App) SetRichPresenceEnabled(v bool) {
+	if a.config == nil || a.rp == nil {
+		return
+	}
+	a.config.SetRichPresenceEnabled(v)
+	a.rp.SetEnabled(v)
+}
+
+func (a *App) CheckForUpdates() {
+	if a.engine != nil {
+		a.engine.CheckForUpdates()
+	}
+}
+
+func (a *App) NewsRefreshIndex() {
+	if a.news != nil {
+		a.news.RefreshIndex()
+	}
+}
+
+func (a *App) NewsLoadRelease(version string) {
+	if a.news != nil {
+		a.news.LoadRelease(version)
+	}
+}
+
+func (a *App) NewsLoadChangelog(version string) {
+	if a.news != nil {
+		a.news.LoadChangelog(version)
+	}
+}
+
+func (a *App) NewsLoadMarkdown(url string) {
+	if a.news != nil {
+		a.news.LoadMarkdown(url)
+	}
+}
+
+func (a *App) ApplyUpdate() error {
+	if a.engine == nil {
+		return fmt.Errorf("motor no disponible")
+	}
+	info := a.engine.LastUpdateInfo()
+	if info == nil || !info.HasUpdate {
+		return fmt.Errorf("no hay actualización disponible")
+	}
+
+	if goruntime.GOOS == "windows" {
+		if info.UpdaterURL == "" {
+			if a.ctx != nil {
+				runtime.BrowserOpenURL(a.ctx, info.ReleaseURL)
+			}
+			return nil
+		}
+		path, err := a.engine.DownloadUpdater(info.UpdaterURL)
+		if err != nil {
+			return err
+		}
+		if err := a.engine.LaunchUpdater(path); err != nil {
+			return err
+		}
+		if a.ctx != nil {
+			runtime.Quit(a.ctx)
+		}
+		return nil
+	}
+
+	if a.ctx != nil {
+		runtime.BrowserOpenURL(a.ctx, info.ReleaseURL)
+	}
+	return nil
+}
+
+func (a *App) GetCheckForUpdatesOnStart() bool {
+	if a.config == nil {
+		return false
+	}
+	return a.config.Get().Launcher.CheckForUpdatesOnStart
+}
+
+func (a *App) SetCheckForUpdatesOnStart(v bool) {
+	if a.config == nil {
+		return
+	}
+	a.config.SetCheckForUpdatesOnStart(v)
 }
 
 func (a *App) GetConfig() Config.Config {
@@ -125,6 +336,16 @@ func (a *App) SetConcurrentDownloads(n int) {
 	}
 }
 
+func (a *App) SetVerifyIntegrity(v bool) {
+	if a.config == nil {
+		return
+	}
+	a.config.SetVerifyIntegrity(v)
+	if a.engine != nil {
+		a.engine.SetVerifyIntegrity(v)
+	}
+}
+
 func (a *App) GetUIScale() int {
 	if a.config == nil {
 		return 100
@@ -139,6 +360,27 @@ func (a *App) SetUIScale(percent int) {
 	a.config.SetUIScale(percent)
 }
 
+func (a *App) SetIdle(idle Config.IdleConfig) {
+	if a.config == nil {
+		return
+	}
+	a.config.UpdateIdle(idle)
+}
+
+func (a *App) SetHideLauncher(v bool) {
+	if a.config == nil {
+		return
+	}
+	a.config.SetHideLauncher(v)
+}
+
+func (a *App) RefreshManifests() (int, error) {
+	if a.engine == nil {
+		return 0, nil
+	}
+	return a.engine.RefreshManifests()
+}
+
 func (a *App) UpdatePersonalization(p Config.Personalization) {
 	if a.config == nil {
 		return
@@ -149,7 +391,6 @@ func (a *App) UpdatePersonalization(p Config.Personalization) {
 var imageExts = map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".webp": true, ".gif": true, ".bmp": true}
 var videoExts = map[string]bool{".mp4": true, ".gif": true, ".webm": true}
 
-// LocalAssetsDir devuelve el workdir del launcher.
 func (a *App) LocalAssetsDir() string {
 	if a.engine == nil {
 		return ""
@@ -157,9 +398,6 @@ func (a *App) LocalAssetsDir() string {
 	return a.engine.ConfigManager().RootDir()
 }
 
-// ReadLocalFile devuelve los bytes de un archivo del workdir (ej: fondos).
-// El frontend crea blob URLs para mostrarlos en el webview sin depender de
-// rutas /local/ que el dev server de Vite no sabe servir.
 func (a *App) ReadLocalFile(rel string) ([]byte, error) {
 	if a.engine == nil {
 		return nil, fmt.Errorf("engine no disponible")
@@ -179,9 +417,68 @@ func (a *App) ReadLocalFile(rel string) ([]byte, error) {
 	return os.ReadFile(path)
 }
 
-// ImportBackground copia un archivo al directorio cache/backgrounds del
-// workdir y devuelve la ruta relativa con "/" (ej: "cache/backgrounds/1234.png").
-// El frontend la lee via ReadLocalFile para crear blob URLs.
+type ScreenshotInfo struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+	Size int64  `json:"size"`
+	Time string `json:"time,omitempty"`
+}
+
+var screenshotExts = map[string]bool{".png": true, ".jpg": true, ".jpeg": true}
+
+func (a *App) ListScreenshots() ([]ScreenshotInfo, error) {
+	if a.engine == nil {
+		return nil, fmt.Errorf("engine no disponible")
+	}
+	root := a.engine.ConfigManager().RootDir()
+	searchDirs := []string{
+		filepath.Join(root, "game", "screenshots"),
+		filepath.Join(root, "game"),
+		filepath.Join(root, "screenshots"),
+	}
+	seen := map[string]bool{}
+	var out []ScreenshotInfo
+	for _, dir := range searchDirs {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		var screenshots []os.DirEntry
+		for _, e := range entries {
+			if e.Type().IsRegular() && screenshotExts[strings.ToLower(filepath.Ext(e.Name()))] {
+				screenshots = append(screenshots, e)
+			}
+		}
+		sort.Slice(screenshots, func(i, j int) bool {
+			ai, _ := screenshots[i].Info()
+			aj, _ := screenshots[j].Info()
+			return ai.ModTime().After(aj.ModTime())
+		})
+		for _, e := range screenshots {
+			name := e.Name()
+			if seen[name] {
+				continue
+			}
+			seen[name] = true
+			info, err := e.Info()
+			if err != nil {
+				continue
+			}
+			rel, err := filepath.Rel(root, filepath.Join(dir, e.Name()))
+			if err != nil {
+				continue
+			}
+			out = append(out, ScreenshotInfo{
+				Name: name,
+				Path: filepath.ToSlash(rel),
+				Size: info.Size(),
+				Time: info.ModTime().Format("2006-01-02 15:04:05"),
+			})
+		}
+	}
+	return out, nil
+}
+
 func (a *App) ImportBackground(src, kind string) (string, error) {
 	if a.engine == nil {
 		return "", fmt.Errorf("engine no disponible")
@@ -228,8 +525,6 @@ func (a *App) ImportBackground(src, kind string) (string, error) {
 	return "cache/backgrounds/" + filepath.Base(dest), nil
 }
 
-// ResetConfig restaura toda la configuracion a los valores por defecto
-// y la reaplica al motor.
 func (a *App) ResetConfig() error {
 	if a.config == nil {
 		return nil
@@ -244,6 +539,7 @@ func (a *App) ResetConfig() error {
 	a.engine.SetMaxRAM(cfg.Launcher.MaxRAMGB)
 	a.engine.SetMaxMbps(cfg.Launcher.MaxMbps)
 	a.engine.SetConcurrentDownloads(cfg.Launcher.ConcurrentDownloads)
+	a.engine.SetVerifyIntegrity(cfg.Launcher.VerifyEnabled())
 	a.applyMinecraft(cfg.MinecraftConfig)
 	return nil
 }
@@ -264,6 +560,7 @@ func (a *App) DetectJavaInstallations() []string {
 
 func (a *App) GetCacheInfo() engine.CacheInfo {
 	if a.engine == nil {
+		a.logf("[Cache] GetCacheInfo: engine no disponible (nil)")
 		return engine.CacheInfo{}
 	}
 	info := a.engine.GetCacheInfo()
@@ -278,8 +575,6 @@ func (a *App) GetCacheInfo() engine.CacheInfo {
 	return info
 }
 
-// launcherBackgroundDirs devuelve los directorios de fondos del launcher:
-// el nuevo dentro de cache y el legado por compatibilidad.
 func (a *App) launcherBackgroundDirs() []string {
 	root := a.engine.ConfigManager().RootDir()
 	return []string{
@@ -288,8 +583,6 @@ func (a *App) launcherBackgroundDirs() []string {
 	}
 }
 
-// referencedBackgrounds devuelve los nombres de archivo de fondo que estan
-// siendo usados por la configuracion actual (no deben borrarse al limpiar).
 func (a *App) referencedBackgrounds() map[string]bool {
 	ref := map[string]bool{}
 	if a.config == nil {
@@ -309,8 +602,6 @@ func (a *App) referencedBackgrounds() map[string]bool {
 	return ref
 }
 
-// launcherCacheCount cuenta los archivos de la cache del launcher
-// (fondos no usados por la configuracion actual).
 func (a *App) launcherCacheCount() int {
 	if a.engine == nil {
 		return 0
@@ -331,13 +622,12 @@ func (a *App) launcherCacheCount() int {
 	return count
 }
 
-// ClearAllCache limpia la cache de NovaCore (manifests) y la del launcher
-// (fondos importados que no esten en uso). Devuelve la cantidad total de
-// archivos eliminados.
 func (a *App) ClearAllCache() int {
 	if a.engine == nil {
+		a.logf("[Cache] ClearAllCache: engine no disponible (nil)")
 		return 0
 	}
+	before := a.GetCacheInfo().TotalEntries
 	total := a.engine.ClearAllCache()
 	ref := a.referencedBackgrounds()
 	for _, dir := range a.launcherBackgroundDirs() {
@@ -354,6 +644,8 @@ func (a *App) ClearAllCache() int {
 			}
 		}
 	}
+	after := a.GetCacheInfo().TotalEntries
+	a.logf("[Cache] Limpieza completa: %d archivos eliminados (antes=%d despues=%d)", total, before, after)
 	return total
 }
 
@@ -385,4 +677,10 @@ func (a *App) applyMinecraft(mc Config.MinecraftConfig) {
 		DetailedLogs:         mc.DetailedLogs,
 		ConcurrentDownloads:  cur.ConcurrentDownloads,
 	})
+}
+
+func (a *App) Shutdown() {
+	if a.rp != nil {
+		a.rp.Close()
+	}
 }

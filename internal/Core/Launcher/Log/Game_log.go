@@ -1,4 +1,4 @@
-﻿package gamelog
+package gamelog
 
 import (
 	"fmt"
@@ -266,8 +266,12 @@ func (g *GameLogManager) WritePreLaunchInfo(info PreLaunchInfo) {
 	g.writeLine(fmt.Sprintf("  Java Exec  : %s", info.JavaExec))
 	g.writeLine(fmt.Sprintf("  Min Memory : %d MB", info.MinRAM))
 	g.writeLine(fmt.Sprintf("  Max Memory : %d MB", info.MaxRAM))
-	g.writeLine(fmt.Sprintf("  GC Preset  : %s", orStr(info.GCPreset, "default")))
-	g.writeLine(fmt.Sprintf("  GPU Pref   : %s", orStr(info.GPUPreference, "auto")))
+	if info.GCPreset != "" {
+		g.writeLine(fmt.Sprintf("  GC Preset  : %s", info.GCPreset))
+	}
+	if info.GPUPreference != "" {
+		g.writeLine(fmt.Sprintf("  GPU Pref   : %s", info.GPUPreference))
+	}
 	g.writeLine(fmt.Sprintf("  HW Accel   : %v", boolStr(!info.HWAccelDisabled)))
 	g.writeLine("")
 

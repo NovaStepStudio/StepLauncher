@@ -1,4 +1,4 @@
-﻿package logger
+package logger
 
 import (
 	"fmt"
@@ -205,6 +205,28 @@ func (l *Logger) Error(f string, a ...interface{})  { l.Log(ERROR, f, a...) }
 func (l *Logger) Debug(f string, a ...interface{})  { l.Log(DEBUG, f, a...) }
 func (l *Logger) Fatal(f string, a ...interface{})  { l.Log(FATAL, f, a...) }
 func (l *Logger) System(f string, a ...interface{}) { l.Log(SYSTEM, f, a...) }
+
+func (l *Logger) GetLogPath() string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if l.logDir == "" {
+		return ""
+	}
+	name := l.launcherName
+	if name == "" {
+		name = "StepLauncher"
+	}
+	ver := l.launcherVersion
+	if ver == "" {
+		ver = "0.1.0"
+	}
+	date := l.date
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+	return filepath.Join(l.logDir, fmt.Sprintf("%s-%s-%s.log", name, ver, date))
+}
 
 func (l *Logger) Close() error {
 	if l.file != nil {

@@ -8,7 +8,7 @@ const appVersion = appInfo.version ?? '0.0.0';
 const links = [
     {
         label: 'Repositorio oficial',
-        desc: 'Todo el código fuente en GitHub: issues, releases, contribuciones y el desarrollo del motor NovaCore.',
+        desc: 'Todo el código fuente en GitHub: issues, releases, contribuciones y el desarrollo del motor.',
         url: 'https://github.com/NovaStepStudio/StepLauncher',
         icon: IconBrandGithub,
     },
@@ -59,8 +59,7 @@ function openUrl(url: string) {
             </div>
             <p>
                 Launcher de Minecraft creado por <strong>NovaStepStudio</strong>.
-                Open-source, construido sobre <strong>NovaCore-Engine</strong> e
-                impulsado por <strong>Wails</strong>: fondos, colores y fuentes
+                Open-source e impulsado por <strong>Wails</strong>: fondos, colores y fuentes
                 personalizables, con un rendimiento pensado para cualquier PC.
             </p>
             <button class="SsBtn SsBtnPrimary" @click="openUrl('https://github.com/NovaStepStudio/StepLauncher')">
@@ -134,6 +133,7 @@ function openUrl(url: string) {
 
         strong {
             color: var(--text-primary);
+            text-shadow: var(--text-shadow-primary, none);
             opacity: .9;
         }
     }
@@ -151,7 +151,7 @@ function openUrl(url: string) {
     h3 {
         margin: 0;
         font-family: var(--font-primary), Arial, sans-serif;
-        font-size: 1.25rem;
+        font-size: calc(1.25rem * var(--font-size-primary, 1));
         font-weight: 600;
     }
 }
@@ -176,9 +176,10 @@ function openUrl(url: string) {
     width: 100%;
     padding: .85rem 1rem;
     border-radius: .6rem;
-    border: 1px solid rgba(255, 255, 255, .07);
-    background: rgba(255, 255, 255, .03);
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
     color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
     cursor: pointer;
     text-align: left;
     font-family: inherit;
@@ -235,7 +236,7 @@ function openUrl(url: string) {
     h4 {
         margin: 0 0 .3rem;
         font-family: var(--font-primary), Arial, sans-serif;
-        font-size: .9rem;
+        font-size: calc(.9rem * var(--font-size-primary, 1));
         font-weight: 600;
     }
 

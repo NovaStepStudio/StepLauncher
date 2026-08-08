@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { applyPersonalization, loadLocal } from '../../../stores/ui';
+import { ref, onMounted, onActivated, onUnmounted } from 'vue';
+import { applyPersonalization, loadLocal, personalization } from '../../../Stores/Ui';
+import { ensureCustomFonts, isBuiltinFont, cleanFontName, fontByType, type LauncherAssets } from '../../../Stores/Fonts';
+import { CLOSE_OVERLAYS_EVENT } from '../../../Stores/Idle';
 import ColorField from './ColorField.vue';
+import FontManagerModal from '../../../Modals/FontManagerModal.vue';
 
 const bgType = ref('none');
 const bgImage = ref('');
@@ -14,25 +17,157 @@ const dynamicUrls = ref<string[]>([]);
 
 const fontPrimary = ref('Lexend');
 const fontSecondary = ref('Inter');
+const fontPrimaryColor = ref('#ffffff');
+const fontSecondaryColor = ref('#cfcfd6');
+const fontPrimarySize = ref(1);
+const fontSecondarySize = ref(1);
 
 const colorSidebar = ref('#0005');
 const colorModal = ref('#111');
-const colorButtons = ref('#111');
 const colorBorderModal = ref('#494949');
 const colorBorder = ref('rgba(37, 37, 37, 0.3)');
+const colorProgress = ref('#5ed89a');
+const colorError = ref('#ff6b6b');
+const colorSuccess = ref('#5ed89a');
+const colorTag = ref('#a974ff');
+const colorWarning = ref('#ffb347');
+const colorPlayButton = ref('#111');
+const colorButtonPrimary = ref('#111');
 const recentColors = ref<string[]>([]);
-
-const animations = ref(true);
-const blur = ref(true);
-const shadows = ref(true);
 
 const errorMsg = ref('');
 
-const fontOptions = ['Lexend', 'Inter', 'Fredoka', 'system'];
+const fontOptions = ref(['Lexend', 'Inter', 'Fredoka', 'system']);
+const fontFiles = ref<string[]>([]);
+const assetsRef = ref<LauncherAssets>({ fonts: [] });
+const showFontManager = ref(false);
 const maxDynamicImages = 10;
 
+async function loadFontData() {
+    let assets: any = null;
+    let files: string[] = [];
+    try {
+        assets = await (window as any).go?.main?.App?.GetLauncherAssets?.();
+    } catch { }
+    try {
+        const f = await (window as any).go?.main?.App?.ListFontFiles?.();
+        files = Array.isArray(f) ? f : [];
+    } catch { }
+    assetsRef.value = { fonts: Array.isArray(assets?.fonts) ? assets.fonts : [] };
+    fontFiles.value = files;
+    const custom: string[] = [];
+    const seen = new Set<string>();
+    const push = (n: string) => {
+        const t = (n ?? '').trim();
+        if (t && !isBuiltinFont(t) && !seen.has(t)) {
+            seen.add(t);
+            custom.push(t);
+        }
+    };
+    for (const e of assetsRef.value.fonts) {
+        if (!e) continue;
+        push((e.name ?? '').trim() || (e.path ? cleanFontName(e.path) : ''));
+    }
+    for (const f of fontFiles.value) {
+        const ref = 'launcher/fonts/' + f;
+        if (assetsRef.value.fonts.some((e) => e?.path === ref)) continue;
+        push(cleanFontName(f));
+    }
+    fontOptions.value = ['Lexend', 'Inter', 'Fredoka', ...custom, 'system'];
+}
+
+function slotFontName(a: LauncherAssets, slot: string): string {
+    const e = fontByType(a, slot);
+    if (!e) return '';
+    return (e.name ?? '').trim() || (e.path ? cleanFontName(e.path) : '');
+}
+
+async function syncFontSelects() {
+    const a = assetsRef.value;
+    const pName = slotFontName(a, 'primary');
+    const sName = slotFontName(a, 'secundary');
+    const opts = fontOptions.value;
+    let changed = false;
+    const realign = (cur: string, registered: string, fallback: string) => {
+        if (isBuiltinFont(cur)) return null;
+        if (registered && registered !== cur) return registered;
+        if (!opts.includes(cur)) return registered || fallback;
+        return null;
+    };
+    const pNext = realign(fontPrimary.value, pName, 'Lexend');
+    if (pNext !== null && pNext !== fontPrimary.value) {
+        fontPrimary.value = pNext;
+        changed = true;
+    }
+    const sNext = realign(fontSecondary.value, sName, 'Inter');
+    if (sNext !== null && sNext !== fontSecondary.value) {
+        fontSecondary.value = sNext;
+        changed = true;
+    }
+    await ensureCustomFonts(assetsRef.value);
+    if (changed) {
+        save();
+    } else {
+        localApply();
+    }
+}
+
+async function saveAssets() {
+    try {
+        await (window as any).go?.main?.App?.SaveLauncherAssets?.(assetsRef.value);
+        await ensureCustomFonts(assetsRef.value);
+    } catch { }
+}
+
+async function onFontChange(slot: 'primary' | 'secundary') {
+    const val = slot === 'primary' ? fontPrimary.value : fontSecondary.value;
+    const list = (assetsRef.value.fonts ?? []).map((e) => ({ ...e }));
+    let assetsChanged = false;
+    if (isBuiltinFont(val)) {
+        const cur = fontByType(assetsRef.value, slot);
+        if (cur && (cur.name || cur.path)) {
+            for (const e of list) {
+                if (e.type === slot && e.path) e.type = '';
+            }
+            assetsChanged = true;
+        }
+} else if (val) {
+        let target = list.find((e) => e.name === val && e.path)
+            ?? list.find((e) => e.path && cleanFontName(e.path) === val);
+        let created = false;
+        if (!target) {
+            const file = fontFiles.value.find((f) => cleanFontName(f) === val);
+            if (file) {
+                target = { type: slot, name: val, path: 'launcher/fonts/' + file };
+                list.push(target);
+                created = true;
+            }
+        }
+        const current = list.find((e) => e.type === slot && e.path);
+        if (target?.path && (created || current?.path !== target.path)) {
+            for (const e of list) {
+                if (e.type === slot && e.path) e.type = '';
+            }
+            target.type = slot;
+            assetsChanged = true;
+        }
+    }
+    if (assetsChanged) {
+        assetsRef.value = { fonts: list };
+        await saveAssets();
+    }
+    save();
+}
+
+async function onFontsChanged() {
+    await loadFontData();
+    await syncFontSelects();
+}
+
 function buildPersonalization() {
+    const base = (personalization.value ?? {}) as any;
     return {
+        ...base,
         background: {
             type: bgType.value,
             imagePath: bgImage.value,
@@ -43,22 +178,29 @@ function buildPersonalization() {
         },
         fontPrimary: fontPrimary.value,
         fontSecondary: fontSecondary.value,
+        fontPrimaryColor: fontPrimaryColor.value,
+        fontSecondaryColor: fontSecondaryColor.value,
+        fontPrimarySize: fontPrimarySize.value,
+        fontSecondarySize: fontSecondarySize.value,
         colors: {
             sidebar: colorSidebar.value,
             modal: colorModal.value,
-            buttons: colorButtons.value,
             borderModal: colorBorderModal.value,
             border: colorBorder.value,
+            progress: colorProgress.value,
+            playButton: colorPlayButton.value,
+            buttonPrimary: colorButtonPrimary.value,
+            error: colorError.value,
+            success: colorSuccess.value,
+            tag: colorTag.value,
+            warning: colorWarning.value,
         },
         recentColors: recentColors.value,
-        animations: animations.value,
-        blur: blur.value,
-        shadows: shadows.value,
     };
 }
 
 function trackRecents() {
-    const used = [colorSidebar.value, colorModal.value, colorButtons.value, colorBorderModal.value, colorBorder.value];
+    const used = [colorSidebar.value, colorModal.value, colorBorderModal.value, colorBorder.value, colorProgress.value, colorPlayButton.value, colorButtonPrimary.value, colorError.value, colorSuccess.value, colorTag.value, colorWarning.value];
     const next = [...recentColors.value];
     for (const c of used) {
         if (!c) continue;
@@ -82,12 +224,19 @@ async function save() {
     applyPersonalization(p as any);
     try {
         await (window as any).go?.main?.App?.UpdatePersonalization?.(p);
-    } catch { /* */ }
+    } catch { }
     await refreshPreviews();
 }
 
 function localApply() {
     applyPersonalization(buildPersonalization() as any);
+}
+
+function onPreviewColor(field: 'sidebar' | 'border', v: string) {
+    const p = buildPersonalization();
+    const colors = { ...p.colors };
+    colors[field] = v;
+    applyPersonalization({ ...p, colors } as any);
 }
 
 async function pickBackground(kind: 'image' | 'video'): Promise<string | null> {
@@ -152,7 +301,13 @@ function clearVideo() {
     save();
 }
 
+function onCloseOverlays() {
+    showFontManager.value = false;
+}
+
 onMounted(async () => {
+    window.addEventListener(CLOSE_OVERLAYS_EVENT, onCloseOverlays);
+
     try {
         const cfg = await (window as any).go?.main?.App?.GetConfig?.();
         const p = cfg?.personalization ?? {};
@@ -165,20 +320,49 @@ onMounted(async () => {
         dynamicInterval.value = b.dynamicInterval ?? 10;
         fontPrimary.value = p.fontPrimary ?? 'Lexend';
         fontSecondary.value = p.fontSecondary ?? 'Inter';
+        fontPrimaryColor.value = p.fontPrimaryColor ?? '#ffffff';
+        fontSecondaryColor.value = p.fontSecondaryColor ?? '#cfcfd6';
+        fontPrimarySize.value = p.fontPrimarySize ?? 1;
+        fontSecondarySize.value = p.fontSecondarySize ?? 1;
         const c = p.colors ?? {};
         colorSidebar.value = c.sidebar ?? '#0005';
         colorModal.value = c.modal ?? '#111';
-        colorButtons.value = c.buttons ?? '#111';
         colorBorderModal.value = c.borderModal ?? '#494949';
         colorBorder.value = c.border ?? 'rgba(37, 37, 37, 0.3)';
+        colorProgress.value = c.progress ?? '#5ed89a';
+        colorError.value = c.error ?? '#ff6b6b';
+        colorSuccess.value = c.success ?? '#5ed89a';
+        colorTag.value = c.tag ?? '#a974ff';
+        colorWarning.value = c.warning ?? '#ffb347';
+        colorPlayButton.value = c.playButton ?? '#111';
+        colorButtonPrimary.value = c.buttonPrimary ?? '#111';
         recentColors.value = Array.isArray(p.recentColors) ? p.recentColors : [];
-        animations.value = p.animations ?? true;
-        blur.value = p.blur ?? true;
-        shadows.value = p.shadows ?? true;
         localApply();
-        await refreshPreviews();
-    } catch { /* */ }
+    } catch { }
+    try { await refreshPreviews(); } catch { }
+    try {
+        await loadFontData();
+        await syncFontSelects();
+    } catch { }
 });
+
+let firstActivate = true;
+onActivated(async () => {
+    if (firstActivate) {
+        firstActivate = false;
+        return;
+    }
+    try {
+        await loadFontData();
+        await syncFontSelects();
+    } catch { }
+});
+
+onUnmounted(() => {
+    window.removeEventListener(CLOSE_OVERLAYS_EVENT, onCloseOverlays);
+});
+
+const round1 = (n: number) => Math.round(n * 10) / 10;
 </script>
 
 <template>
@@ -305,8 +489,8 @@ onMounted(async () => {
                 <span class="SsDesc">Títulos y elementos destacados.</span>
             </div>
             <div class="SsCtrl">
-                <select class="SsSel" v-model="fontPrimary" @change="save">
-                    <option v-for="f in fontOptions" :key="f" :value="f">{{ f === 'system' ? 'Del sistema' : f }}</option>
+                <select class="SsSel" v-model="fontPrimary" @change="onFontChange('primary')">
+                    <option v-for="f in fontOptions" :key="f" :value="f">{{ f === 'system' ? 'Del sistema' : cleanFontName(f) }}</option>
                 </select>
             </div>
         </div>
@@ -316,9 +500,61 @@ onMounted(async () => {
                 <span class="SsDesc">Textos y descripciones.</span>
             </div>
             <div class="SsCtrl">
-                <select class="SsSel" v-model="fontSecondary" @change="save">
-                    <option v-for="f in fontOptions" :key="f" :value="f">{{ f === 'system' ? 'Del sistema' : f }}</option>
+                <select class="SsSel" v-model="fontSecondary" @change="onFontChange('secundary')">
+                    <option v-for="f in fontOptions" :key="f" :value="f">{{ f === 'system' ? 'Del sistema' : cleanFontName(f) }}</option>
                 </select>
+            </div>
+        </div>
+        <div class="SsColorRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Color de letra principal</span>
+                <span class="SsDesc">Color de los títulos y elementos destacados.</span>
+            </div>
+            <ColorField v-model="fontPrimaryColor" :recents="recentColors" @update:model-value="save" />
+        </div>
+        <div class="SsRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Tamaño de letra principal</span>
+                <span class="SsDesc">Porcentaje respecto al tamaño original.</span>
+            </div>
+            <div class="SsCtrl">
+                <div class="SsStep">
+                    <button class="SsStepBtn" :disabled="fontPrimarySize <= 0.5" @click="fontPrimarySize = round1(fontPrimarySize - 0.1); save()">−</button>
+                    <span class="SsStepVal">{{ Math.round(fontPrimarySize * 100) }}%</span>
+                    <button class="SsStepBtn" :disabled="fontPrimarySize >= 2" @click="fontPrimarySize = round1(fontPrimarySize + 0.1); save()">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="SsColorRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Color de letra secundaria</span>
+                <span class="SsDesc">Color de los textos y descripciones.</span>
+            </div>
+            <ColorField v-model="fontSecondaryColor" :recents="recentColors" @update:model-value="save" />
+        </div>
+        <div class="SsRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Tamaño de letra secundaria</span>
+                <span class="SsDesc">Porcentaje respecto al tamaño original.</span>
+            </div>
+            <div class="SsCtrl">
+                <div class="SsStep">
+                    <button class="SsStepBtn" :disabled="fontSecondarySize <= 0.5" @click="fontSecondarySize = round1(fontSecondarySize - 0.1); save()">−</button>
+                    <span class="SsStepVal">{{ Math.round(fontSecondarySize * 100) }}%</span>
+                    <button class="SsStepBtn" :disabled="fontSecondarySize >= 2" @click="fontSecondarySize = round1(fontSecondarySize + 0.1); save()">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="SsRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Fuentes personalizadas</span>
+                <span class="SsDesc">Importa tus propias tipografías para personalizar el launcher.</span>
+            </div>
+            <div class="SsCtrl">
+                <button class="SsBtn SsBtnPrimary" @click="showFontManager = true">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+                    Gestionar tipografías
+                </button>
             </div>
         </div>
     </div>
@@ -330,10 +566,10 @@ onMounted(async () => {
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
-                <span class="SsLabel">Sidebar</span>
+                <span class="SsLabel">Barra lateral</span>
                 <span class="SsDesc">Color de la barra lateral izquierda.</span>
             </div>
-            <ColorField v-model="colorSidebar" :recents="recentColors" @update:model-value="save" />
+            <ColorField v-model="colorSidebar" :recents="recentColors" preview @update:model-value="save" @preview="(v: string) => onPreviewColor('sidebar', v)" />
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
@@ -341,13 +577,6 @@ onMounted(async () => {
                 <span class="SsDesc">Fondo de las ventanas modales.</span>
             </div>
             <ColorField v-model="colorModal" :recents="recentColors" @update:model-value="save" />
-        </div>
-        <div class="SsColorRow">
-            <div class="SsInfo">
-                <span class="SsLabel">Botones</span>
-                <span class="SsDesc">Color de los botones y el botón de jugar.</span>
-            </div>
-            <ColorField v-model="colorButtons" :recents="recentColors" @update:model-value="save" />
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
@@ -361,13 +590,146 @@ onMounted(async () => {
                 <span class="SsLabel">Bordes generales</span>
                 <span class="SsDesc">Bordes de tarjetas y elementos en general.</span>
             </div>
-            <ColorField v-model="colorBorder" :recents="recentColors" @update:model-value="save" />
+            <ColorField v-model="colorBorder" :recents="recentColors" preview @update:model-value="save" @preview="(v: string) => onPreviewColor('border', v)" />
+        </div>
+        <div class="SsColorRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Progreso de descarga</span>
+                <span class="SsDesc">Color de la barra y del círculo de progreso al descargar.</span>
+            </div>
+            <ColorField v-model="colorProgress" :recents="recentColors" @update:model-value="save" />
+        </div>
+        <div class="SsColorRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Error</span>
+                <span class="SsDesc">Errores, acciones destructivas y botones de peligro.</span>
+            </div>
+            <ColorField v-model="colorError" :recents="recentColors" @update:model-value="save" />
+        </div>
+        <div class="SsColorRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Éxito</span>
+                <span class="SsDesc">Confirmaciones, listo y estados positivos.</span>
+            </div>
+            <ColorField v-model="colorSuccess" :recents="recentColors" @update:model-value="save" />
+        </div>
+        <div class="SsColorRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Etiquetas</span>
+                <span class="SsDesc">Etiquetas y badges informativos.</span>
+            </div>
+            <ColorField v-model="colorTag" :recents="recentColors" @update:model-value="save" />
+        </div>
+        <div class="SsColorRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Aviso</span>
+                <span class="SsDesc">Advertencias y avisos.</span>
+            </div>
+            <ColorField v-model="colorWarning" :recents="recentColors" @update:model-value="save" />
+        </div>
+        <div class="SsColorRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Botón de jugar</span>
+                <span class="SsDesc">Color del botón principal de jugar en la pantalla de inicio.</span>
+            </div>
+            <ColorField v-model="colorPlayButton" :recents="recentColors" @update:model-value="save" />
+        </div>
+        <div class="SsColorRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Botones principales</span>
+                <span class="SsDesc">Color de los botones primarios de la interfaz.</span>
+            </div>
+            <ColorField v-model="colorButtonPrimary" :recents="recentColors" @update:model-value="save" />
+        </div>
+        <div class="SsRow PsColorHead">
+            <div class="SsInfo">
+                <span class="SsLabel">Vista previa</span>
+                <span class="SsDesc">Así se verán los colores semánticos en la interfaz.</span>
+            </div>
+        </div>
+        <div class="PsExamples">
+            <div class="PsExItem"><span class="PsExCheck">✓</span> Versión seleccionada</div>
+            <span class="PsExBadge">Fabric</span>
+            <span class="PsExText is-good">Descarga completada ✓</span>
+            <span class="PsExText is-warn">⚠ Espacio insuficiente</span>
+            <button type="button" class="PsExBtn" tabindex="-1">Eliminar</button>
+            <span class="PsExText is-bad">✕ Error al conectar</span>
         </div>
     </div>
+
+    <FontManagerModal v-model:visible="showFontManager" :assets="assetsRef" @changed="onFontsChanged" />
 
 </div>
 </template>
 
 <style scoped lang="scss">
 @use '../../../Styles/Settings.scss';
+
+.PsColorHead {
+    padding-top: .8rem;
+}
+
+.PsExamples {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .6rem;
+    padding: 0 2rem 1.4rem;
+
+    .PsExItem {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        padding: .45rem .8rem;
+        border-radius: .5rem;
+        border: 1px solid color-mix(in srgb, var(--background-button-primary) 60%, transparent);
+        background: linear-gradient(90deg, color-mix(in srgb, var(--background-button-primary) 12%, transparent), color-mix(in srgb, var(--background-button-primary) 4%, transparent));
+        color: color-mix(in srgb, var(--background-button-primary) 60%, white 40%);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(.7rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+    }
+
+    .PsExCheck {
+        font-size: .72rem;
+        font-weight: 700;
+    }
+
+    .PsExBadge {
+        padding: .18rem .55rem;
+        border-radius: .35rem;
+        background: color-mix(in srgb, var(--color-tag) 18%, transparent);
+        color: var(--color-tag);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(.62rem * var(--font-size-secundary, 1));
+        font-weight: 700;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+    }
+
+    .PsExText {
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(.72rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+
+        &.is-good { color: var(--color-success); }
+        &.is-warn { color: var(--color-warning); }
+        &.is-bad { color: var(--color-error); }
+    }
+
+    .PsExBtn {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .42rem .85rem;
+        border-radius: .45rem;
+        border: 1px solid color-mix(in srgb, var(--color-error) 20%, transparent);
+        background: color-mix(in srgb, var(--color-error) 8%, transparent);
+        color: var(--color-error);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(.7rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+        cursor: default;
+    }
+}
 </style>

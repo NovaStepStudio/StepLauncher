@@ -1,14 +1,15 @@
 package engine
+
 import (
-	"StepLauncher/internal/Core/Config"
 	"StepLauncher/internal/Core/Platform"
+	engineconfig "StepLauncher/internal/Handlers/Engine/engineconfig"
 )
 
-func (e *Engine) Config() config.Config {
+func (e *Engine) Config() engineconfig.Config {
 	return e.config.Get()
 }
 
-func (e *Engine) ConfigManager() *config.Manager {
+func (e *Engine) ConfigManager() *engineconfig.Manager {
 	return e.config
 }
 
@@ -63,5 +64,11 @@ func (e *Engine) SetConcurrentDownloads(n int) {
 func (e *Engine) SetMaxMbps(mbps float64) {
 	cfg := e.config.Get()
 	cfg.MaxMbps = mbps
+	e.config.UpdateConfig(cfg)
+}
+
+func (e *Engine) SetVerifyIntegrity(v bool) {
+	cfg := e.config.Get()
+	cfg.VerifyIntegrity = v
 	e.config.UpdateConfig(cfg)
 }

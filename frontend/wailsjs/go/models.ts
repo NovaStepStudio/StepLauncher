@@ -22,12 +22,69 @@ export namespace Config {
 	        this.dynamicInterval = source["dynamicInterval"];
 	    }
 	}
+	export class ExtraData {
+	    assets: string;
+	    accounts: string;
+	    history: string;
+	    profiles: string;
+	    crashHistory: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ExtraData(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.assets = source["assets"];
+	        this.accounts = source["accounts"];
+	        this.history = source["history"];
+	        this.profiles = source["profiles"];
+	        this.crashHistory = source["crashHistory"];
+	    }
+	}
+	export class RichPresenceConfig {
+	    enabled?: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new RichPresenceConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.enabled = source["enabled"];
+	    }
+	}
+	export class IdleConfig {
+	    autoCloseModals: boolean;
+	    idleMinutes: number;
+	    configCheckEnabled: boolean;
+	    configCheckMinutes: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new IdleConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.autoCloseModals = source["autoCloseModals"];
+	        this.idleMinutes = source["idleMinutes"];
+	        this.configCheckEnabled = source["configCheckEnabled"];
+	        this.configCheckMinutes = source["configCheckMinutes"];
+	    }
+	}
 	export class ThemeColors {
 	    sidebar: string;
 	    modal: string;
 	    buttons: string;
 	    borderModal: string;
 	    border: string;
+	    progress: string;
+	    playButton: string;
+	    buttonPrimary: string;
+	    error: string;
+	    success: string;
+	    tag: string;
+	    warning: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new ThemeColors(source);
@@ -40,6 +97,13 @@ export namespace Config {
 	        this.buttons = source["buttons"];
 	        this.borderModal = source["borderModal"];
 	        this.border = source["border"];
+	        this.progress = source["progress"];
+	        this.playButton = source["playButton"];
+	        this.buttonPrimary = source["buttonPrimary"];
+	        this.error = source["error"];
+	        this.success = source["success"];
+	        this.tag = source["tag"];
+	        this.warning = source["warning"];
 	    }
 	}
 	export class Personalization {
@@ -47,11 +111,17 @@ export namespace Config {
 	    background: BackgroundConfig;
 	    fontPrimary: string;
 	    fontSecondary: string;
+	    fontPrimaryColor: string;
+	    fontSecondaryColor: string;
+	    fontPrimarySize: number;
+	    fontSecondarySize: number;
 	    colors: ThemeColors;
 	    recentColors: string[];
 	    animations: boolean;
 	    blur: boolean;
 	    shadows: boolean;
+	    textShadow: boolean;
+	    textShadowIntensity: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Personalization(source);
@@ -63,11 +133,17 @@ export namespace Config {
 	        this.background = this.convertValues(source["background"], BackgroundConfig);
 	        this.fontPrimary = source["fontPrimary"];
 	        this.fontSecondary = source["fontSecondary"];
+	        this.fontPrimaryColor = source["fontPrimaryColor"];
+	        this.fontSecondaryColor = source["fontSecondaryColor"];
+	        this.fontPrimarySize = source["fontPrimarySize"];
+	        this.fontSecondarySize = source["fontSecondarySize"];
 	        this.colors = this.convertValues(source["colors"], ThemeColors);
 	        this.recentColors = source["recentColors"];
 	        this.animations = source["animations"];
 	        this.blur = source["blur"];
 	        this.shadows = source["shadows"];
+	        this.textShadow = source["textShadow"];
+	        this.textShadowIntensity = source["textShadowIntensity"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -92,6 +168,9 @@ export namespace Config {
 	    maxRamGB: number;
 	    maxMbps: number;
 	    concurrentDownloads: number;
+	    hideLauncherOnLaunch: boolean;
+	    verifyIntegrity?: boolean;
+	    checkForUpdatesOnStart: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new LauncherConfig(source);
@@ -102,6 +181,9 @@ export namespace Config {
 	        this.maxRamGB = source["maxRamGB"];
 	        this.maxMbps = source["maxMbps"];
 	        this.concurrentDownloads = source["concurrentDownloads"];
+	        this.hideLauncherOnLaunch = source["hideLauncherOnLaunch"];
+	        this.verifyIntegrity = source["verifyIntegrity"];
+	        this.checkForUpdatesOnStart = source["checkForUpdatesOnStart"];
 	    }
 	}
 	export class MinecraftConfig {
@@ -158,6 +240,9 @@ export namespace Config {
 	    minecraftConfig: MinecraftConfig;
 	    launcher: LauncherConfig;
 	    personalization: Personalization;
+	    idle: IdleConfig;
+	    richPresence: RichPresenceConfig;
+	    extraData: ExtraData;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -168,6 +253,9 @@ export namespace Config {
 	        this.minecraftConfig = this.convertValues(source["minecraftConfig"], MinecraftConfig);
 	        this.launcher = this.convertValues(source["launcher"], LauncherConfig);
 	        this.personalization = this.convertValues(source["personalization"], Personalization);
+	        this.idle = this.convertValues(source["idle"], IdleConfig);
+	        this.richPresence = this.convertValues(source["richPresence"], RichPresenceConfig);
+	        this.extraData = this.convertValues(source["extraData"], ExtraData);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -191,6 +279,178 @@ export namespace Config {
 	
 	
 	
+	
+	
+	
+
+}
+
+export namespace Handlers {
+	
+	export class ScreenshotInfo {
+	    name: string;
+	    path: string;
+	    size: number;
+	    time?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ScreenshotInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.path = source["path"];
+	        this.size = source["size"];
+	        this.time = source["time"];
+	    }
+	}
+
+}
+
+export namespace accounts {
+	
+	export class AccountCredentials {
+	    username: string;
+	    uuid: string;
+	    accessToken: string;
+	    userType?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AccountCredentials(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.username = source["username"];
+	        this.uuid = source["uuid"];
+	        this.accessToken = source["accessToken"];
+	        this.userType = source["userType"];
+	    }
+	}
+	export class AccountInfo {
+	    id: string;
+	    name: string;
+	    type: string;
+	    username: string;
+	    uuid: string;
+	    authServerUrl?: string;
+	    serverName?: string;
+	    hasToken: boolean;
+	    sessionValid: boolean;
+	    createdAt: string;
+	    lastUsed?: string;
+	    customProperties?: Record<string, string>;
+	
+	    static createFrom(source: any = {}) {
+	        return new AccountInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.type = source["type"];
+	        this.username = source["username"];
+	        this.uuid = source["uuid"];
+	        this.authServerUrl = source["authServerUrl"];
+	        this.serverName = source["serverName"];
+	        this.hasToken = source["hasToken"];
+	        this.sessionValid = source["sessionValid"];
+	        this.createdAt = source["createdAt"];
+	        this.lastUsed = source["lastUsed"];
+	        this.customProperties = source["customProperties"];
+	    }
+	}
+	export class AuthlibLoginReq {
+	    authServerUrl: string;
+	    username: string;
+	    password: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AuthlibLoginReq(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.authServerUrl = source["authServerUrl"];
+	        this.username = source["username"];
+	        this.password = source["password"];
+	    }
+	}
+	export class CreateAccountReq {
+	    type: string;
+	    name?: string;
+	    username: string;
+	    accessToken?: string;
+	    authServerUrl?: string;
+	    uuid?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateAccountReq(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.type = source["type"];
+	        this.name = source["name"];
+	        this.username = source["username"];
+	        this.accessToken = source["accessToken"];
+	        this.authServerUrl = source["authServerUrl"];
+	        this.uuid = source["uuid"];
+	    }
+	}
+
+}
+
+export namespace assets {
+	
+	export class FontSlot {
+	    type: string;
+	    name: string;
+	    path: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new FontSlot(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.type = source["type"];
+	        this.name = source["name"];
+	        this.path = source["path"];
+	    }
+	}
+	export class Assets {
+	    fonts: FontSlot[];
+	
+	    static createFrom(source: any = {}) {
+	        return new Assets(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.fonts = this.convertValues(source["fonts"], FontSlot);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 
 }
 
@@ -212,97 +472,6 @@ export namespace cache {
 	        this.totalEntries = source["totalEntries"];
 	        this.categories = source["categories"];
 	        this.ttls = source["ttls"];
-	    }
-	}
-
-}
-
-export namespace config {
-	
-	export class Config {
-	    maxCores?: number;
-	    maxRam?: number;
-	    cacheDir?: string;
-	    logDir?: string;
-	    workDir?: string;
-	    launcherName?: string;
-	    launcherVersion?: string;
-	    instancesDir?: string;
-	    sharedDir?: string;
-	    maxMbps?: number;
-	    minMbps?: number;
-	    cacheTTLManifest?: string;
-	    cacheTTLAssets?: string;
-	    cacheTTLVersions?: string;
-	    cacheTTLModloader?: string;
-	    cacheTTLJava?: string;
-	    cacheTTLDefault?: string;
-	    hardwareEnabled: boolean;
-	    hardwareAcceleration: boolean;
-	    gpuType: string;
-	    gpuPreset: string;
-	    javaMode: string;
-	    javaCustomPath: string;
-	    proxyEnabled: boolean;
-	    proxyHost: string;
-	    proxyPort: number;
-	    proxyUser: string;
-	    proxyPass: string;
-	    authVerify: boolean;
-	    windowWidth: number;
-	    windowHeight: number;
-	    fullscreen: boolean;
-	    javaArgs: string;
-	    gameArgs: string;
-	    offlineMode: boolean;
-	    compatMode: boolean;
-	    detailedLogs: boolean;
-	    concurrentDownloads: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new Config(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.maxCores = source["maxCores"];
-	        this.maxRam = source["maxRam"];
-	        this.cacheDir = source["cacheDir"];
-	        this.logDir = source["logDir"];
-	        this.workDir = source["workDir"];
-	        this.launcherName = source["launcherName"];
-	        this.launcherVersion = source["launcherVersion"];
-	        this.instancesDir = source["instancesDir"];
-	        this.sharedDir = source["sharedDir"];
-	        this.maxMbps = source["maxMbps"];
-	        this.minMbps = source["minMbps"];
-	        this.cacheTTLManifest = source["cacheTTLManifest"];
-	        this.cacheTTLAssets = source["cacheTTLAssets"];
-	        this.cacheTTLVersions = source["cacheTTLVersions"];
-	        this.cacheTTLModloader = source["cacheTTLModloader"];
-	        this.cacheTTLJava = source["cacheTTLJava"];
-	        this.cacheTTLDefault = source["cacheTTLDefault"];
-	        this.hardwareEnabled = source["hardwareEnabled"];
-	        this.hardwareAcceleration = source["hardwareAcceleration"];
-	        this.gpuType = source["gpuType"];
-	        this.gpuPreset = source["gpuPreset"];
-	        this.javaMode = source["javaMode"];
-	        this.javaCustomPath = source["javaCustomPath"];
-	        this.proxyEnabled = source["proxyEnabled"];
-	        this.proxyHost = source["proxyHost"];
-	        this.proxyPort = source["proxyPort"];
-	        this.proxyUser = source["proxyUser"];
-	        this.proxyPass = source["proxyPass"];
-	        this.authVerify = source["authVerify"];
-	        this.windowWidth = source["windowWidth"];
-	        this.windowHeight = source["windowHeight"];
-	        this.fullscreen = source["fullscreen"];
-	        this.javaArgs = source["javaArgs"];
-	        this.gameArgs = source["gameArgs"];
-	        this.offlineMode = source["offlineMode"];
-	        this.compatMode = source["compatMode"];
-	        this.detailedLogs = source["detailedLogs"];
-	        this.concurrentDownloads = source["concurrentDownloads"];
 	    }
 	}
 
@@ -332,6 +501,48 @@ export namespace downloader {
 	        this.java = source["java"];
 	    }
 	}
+	export class FileProgress {
+	    name: string;
+	    section: string;
+	    size: number;
+	    downloaded: number;
+	    percent: number;
+	    state: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new FileProgress(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.section = source["section"];
+	        this.size = source["size"];
+	        this.downloaded = source["downloaded"];
+	        this.percent = source["percent"];
+	        this.state = source["state"];
+	    }
+	}
+	export class SectionProgress {
+	    name: string;
+	    totalFiles: number;
+	    doneFiles: number;
+	    mbTotal: number;
+	    mbDownloaded: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SectionProgress(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.totalFiles = source["totalFiles"];
+	        this.doneFiles = source["doneFiles"];
+	        this.mbTotal = source["mbTotal"];
+	        this.mbDownloaded = source["mbDownloaded"];
+	    }
+	}
 	export class DownloadProgress {
 	    mbDownloaded: number;
 	    mbTotal: number;
@@ -348,6 +559,11 @@ export namespace downloader {
 	    currentDest: string;
 	    currentProgress: number;
 	    log: string[];
+	    sections: SectionProgress[];
+	    activeFiles: FileProgress[];
+	    queuedCount: number;
+	    queuedPreview: string[];
+	    speedMbps: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new DownloadProgress(source);
@@ -370,8 +586,32 @@ export namespace downloader {
 	        this.currentDest = source["currentDest"];
 	        this.currentProgress = source["currentProgress"];
 	        this.log = source["log"];
+	        this.sections = this.convertValues(source["sections"], SectionProgress);
+	        this.activeFiles = this.convertValues(source["activeFiles"], FileProgress);
+	        this.queuedCount = source["queuedCount"];
+	        this.queuedPreview = source["queuedPreview"];
+	        this.speedMbps = source["speedMbps"];
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
+	
 	export class LatestInfo {
 	    release: string;
 	    snapshot: string;
@@ -389,6 +629,8 @@ export namespace downloader {
 	export class ManifestVersion {
 	    id: string;
 	    url: string;
+	    type: string;
+	    releaseTime: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new ManifestVersion(source);
@@ -398,6 +640,8 @@ export namespace downloader {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.url = source["url"];
+	        this.type = source["type"];
+	        this.releaseTime = source["releaseTime"];
 	    }
 	}
 	export class Manifest {
@@ -432,6 +676,7 @@ export namespace downloader {
 		    return a;
 		}
 	}
+	
 
 }
 
@@ -515,6 +760,20 @@ export namespace engine {
 	        this.crashCategory = source["crashCategory"];
 	    }
 	}
+	export class InstalledVersion {
+	    id: string;
+	    type: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new InstalledVersion(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.type = source["type"];
+	    }
+	}
 	export class ModLoaderInstallResult {
 	    sessionId: string;
 	    status: string;
@@ -568,8 +827,129 @@ export namespace engine {
 
 }
 
+export namespace engineconfig {
+	
+	export class Config {
+	    maxCores?: number;
+	    maxRam?: number;
+	    cacheDir?: string;
+	    logDir?: string;
+	    workDir?: string;
+	    launcherName?: string;
+	    launcherVersion?: string;
+	    instancesDir?: string;
+	    sharedDir?: string;
+	    maxMbps?: number;
+	    minMbps?: number;
+	    cacheTTLManifest?: string;
+	    cacheTTLAssets?: string;
+	    cacheTTLVersions?: string;
+	    cacheTTLModloader?: string;
+	    cacheTTLJava?: string;
+	    cacheTTLDefault?: string;
+	    hardwareEnabled: boolean;
+	    hardwareAcceleration: boolean;
+	    gpuType: string;
+	    gpuPreset: string;
+	    javaMode: string;
+	    javaCustomPath: string;
+	    proxyEnabled: boolean;
+	    proxyHost: string;
+	    proxyPort: number;
+	    proxyUser: string;
+	    proxyPass: string;
+	    authVerify: boolean;
+	    windowWidth: number;
+	    windowHeight: number;
+	    fullscreen: boolean;
+	    javaArgs: string;
+	    gameArgs: string;
+	    offlineMode: boolean;
+	    compatMode: boolean;
+	    detailedLogs: boolean;
+	    concurrentDownloads: number;
+	    verifyIntegrity: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Config(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.maxCores = source["maxCores"];
+	        this.maxRam = source["maxRam"];
+	        this.cacheDir = source["cacheDir"];
+	        this.logDir = source["logDir"];
+	        this.workDir = source["workDir"];
+	        this.launcherName = source["launcherName"];
+	        this.launcherVersion = source["launcherVersion"];
+	        this.instancesDir = source["instancesDir"];
+	        this.sharedDir = source["sharedDir"];
+	        this.maxMbps = source["maxMbps"];
+	        this.minMbps = source["minMbps"];
+	        this.cacheTTLManifest = source["cacheTTLManifest"];
+	        this.cacheTTLAssets = source["cacheTTLAssets"];
+	        this.cacheTTLVersions = source["cacheTTLVersions"];
+	        this.cacheTTLModloader = source["cacheTTLModloader"];
+	        this.cacheTTLJava = source["cacheTTLJava"];
+	        this.cacheTTLDefault = source["cacheTTLDefault"];
+	        this.hardwareEnabled = source["hardwareEnabled"];
+	        this.hardwareAcceleration = source["hardwareAcceleration"];
+	        this.gpuType = source["gpuType"];
+	        this.gpuPreset = source["gpuPreset"];
+	        this.javaMode = source["javaMode"];
+	        this.javaCustomPath = source["javaCustomPath"];
+	        this.proxyEnabled = source["proxyEnabled"];
+	        this.proxyHost = source["proxyHost"];
+	        this.proxyPort = source["proxyPort"];
+	        this.proxyUser = source["proxyUser"];
+	        this.proxyPass = source["proxyPass"];
+	        this.authVerify = source["authVerify"];
+	        this.windowWidth = source["windowWidth"];
+	        this.windowHeight = source["windowHeight"];
+	        this.fullscreen = source["fullscreen"];
+	        this.javaArgs = source["javaArgs"];
+	        this.gameArgs = source["gameArgs"];
+	        this.offlineMode = source["offlineMode"];
+	        this.compatMode = source["compatMode"];
+	        this.detailedLogs = source["detailedLogs"];
+	        this.concurrentDownloads = source["concurrentDownloads"];
+	        this.verifyIntegrity = source["verifyIntegrity"];
+	    }
+	}
+
+}
+
 export namespace history {
 	
+	export class CrashEntry {
+	    id: string;
+	    timestamp: number;
+	    version: string;
+	    exit_code: number;
+	    crash_reason?: string;
+	    crash_category?: string;
+	    launcherLogPath?: string;
+	    minecraftLogPath?: string;
+	    jvmLogPath?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CrashEntry(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.timestamp = source["timestamp"];
+	        this.version = source["version"];
+	        this.exit_code = source["exit_code"];
+	        this.crash_reason = source["crash_reason"];
+	        this.crash_category = source["crash_category"];
+	        this.launcherLogPath = source["launcherLogPath"];
+	        this.minecraftLogPath = source["minecraftLogPath"];
+	        this.jvmLogPath = source["jvmLogPath"];
+	    }
+	}
 	export class Entry {
 	    id: string;
 	    timestamp: number;
@@ -1454,6 +1834,7 @@ export namespace profile {
 	export class Profile {
 	    name: string;
 	    version?: string;
+	    lastVersionId?: string;
 	    gameDir?: string;
 	    javaExec?: string;
 	    javaArgs?: string;
@@ -1475,6 +1856,7 @@ export namespace profile {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
 	        this.version = source["version"];
+	        this.lastVersionId = source["lastVersionId"];
 	        this.gameDir = source["gameDir"];
 	        this.javaExec = source["javaExec"];
 	        this.javaArgs = source["javaArgs"];

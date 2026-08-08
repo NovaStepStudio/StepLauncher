@@ -1,4 +1,5 @@
 package engine
+
 import (
 	"fmt"
 	"time"
@@ -30,8 +31,10 @@ type ModLoaderInstallResult struct {
 func (e *Engine) InstallModLoader(loader, loaderVersion, mcVersion, instancePath string) (*ModLoaderInstallResult, error) {
 	sessionID := fmt.Sprintf("ml-%d", time.Now().UnixMilli())
 
+	targetDir := e.config.Get().WorkDir
+
 	go func() {
-		_, err := e.modloader.Install(sessionID, loader, loaderVersion, mcVersion, instancePath)
+		_, err := e.modloader.Install(sessionID, loader, loaderVersion, mcVersion, targetDir)
 		if err != nil {
 			e.log.Error("Modloader install failed: %v", err)
 		}

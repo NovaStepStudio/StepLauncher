@@ -9,6 +9,28 @@ const (
 	OSResRAM = 512
 )
 
+const (
+	mcExitCrashDefault         = -1
+	mcExitCrashWithoutReport   = -2
+	mcExitCrashEarlyNoModules  = -3
+	mcExitCrashEarlyArgLibLoad = -4
+	mcExitCrashEarlyArgParse   = -5
+	mcExitCrashShutdown        = -6
+	mcExitVersionParsingFail   = -7
+	mcExitClientWatchdog       = -8
+)
+
+const (
+	mcExitCrashDefaultU         = int(^uint32(0))
+	mcExitCrashWithoutReportU   = int(^uint32(1))
+	mcExitCrashEarlyNoModulesU  = int(^uint32(2))
+	mcExitCrashEarlyArgLibLoadU = int(^uint32(3))
+	mcExitCrashEarlyArgParseU   = int(^uint32(4))
+	mcExitCrashShutdownU        = int(^uint32(5))
+	mcExitVersionParsingFailU   = int(^uint32(6))
+	mcExitClientWatchdogU       = int(^uint32(7))
+)
+
 func RecommendedMaxRAM(freeRAM int64) int {
 	rec := int(float64(freeRAM) * RAMFrac)
 	rec = (rec / 256) * 256
@@ -58,15 +80,6 @@ func GCFlags(preset string) []string {
 	}
 }
 
-func HWAccelDisableFlags() []string {
-	return []string{
-		"-Dsun.java2d.d3d=false",
-		"-Dsun.java2d.opengl=false",
-		"-Dsun.java2d.noddraw=true",
-		"-Dsun.java2d.ddoffscreen=false",
-	}
-}
-
 func GPUEnvVars(preference string) map[string]string {
 	switch preference {
 	case "dgpu":
@@ -86,20 +99,34 @@ func GPUEnvVars(preference string) map[string]string {
 }
 
 func CrashReasonLabel(exitCode int) string {
-	switch exitCode {
-	case 0:
+	switch {
+	case exitCode == 0:
 		return "normal_exit"
-	case 1:
+	case exitCode == 1:
 		return "generic_error"
-	case -1:
-		return "killed_or_oom"
-	case 134:
+	case exitCode == mcExitCrashDefault || exitCode == mcExitCrashDefaultU:
+		return "crash"
+	case exitCode == mcExitCrashWithoutReport || exitCode == mcExitCrashWithoutReportU:
+		return "crash_without_report"
+	case exitCode == mcExitCrashEarlyNoModules || exitCode == mcExitCrashEarlyNoModulesU:
+		return "early_crash_no_modules"
+	case exitCode == mcExitCrashEarlyArgLibLoad || exitCode == mcExitCrashEarlyArgLibLoadU:
+		return "early_crash_library_load"
+	case exitCode == mcExitCrashEarlyArgParse || exitCode == mcExitCrashEarlyArgParseU:
+		return "early_crash_argument_parse"
+	case exitCode == mcExitCrashShutdown || exitCode == mcExitCrashShutdownU:
+		return "crash_on_shutdown"
+	case exitCode == mcExitVersionParsingFail || exitCode == mcExitVersionParsingFailU:
+		return "version_parsing_failed"
+	case exitCode == mcExitClientWatchdog || exitCode == mcExitClientWatchdogU:
+		return "client_watchdog"
+	case exitCode == 134:
 		return "sigsegv_or_abort"
-	case 139:
+	case exitCode == 139:
 		return "sigsegv"
-	case 143:
+	case exitCode == 143:
 		return "sigterm"
-	case 130:
+	case exitCode == 130:
 		return "sigint"
 	default:
 		if exitCode > 128 {
@@ -113,7 +140,25 @@ func CrashCategory(exitCode int, reason string) string {
 	if exitCode == 0 {
 		return "clean"
 	}
-	if exitCode == -1 || reason == "killed_or_oom" {
+	switch {
+	case exitCode == mcExitCrashDefault || exitCode == mcExitCrashDefaultU:
+		return "game_crash"
+	case exitCode == mcExitCrashWithoutReport || exitCode == mcExitCrashWithoutReportU:
+		return "game_crash"
+	case exitCode == mcExitCrashEarlyNoModules || exitCode == mcExitCrashEarlyNoModulesU:
+		return "early_crash"
+	case exitCode == mcExitCrashEarlyArgLibLoad || exitCode == mcExitCrashEarlyArgLibLoadU:
+		return "early_crash"
+	case exitCode == mcExitCrashEarlyArgParse || exitCode == mcExitCrashEarlyArgParseU:
+		return "early_crash"
+	case exitCode == mcExitCrashShutdown || exitCode == mcExitCrashShutdownU:
+		return "shutdown_crash"
+	case exitCode == mcExitVersionParsingFail || exitCode == mcExitVersionParsingFailU:
+		return "version_error"
+	case exitCode == mcExitClientWatchdog || exitCode == mcExitClientWatchdogU:
+		return "watchdog"
+	}
+	if reason == "killed_or_oom" {
 		return "oom_or_killed"
 	}
 	switch {

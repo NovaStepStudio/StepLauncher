@@ -3,22 +3,31 @@
 import {instance} from '../models';
 import {main} from '../models';
 import {modloader} from '../models';
+import {accounts} from '../models';
 import {profile} from '../models';
-import {config} from '../models';
+import {engineconfig} from '../models';
 import {engine} from '../models';
 import {downloader} from '../models';
 import {cache} from '../models';
 import {Config} from '../models';
 import {history} from '../models';
+import {assets} from '../models';
 import {launcher} from '../models';
+import {Handlers} from '../models';
 
 export function AddInstanceVersion(arg1:string,arg2:instance.AddVersionReq):Promise<main.AddInstanceVersionResult>;
 
+export function ApplyUpdate():Promise<void>;
+
 export function BuildModLoaderExecution(arg1:string,arg2:string,arg3:string):Promise<modloader.ExecutionPlan>;
+
+export function CancelAuthlibLogin():Promise<void>;
 
 export function CancelDownload(arg1:string):Promise<void>;
 
 export function CancelInstanceDownload(arg1:string):Promise<void>;
+
+export function CheckForUpdates():Promise<void>;
 
 export function ClearAllCache():Promise<number>;
 
@@ -26,13 +35,19 @@ export function ClearHistory():Promise<number>;
 
 export function CloneInstance(arg1:string,arg2:string,arg3:boolean):Promise<instance.InstanceMetadata>;
 
+export function CreateAccount(arg1:accounts.CreateAccountReq):Promise<accounts.AccountInfo>;
+
 export function CreateInstance(arg1:instance.CreateInstanceReq):Promise<main.CreateInstanceResult>;
 
 export function CreateProfile(arg1:profile.Profile):Promise<void>;
 
+export function DeleteAccount(arg1:string):Promise<void>;
+
 export function DeleteCacheCategory(arg1:string):Promise<number>;
 
 export function DeleteCacheEntry(arg1:string,arg2:string):Promise<void>;
+
+export function DeleteFontFile(arg1:string):Promise<void>;
 
 export function DeleteHistoryEntry(arg1:string):Promise<boolean>;
 
@@ -42,15 +57,25 @@ export function DeleteProfile(arg1:string):Promise<void>;
 
 export function DetectJavaInstallations():Promise<Array<string>>;
 
-export function EngineConfig():Promise<config.Config>;
+export function EngineConfig():Promise<engineconfig.Config>;
 
 export function EngineInfo():Promise<engine.EngineInfo>;
 
 export function FetchVersionManifest():Promise<downloader.Manifest>;
 
+export function GetAccount(arg1:string):Promise<accounts.AccountInfo>;
+
+export function GetAccountAssets(arg1:string):Promise<void>;
+
+export function GetAccountsAutoRefresh():Promise<boolean>;
+
 export function GetCacheInfo():Promise<cache.Info>;
 
+export function GetCheckForUpdatesOnStart():Promise<boolean>;
+
 export function GetConfig():Promise<Config.Config>;
+
+export function GetCrashHistory():Promise<Array<history.CrashEntry>>;
 
 export function GetDownload(arg1:string):Promise<engine.DownloadInfo>;
 
@@ -70,6 +95,8 @@ export function GetInstance(arg1:string):Promise<main.GetInstanceResult>;
 
 export function GetInstanceDownloadStatus(arg1:string):Promise<main.InstanceDownloadStatusResult>;
 
+export function GetLauncherAssets():Promise<assets.Assets>;
+
 export function GetMinecraftConfig():Promise<Config.MinecraftConfig>;
 
 export function GetModLoaderVersions(arg1:string,arg2:string):Promise<Array<modloader.LoaderVersion>>;
@@ -80,7 +107,13 @@ export function GetProfile(arg1:string):Promise<profile.Profile>;
 
 export function GetRecentHistory(arg1:number):Promise<Array<history.Entry>>;
 
+export function GetRichPresenceConfig():Promise<Config.RichPresenceConfig>;
+
+export function GetSelectedAccount():Promise<string>;
+
 export function GetSelectedProfile():Promise<string>;
+
+export function GetSelectedVersion():Promise<string>;
 
 export function GetUIScale():Promise<number>;
 
@@ -88,13 +121,21 @@ export function GetVersions(arg1:string):Promise<Array<engine.VersionInfo>>;
 
 export function ImportBackground(arg1:string,arg2:string):Promise<string>;
 
+export function ImportFont(arg1:string):Promise<string>;
+
 export function InstallModLoader(arg1:string,arg2:string,arg3:string,arg4:string):Promise<engine.ModLoaderInstallResult>;
 
 export function LaunchInstance(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string):Promise<instance.InstanceLaunchResult>;
 
 export function LaunchMinecraft(arg1:launcher.LaunchConfig):Promise<engine.GameResp>;
 
+export function ListAccounts():Promise<Array<accounts.AccountInfo>>;
+
+export function ListDownloadedVersions():Promise<Array<engine.InstalledVersion>>;
+
 export function ListDownloads():Promise<Array<engine.DownloadInfo>>;
+
+export function ListFontFiles():Promise<Array<string>>;
 
 export function ListGames():Promise<Array<engine.GameResp>>;
 
@@ -106,13 +147,27 @@ export function ListModLoaders():Promise<Array<string>>;
 
 export function ListProfiles():Promise<Record<string, profile.Profile>>;
 
+export function ListScreenshots():Promise<Array<Handlers.ScreenshotInfo>>;
+
 export function LocalAssetsDir():Promise<string>;
 
+export function LoginAuthlib(arg1:accounts.AuthlibLoginReq):Promise<void>;
+
 export function MaxRAMGB():Promise<number>;
+
+export function NewsLoadChangelog(arg1:string):Promise<void>;
+
+export function NewsLoadMarkdown(arg1:string):Promise<void>;
+
+export function NewsLoadRelease(arg1:string):Promise<void>;
+
+export function NewsRefreshIndex():Promise<void>;
 
 export function PauseDownload(arg1:string):Promise<void>;
 
 export function PickBackgroundFile(arg1:string):Promise<string>;
+
+export function PickFontFile():Promise<string>;
 
 export function ReadLocalFile(arg1:string):Promise<Array<number>>;
 
@@ -120,7 +175,13 @@ export function RecommendedRAM():Promise<main.RecommendedRAMResult>;
 
 export function RecommendedRAMGB():Promise<number>;
 
+export function RefreshAccount(arg1:string):Promise<void>;
+
+export function RefreshAllAccounts():Promise<number>;
+
 export function RefreshCache(arg1:string,arg2:string):Promise<void>;
+
+export function RefreshManifests():Promise<number>;
 
 export function RemoveInstanceVersion(arg1:string,arg2:string):Promise<void>;
 
@@ -128,13 +189,25 @@ export function RemoveModLoaderState(arg1:string):Promise<void>;
 
 export function ResetConfig():Promise<void>;
 
+export function ResolveAccountCredentials(arg1:string):Promise<accounts.AccountCredentials>;
+
 export function ResolveModLoaderVersion(arg1:string,arg2:string,arg3:string):Promise<string>;
 
 export function ResumeDownload(arg1:string):Promise<void>;
 
+export function SaveLauncherAssets(arg1:assets.Assets):Promise<void>;
+
+export function SetAccountsAutoRefresh(arg1:boolean):Promise<void>;
+
 export function SetAuthVerify(arg1:boolean):Promise<void>;
 
+export function SetCheckForUpdatesOnStart(arg1:boolean):Promise<void>;
+
 export function SetConcurrentDownloads(arg1:number):Promise<void>;
+
+export function SetHideLauncher(arg1:boolean):Promise<void>;
+
+export function SetIdle(arg1:Config.IdleConfig):Promise<void>;
 
 export function SetMaxMbps(arg1:number):Promise<void>;
 
@@ -142,9 +215,17 @@ export function SetMaxRAM(arg1:number):Promise<void>;
 
 export function SetProxy(arg1:boolean,arg2:string,arg3:number,arg4:string,arg5:string):Promise<void>;
 
+export function SetRichPresenceEnabled(arg1:boolean):Promise<void>;
+
+export function SetSelectedAccount(arg1:string):Promise<void>;
+
 export function SetSelectedProfile(arg1:string):Promise<void>;
 
+export function SetSelectedVersion(arg1:string):Promise<void>;
+
 export function SetUIScale(arg1:number):Promise<void>;
+
+export function SetVerifyIntegrity(arg1:boolean):Promise<void>;
 
 export function StartDownload(arg1:string,arg2:downloader.DownloadFilter,arg3:number,arg4:number,arg5:boolean,arg6:number,arg7:number):Promise<engine.DownloadInfo>;
 
@@ -156,7 +237,9 @@ export function StopGame(arg1:string):Promise<void>;
 
 export function TotalRAMGB():Promise<number>;
 
-export function UpdateEngineConfig(arg1:config.Config):Promise<void>;
+export function UpdateAccount(arg1:string,arg2:accounts.CreateAccountReq):Promise<accounts.AccountInfo>;
+
+export function UpdateEngineConfig(arg1:engineconfig.Config):Promise<void>;
 
 export function UpdateInstanceConfig(arg1:string,arg2:instance.InstanceLaunchConfig):Promise<instance.InstanceLaunchConfig>;
 

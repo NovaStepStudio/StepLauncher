@@ -7,20 +7,21 @@ import (
 )
 
 type Config struct {
-	WorkDir        string
-	CacheDir       string
-	MaxRetries     int
-	MaxConcurrency int
-	MaxRAM         int
-	SkipVerify     bool
-	LogFn          func(string, ...interface{})
-	BroadcastFn    func([]byte)
-	HTTPClient     *http.Client
-	CacheManager   *cache.Manager
-	MaxMbps        float64
-	MinMbps        float64
-	StallTimeout   int // ms, default 60000 (1 min)
-	MaxStallReDownload int // max retries per file for stall, default 3
+	WorkDir  string
+	CacheDir string
+	JavaRuntimeDir     string
+	MaxRetries         int
+	MaxConcurrency     int
+	MaxRAM             int
+	SkipVerify         bool
+	LogFn              func(string, ...interface{})
+	BroadcastFn        func([]byte)
+	HTTPClient         *http.Client
+	CacheManager       *cache.Manager
+	MaxMbps            float64
+	MinMbps            float64
+	StallTimeout       int
+	MaxStallReDownload int
 }
 
 type DownloadFilter struct {
@@ -62,7 +63,38 @@ type DownloadProgress struct {
 	CurrentDest       string        `json:"currentDest"`
 	CurrentProgress   float64       `json:"currentProgress"`
 	Log               []string      `json:"log"`
+
+	Sections       []SectionProgress `json:"sections"`
+	ActiveFiles    []FileProgress    `json:"activeFiles"`
+	QueuedCount    int               `json:"queuedCount"`
+	QueuedPreview  []string          `json:"queuedPreview"`
+	SpeedMbps      float64           `json:"speedMbps"`
 }
+
+type FileProgress struct {
+	Name       string  `json:"name"`
+	Section    string  `json:"section"`
+	Size       int64   `json:"size"`
+	Downloaded int64   `json:"downloaded"`
+	Percent    float64 `json:"percent"`
+	State      string  `json:"state"`
+}
+
+type SectionProgress struct {
+	Name         string  `json:"name"`
+	TotalFiles   int     `json:"totalFiles"`
+	DoneFiles    int     `json:"doneFiles"`
+	MBTotal      float64 `json:"mbTotal"`
+	MBDownloaded float64 `json:"mbDownloaded"`
+}
+
+const (
+	FilePending     = "pending"
+	FileDownloading = "downloading"
+	FileDone        = "done"
+	FileExisting    = "existing"
+	FileError       = "error"
+)
 
 type ProgressUpdate struct {
 	Section      string
@@ -86,8 +118,10 @@ type DownloadTask struct {
 }
 
 type ManifestVersion struct {
-	ID  string `json:"id"`
-	URL string `json:"url"`
+	ID          string `json:"id"`
+	URL         string `json:"url"`
+	Type        string `json:"type"`
+	ReleaseTime string `json:"releaseTime"`
 }
 
 type LatestInfo struct {

@@ -8,9 +8,9 @@ import (
 )
 
 type Transport struct {
-	inner    http.RoundTripper
-	maxBps   float64
-	minBps   float64
+	inner  http.RoundTripper
+	maxBps float64
+	minBps float64
 }
 
 func NewTransport(inner http.RoundTripper, maxMbps, minMbps float64) *Transport {
@@ -26,11 +26,11 @@ func NewTransport(inner http.RoundTripper, maxMbps, minMbps float64) *Transport 
 }
 
 type slowReader struct {
-	reader  io.ReadCloser
-	maxBps  float64
-	minBps  float64
-	start   time.Time
-	read    int64
+	reader io.ReadCloser
+	maxBps float64
+	minBps float64
+	start  time.Time
+	read   int64
 }
 
 func (s *slowReader) Close() error {

@@ -61,7 +61,7 @@ async function scanJava() {
     try {
         const list = await (window as any).go?.main?.App?.DetectJavaInstallations?.();
         if (Array.isArray(list)) detectedJava.value = parseDetected(list);
-    } catch { /* */ }
+    } catch { }
 }
 
 function pickJava() {
@@ -77,7 +77,7 @@ async function detectRAM() {
             totalRAM.value = total;
             return;
         }
-    } catch { /* fall through */ }
+    } catch { }
 
     if ((navigator as any).deviceMemory) {
         totalRAM.value = Math.round((navigator as any).deviceMemory as number);
@@ -90,7 +90,7 @@ async function detectRAM() {
 async function saveRAM() {
     try {
         await (window as any).go?.main?.App?.SetMaxRAM?.(maxRAM.value);
-    } catch { /* */ }
+    } catch { }
 }
 
 onMounted(async () => {
@@ -99,7 +99,7 @@ onMounted(async () => {
     try {
         const cur = await (window as any).go?.main?.App?.MaxRAMGB?.();
         if (cur && typeof cur === 'number') maxRAM.value = cur;
-    } catch { /* */ }
+    } catch { }
 
     try {
         const c = await (window as any).go?.main?.App?.GetMinecraftConfig?.();
@@ -119,7 +119,7 @@ onMounted(async () => {
             compatMode.value = c.compatMode ?? false;
             detailedLogs.value = c.detailedLogs ?? false;
         }
-    } catch { /* */ }
+    } catch { }
 
     await scanJava();
     if (javaCustomPath.value && detectedJava.value.some((j) => j.path === javaCustomPath.value)) {
@@ -145,14 +145,13 @@ async function save() {
             compatMode: compatMode.value,
             detailedLogs: detailedLogs.value,
         });
-    } catch { /* */ }
+    } catch { }
 }
 </script>
 
 <template>
 <div class="Ss">
 
-    <!-- HARDWARE -->
     <div class="SsGroup">
         <div class="SsGroupHead">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M20 15h2"/></svg>
@@ -212,7 +211,6 @@ async function save() {
         </template>
     </div>
 
-    <!-- MEMORIA -->
     <div class="SsGroup">
         <div class="SsGroupHead">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M20 15h2"/></svg>
@@ -237,7 +235,6 @@ async function save() {
         </div>
     </div>
 
-    <!-- JAVA -->
     <div class="SsGroup">
         <div class="SsGroupHead">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3l-1 8h10l-1-8H8z"/><path d="M4 16l2 4h12l2-4H4z"/><path d="M12 11v5"/><path d="M9 21h6"/></svg>
@@ -288,7 +285,6 @@ async function save() {
         </template>
     </div>
 
-    <!-- VENTANA -->
     <div class="SsGroup">
         <div class="SsGroupHead">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
@@ -321,7 +317,6 @@ async function save() {
         </div>
     </div>
 
-    <!-- ARGUMENTOS -->
     <div class="SsGroup">
         <div class="SsGroupHead">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
@@ -347,7 +342,6 @@ async function save() {
         </div>
     </div>
 
-    <!-- AVANZADO -->
     <div class="SsGroup">
         <div class="SsGroupHead">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>

@@ -7,14 +7,14 @@ import (
 )
 
 type AuthLibConfig struct {
-	Enabled         bool   `json:"enabled"`
-	InjectorPath    string `json:"injectorPath,omitempty"`
-	AuthServerURL   string `json:"authServerUrl,omitempty"`
-	PreVerifyServer bool   `json:"preVerifyServer"`
-	PreVerifyTimeout int   `json:"preVerifyTimeout,omitempty"`
-	SkipServerCheck bool   `json:"skipServerCheck"`
-	Username        string `json:"username,omitempty"`
-	ServerToken     string `json:"serverToken,omitempty"`
+	Enabled          bool   `json:"enabled"`
+	InjectorPath     string `json:"injectorPath,omitempty"`
+	AuthServerURL    string `json:"authServerUrl,omitempty"`
+	PreVerifyServer  bool   `json:"preVerifyServer"`
+	PreVerifyTimeout int    `json:"preVerifyTimeout,omitempty"`
+	SkipServerCheck  bool   `json:"skipServerCheck"`
+	Username         string `json:"username,omitempty"`
+	ServerToken      string `json:"serverToken,omitempty"`
 }
 
 type AdvancedConfig struct {

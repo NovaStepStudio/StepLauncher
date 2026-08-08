@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	
 	"StepLauncher/internal/Core/Utils"
 )
 
@@ -20,6 +19,7 @@ type VarConfig struct {
 	UserType                                    string
 	GCArgs                                      []string
 	HWAccelFlags                                []string
+	LauncherProperties                          string
 }
 
 func BuildVarsMap(cfg VarConfig, verID, verType, assetsIndexID, classpath, nativesDir string) map[string]string {
@@ -59,6 +59,7 @@ func BuildVarsMap(cfg VarConfig, verID, verType, assetsIndexID, classpath, nativ
 		"profile_name":        verID,
 		"resolution_width":    strconv.Itoa(cfg.ResWidth),
 		"resolution_height":   strconv.Itoa(cfg.ResHeight),
+		"launcher_properties": cfg.LauncherProperties,
 	}
 	return m
 }
@@ -162,7 +163,46 @@ func expandValue(valueRaw interface{}, vars map[string]string) []string {
 }
 
 func SubstituteVars(template string, vars map[string]string) string {
-	return SubstituteVars(template, vars)
+	if template == "" || !strings.Contains(template, "${") {
+		return template
+	}
+	current := template
+	for pass := 0; pass < 8; pass++ {
+		if !strings.Contains(current, "${") {
+			break
+		}
+		var b strings.Builder
+		b.Grow(len(current))
+		replaced := false
+		rest := current
+		for {
+			start := strings.Index(rest, "${")
+			if start < 0 {
+				b.WriteString(rest)
+				break
+			}
+			closeIdx := strings.IndexByte(rest[start+2:], '}')
+			if closeIdx < 0 {
+				b.WriteString(rest)
+				break
+			}
+			key := rest[start+2 : start+2+closeIdx]
+			val, ok := vars[key]
+			b.WriteString(rest[:start])
+			if ok {
+				b.WriteString(val)
+				replaced = true
+			} else {
+				b.WriteString(rest[start : start+2+closeIdx+1])
+			}
+			rest = rest[start+2+closeIdx+1:]
+		}
+		current = b.String()
+		if !replaced {
+			break
+		}
+	}
+	return current
 }
 
 func EvaluateRules(rulesRaw interface{}, features map[string]bool) bool {

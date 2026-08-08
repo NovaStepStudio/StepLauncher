@@ -1,4 +1,4 @@
-package config
+package engineconfig
 
 import (
 	"encoding/json"
@@ -14,11 +14,11 @@ const (
 )
 
 type Config struct {
-	MaxCores  int    `json:"maxCores,omitempty"`
-	MaxRAMMB  int    `json:"maxRam,omitempty"`
-	CacheDir  string `json:"cacheDir,omitempty"`
-	LogDir    string `json:"logDir,omitempty"`
-	WorkDir   string `json:"workDir,omitempty"`
+	MaxCores int    `json:"maxCores,omitempty"`
+	MaxRAMMB int    `json:"maxRam,omitempty"`
+	CacheDir string `json:"cacheDir,omitempty"`
+	LogDir   string `json:"logDir,omitempty"`
+	WorkDir  string `json:"workDir,omitempty"`
 
 	LauncherName    string `json:"launcherName,omitempty"`
 	LauncherVersion string `json:"launcherVersion,omitempty"`
@@ -36,13 +36,13 @@ type Config struct {
 	CacheTTLJava      string `json:"cacheTTLJava,omitempty"`
 	CacheTTLDefault   string `json:"cacheTTLDefault,omitempty"`
 
-	HardwareEnabled     bool    `json:"hardwareEnabled"`
+	HardwareEnabled      bool   `json:"hardwareEnabled"`
 	HardwareAcceleration bool   `json:"hardwareAcceleration"`
-	GPUType             string  `json:"gpuType"`
-	GPUPreset           string  `json:"gpuPreset"`
+	GPUType              string `json:"gpuType"`
+	GPUPreset            string `json:"gpuPreset"`
 
-	JavaMode        string `json:"javaMode"`
-	JavaCustomPath  string `json:"javaCustomPath"`
+	JavaMode       string `json:"javaMode"`
+	JavaCustomPath string `json:"javaCustomPath"`
 
 	ProxyEnabled bool   `json:"proxyEnabled"`
 	ProxyHost    string `json:"proxyHost"`
@@ -59,11 +59,13 @@ type Config struct {
 	JavaArgs string `json:"javaArgs"`
 	GameArgs string `json:"gameArgs"`
 
-	OfflineMode   bool `json:"offlineMode"`
-	CompatMode    bool `json:"compatMode"`
-	DetailedLogs  bool `json:"detailedLogs"`
+	OfflineMode  bool `json:"offlineMode"`
+	CompatMode   bool `json:"compatMode"`
+	DetailedLogs bool `json:"detailedLogs"`
 
 	ConcurrentDownloads int `json:"concurrentDownloads"`
+
+	VerifyIntegrity bool `json:"verifyIntegrity"`
 }
 
 type Manager struct {
@@ -77,16 +79,16 @@ func DefaultConfig() Config {
 		cores--
 	}
 	return Config{
-		MaxCores:  cores,
-		MaxRAMMB:  2048,
+		MaxCores: cores,
+		MaxRAMMB: 2048,
 
 		InstancesDir: "instances",
 		SharedDir:    "shared",
 
 		HardwareEnabled:      true,
 		HardwareAcceleration: true,
-		GPUType:             "",
-		GPUPreset:           "",
+		GPUType:              "",
+		GPUPreset:            "",
 
 		JavaMode: "auto",
 
@@ -97,6 +99,8 @@ func DefaultConfig() Config {
 		Fullscreen:   false,
 
 		ConcurrentDownloads: 4,
+
+		VerifyIntegrity: true,
 	}
 }
 
@@ -165,29 +169,11 @@ func (m *Manager) ensureDirs() error {
 			}
 		}
 	}
-	instancesDir := filepath.Join(m.cfg.WorkDir, m.cfg.InstancesDir)
-	sharedDir := filepath.Join(m.cfg.WorkDir, m.cfg.SharedDir)
-	for _, d := range []string{instancesDir, sharedDir} {
-		if err := os.MkdirAll(d, 0755); err != nil {
-			return err
-		}
-	}
-	for _, sub := range []string{"libraries", "assets", "runtime", "cache"} {
-		if err := os.MkdirAll(filepath.Join(sharedDir, sub), 0755); err != nil {
-			return err
-		}
-	}
-	if err := os.MkdirAll(filepath.Join(sharedDir, "assets", "indexes"), 0755); err != nil {
-		return err
-	}
-	if err := os.MkdirAll(filepath.Join(sharedDir, "assets", "objects"), 0755); err != nil {
-		return err
-	}
 	return nil
 }
 
-func (m *Manager) Get() Config       { return m.cfg }
-func (m *Manager) RootDir() string   { return m.cfg.WorkDir }
+func (m *Manager) Get() Config     { return m.cfg }
+func (m *Manager) RootDir() string { return m.cfg.WorkDir }
 
 func (m *Manager) UpdateConfig(cfg Config) {
 	m.cfg = cfg

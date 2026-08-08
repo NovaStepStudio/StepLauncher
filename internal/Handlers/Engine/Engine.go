@@ -1,38 +1,46 @@
 package engine
+
 import (
 	"encoding/json"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"time"
 
+	accounts "StepLauncher/internal/Core/Accounts"
 	"StepLauncher/internal/Core/Cache"
-	"StepLauncher/internal/Core/Config"
 	"StepLauncher/internal/Core/Downloader"
-	lhistory "StepLauncher/internal/Core/Launcher/History"
 	"StepLauncher/internal/Core/Launcher"
+	lhistory "StepLauncher/internal/Core/Launcher/History"
 	linstance "StepLauncher/internal/Core/Launcher/Instance"
+	lprofile "StepLauncher/internal/Core/Launcher/Profile"
 	"StepLauncher/internal/Core/Logger"
 	"StepLauncher/internal/Core/ModLoader"
 	"StepLauncher/internal/Core/ModLoader/Provider"
 	"StepLauncher/internal/Core/Platform"
-	lprofile "StepLauncher/internal/Core/Launcher/Profile"
+	engineconfig "StepLauncher/internal/Handlers/Engine/engineconfig"
 )
 
 type EventHandler func(eventType string, data []byte)
 
 type Engine struct {
-	config     *config.Manager
+	config     *engineconfig.Manager
 	log        *logger.Logger
 	cache      *cache.Manager
 	downloader *downloader.Manager
 	launcher   *launcher.LaunchManager
 	modloader  *modloader.Orchestrator
 	history    *lhistory.Manager
+	crashHist  *lhistory.CrashManager
 	profiles   *lprofile.Manager
+	accounts   *accounts.Manager
 	instances  *linstance.InstanceManager
 	sharedDl   *downloader.Manager
 
 	eventCb EventHandler
+
+	updateMu   sync.Mutex
+	lastUpdate *UpdateInfo
 }
 
 type EngineInfo struct {
@@ -66,7 +74,7 @@ func NewEngine(opts ...Option) (*Engine, error) {
 		opt(e)
 	}
 
-	cfgMgr := config.NewManager()
+	cfgMgr := engineconfig.NewManager()
 	if err := cfgMgr.Load(); err != nil {
 		return nil, err
 	}
@@ -76,31 +84,37 @@ func NewEngine(opts ...Option) (*Engine, error) {
 
 	launcherName := cfg.LauncherName
 	if launcherName == "" {
-		launcherName = config.AppName
+		launcherName = engineconfig.AppName
 	}
 	launcherVersion := cfg.LauncherVersion
 	if launcherVersion == "" {
-		launcherVersion = config.AppVersion
+		launcherVersion = engineconfig.AppVersion
 	}
 
-	log, err := logger.New(cfg.LogDir, config.AppName, launcherName, launcherVersion)
+	log, err := logger.New(cfg.LogDir, engineconfig.AppName, launcherName, launcherVersion)
 	if err != nil {
 		return nil, err
 	}
 	e.log = log
 
-	log.System("%s v%s", config.AppName, config.AppVersion)
-	log.System("Author: %s", config.AppAuthor)
+	log.System("%s v%s", engineconfig.AppName, engineconfig.AppVersion)
+	log.System("Author: %s", engineconfig.AppAuthor)
 	log.System("GoVersion: %s", runtime.Version())
 	log.System("Runtime:  CPU: %d | GOMAXPROCS: %d | RAM: %dMB | OS: %s | Arch: %s",
 		runtime.NumCPU(), runtime.GOMAXPROCS(0), platform.TotalRAMMB(), runtime.GOOS, runtime.GOARCH)
 	log.System("  WorkDir: %s", cfg.WorkDir)
 	log.System("  LogDir: %s", cfg.LogDir)
 	log.System("  CacheDir: %s", cfg.CacheDir)
+	log.System("  Instances: %s (se crea al usar instancias)", filepath.Join(cfg.WorkDir, cfg.InstancesDir))
+	log.System("  Shared: %s (se crea al usar instancias)", filepath.Join(cfg.WorkDir, cfg.SharedDir))
+	log.System("  Config: cacheTTL manifest=%s | assets=%s | versions=%s | java=%s",
+		cfg.CacheTTLManifest, cfg.CacheTTLAssets, cfg.CacheTTLVersions, cfg.CacheTTLJava)
 	log.System("========================================")
 
 	e.log.SetBroadcastFn(func(t logger.Type, msg string) {
-		if e.eventCb == nil { return }
+		if e.eventCb == nil {
+			return
+		}
 		data, _ := json.Marshal(map[string]string{
 			"type": "engine_log", "level": string(t), "message": msg,
 		})
@@ -108,8 +122,12 @@ func NewEngine(opts ...Option) (*Engine, error) {
 	})
 
 	broadcastFn := func(data []byte) {
-		if e.eventCb == nil { return }
-		var evt struct { Type string `json:"type"` }
+		if e.eventCb == nil {
+			return
+		}
+		var evt struct {
+			Type string `json:"type"`
+		}
 		if json.Unmarshal(data, &evt) == nil {
 			e.eventCb(evt.Type, data)
 		} else {
@@ -119,12 +137,24 @@ func NewEngine(opts ...Option) (*Engine, error) {
 
 	ttls := cache.DefaultTTLs()
 	cfgTTL := cfgMgr.Get()
-	if v := cfgTTL.CacheTTLManifest; v != "" { ttls.Manifest = parseDuration(v, ttls.Manifest) }
-	if v := cfgTTL.CacheTTLAssets; v != "" { ttls.Assets = parseDuration(v, ttls.Assets) }
-	if v := cfgTTL.CacheTTLVersions; v != "" { ttls.Versions = parseDuration(v, ttls.Versions) }
-	if v := cfgTTL.CacheTTLModloader; v != "" { ttls.Modloader = parseDuration(v, ttls.Modloader) }
-	if v := cfgTTL.CacheTTLJava; v != "" { ttls.Java = parseDuration(v, ttls.Java) }
-	if v := cfgTTL.CacheTTLDefault; v != "" { ttls.Default = parseDuration(v, ttls.Default) }
+	if v := cfgTTL.CacheTTLManifest; v != "" {
+		ttls.Manifest = parseDuration(v, ttls.Manifest)
+	}
+	if v := cfgTTL.CacheTTLAssets; v != "" {
+		ttls.Assets = parseDuration(v, ttls.Assets)
+	}
+	if v := cfgTTL.CacheTTLVersions; v != "" {
+		ttls.Versions = parseDuration(v, ttls.Versions)
+	}
+	if v := cfgTTL.CacheTTLModloader; v != "" {
+		ttls.Modloader = parseDuration(v, ttls.Modloader)
+	}
+	if v := cfgTTL.CacheTTLJava; v != "" {
+		ttls.Java = parseDuration(v, ttls.Java)
+	}
+	if v := cfgTTL.CacheTTLDefault; v != "" {
+		ttls.Default = parseDuration(v, ttls.Default)
+	}
 
 	cacheMgr := cache.NewManager(filepath.Join(cfg.WorkDir, "cache"), ttls)
 	e.cache = cacheMgr
@@ -133,13 +163,44 @@ func NewEngine(opts ...Option) (*Engine, error) {
 	if err := histMgr.Load(); err != nil {
 		log.Warn("Failed to load history: %v", err)
 	}
+	if err := histMgr.EnsureFile(); err != nil {
+		log.Warn("Failed to create history file: %v", err)
+	}
 	e.history = histMgr
+
+	crashHistMgr := lhistory.NewCrashManager(cfg.WorkDir)
+	if err := crashHistMgr.Load(); err != nil {
+		log.Warn("Failed to load crash history: %v", err)
+	}
+	if err := crashHistMgr.EnsureFile(); err != nil {
+		log.Warn("Failed to create crash history file: %v", err)
+	}
+	e.crashHist = crashHistMgr
 
 	profMgr := lprofile.NewManager(cfg.WorkDir)
 	if err := profMgr.Load(); err != nil {
 		log.Warn("Failed to load profiles: %v", err)
 	}
+	if err := profMgr.EnsureFile(); err != nil {
+		log.Warn("Failed to create profiles file: %v", err)
+	}
 	e.profiles = profMgr
+
+	accMgr := accounts.NewManager(cfg.WorkDir)
+	accMgr.SetLogFn(func(f string, a ...interface{}) { log.Info(f, a...) })
+	accMgr.SetEventFn(func(et string, data []byte) {
+		if e.eventCb == nil {
+			return
+		}
+		e.eventCb(et, data)
+	})
+	if err := accMgr.Load(); err != nil {
+		log.Warn("Failed to load accounts: %v", err)
+	}
+	if err := accMgr.Save(); err != nil {
+		log.Warn("Failed to create accounts file: %v", err)
+	}
+	e.accounts = accMgr
 
 	runtime.GOMAXPROCS(cfg.MaxCores)
 
@@ -175,17 +236,39 @@ func NewEngine(opts ...Option) (*Engine, error) {
 			if err := histMgr.AddEntry(entry); err != nil {
 				log.Warn("Failed to record play history: %v", err)
 			}
+			if gi.Status == launcher.GameCrashed {
+				crash := lhistory.CrashEntry{
+					Version:          gi.Version,
+					ExitCode:         gi.ExitCode,
+					CrashReason:      gi.CrashReason,
+					CrashCategory:    gi.CrashCategory,
+					LauncherLogPath:  relPathToWorkDir(cfg.WorkDir, e.log.GetLogPath()),
+					MinecraftLogPath: relPathToWorkDir(cfg.WorkDir, gi.LogPath),
+					JvmLogPath:       relPathToWorkDir(cfg.WorkDir, gi.CrashLog),
+				}
+				if err := crashHistMgr.AddEntry(crash); err != nil {
+					log.Warn("Failed to record crash history: %v", err)
+				} else {
+					log.Info("Crash registrado en el historial: %s", crash.ID)
+				}
+			}
 		},
 		GameLogBroadcastFn: func(stream, line string) {
-			if e.eventCb == nil { return }
+			if e.eventCb == nil {
+				return
+			}
 			data, _ := json.Marshal(map[string]string{
 				"type": "game_log", "level": stream, "message": line,
 			})
 			e.eventCb("game_log", data)
 		},
 		GameEventBroadcastFn: func(data []byte) {
-			if e.eventCb == nil { return }
-			var evt struct { Type string `json:"type"` }
+			if e.eventCb == nil {
+				return
+			}
+			var evt struct {
+				Type string `json:"type"`
+			}
 			if json.Unmarshal(data, &evt) == nil {
 				e.eventCb(evt.Type, data)
 			} else {
@@ -193,8 +276,12 @@ func NewEngine(opts ...Option) (*Engine, error) {
 			}
 		},
 		GameEventReplayFn: func(data []byte) {
-			if e.eventCb == nil { return }
-			var evt struct { Type string `json:"type"` }
+			if e.eventCb == nil {
+				return
+			}
+			var evt struct {
+				Type string `json:"type"`
+			}
 			if json.Unmarshal(data, &evt) == nil {
 				e.eventCb(evt.Type, data)
 			} else {
@@ -206,7 +293,7 @@ func NewEngine(opts ...Option) (*Engine, error) {
 
 	sharedDlMgr := downloader.NewManager(downloader.Config{
 		WorkDir:      filepath.Join(cfg.WorkDir, cfg.SharedDir),
-		CacheDir:     filepath.Join(cfg.WorkDir, cfg.SharedDir, "cache"),
+		CacheDir:     cfg.CacheDir,
 		CacheManager: cacheMgr,
 		MaxRAM:       cfg.MaxRAMMB,
 		LogFn:        func(f string, a ...interface{}) { log.Info(f, a...) },
@@ -235,7 +322,6 @@ func NewEngine(opts ...Option) (*Engine, error) {
 
 	mlOrch := modloader.NewOrchestrator(
 		cfg.WorkDir,
-		filepath.Join(cfg.WorkDir, cfg.SharedDir),
 		cfg.CacheDir,
 		httpClient,
 		mlReg,
@@ -252,20 +338,20 @@ func (e *Engine) SetEventCallback(cb EventHandler) {
 	e.eventCb = cb
 }
 
-func (e *Engine) GetConfig() config.Config {
+func (e *Engine) GetConfig() engineconfig.Config {
 	return e.config.Get()
 }
 
-func (e *Engine) UpdateConfig(cfg config.Config) {
+func (e *Engine) UpdateConfig(cfg engineconfig.Config) {
 	e.config.UpdateConfig(cfg)
 }
 
 func (e *Engine) EngineInfo() EngineInfo {
 	cfg := e.config.Get()
 	return EngineInfo{
-		Name:            config.AppName,
-		Version:         config.AppVersion,
-		Author:          config.AppAuthor,
+		Name:            engineconfig.AppName,
+		Version:         engineconfig.AppVersion,
+		Author:          engineconfig.AppAuthor,
 		GoVersion:       runtime.Version(),
 		OS:              runtime.GOOS,
 		Arch:            runtime.GOARCH,
@@ -300,8 +386,39 @@ func (e *Engine) HistoryManager() *lhistory.Manager {
 	return e.history
 }
 
+func (e *Engine) CrashHistoryManager() *lhistory.CrashManager {
+	return e.crashHist
+}
+
+func relPathToWorkDir(workDir, p string) string {
+	if p == "" {
+		return ""
+	}
+	r, err := filepath.Rel(workDir, p)
+	if err != nil {
+		return filepath.ToSlash(p)
+	}
+	return filepath.ToSlash(r)
+}
+
 func (e *Engine) ProfileManager() *lprofile.Manager {
 	return e.profiles
+}
+
+func (e *Engine) AccountsManager() *accounts.Manager {
+	return e.accounts
+}
+
+func (e *Engine) Shutdown() {
+	if e.accounts != nil {
+		e.accounts.CancelLogin()
+	}
+	e.StopAllGames()
+	for _, mgr := range []*downloader.Manager{e.downloader, e.sharedDl} {
+		if mgr != nil {
+			mgr.CancelActive()
+		}
+	}
 }
 
 func (e *Engine) InstanceManager() *linstance.InstanceManager {

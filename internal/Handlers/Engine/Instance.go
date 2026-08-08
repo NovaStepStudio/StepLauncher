@@ -1,4 +1,5 @@
 package engine
+
 import (
 	"StepLauncher/internal/Core/Launcher"
 	linstance "StepLauncher/internal/Core/Launcher/Instance"
@@ -68,10 +69,14 @@ func (e *Engine) CloneInstance(name, newName string, copyVersions bool) (*Instan
 }
 
 func (e *Engine) LaunchInstance(name string, username, uuid, accessToken, xuid, clientID string) (*InstanceLaunchResult, error) {
-	return e.instances.LaunchInstance(name, launcher.LaunchConfig{
+	cfg := launcher.LaunchConfig{
 		Username: username, UUID: uuid, AccessToken: accessToken,
 		XUID: xuid, ClientID: clientID,
-	})
+	}
+	if err := e.fillAccountCredentials(&cfg, ""); err != nil {
+		return nil, err
+	}
+	return e.instances.LaunchInstance(name, cfg)
 }
 
 func (e *Engine) GetInstanceDownloadStatus(dlID string) (string, string, string, string) {

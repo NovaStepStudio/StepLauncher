@@ -1,0 +1,27 @@
+{
+    "versions": [
+        {
+            "version": "2.3.0",
+            "errors": [
+                "./StepLauncher-2.3.0/StepLauncher-Error-1.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-2.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-3.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-4.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-5.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-6.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-7.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-8.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-9.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-10.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-11.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-12.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-13.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-14.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-15.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-16.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-17.md",
+                "./StepLauncher-2.3.0/StepLauncher-Error-18.md"
+            ]
+        }
+    ]
+}

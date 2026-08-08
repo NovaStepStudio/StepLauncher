@@ -1,4 +1,4 @@
-﻿package downloader
+package downloader
 
 import (
 	"crypto/sha1"

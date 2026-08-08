@@ -74,6 +74,16 @@ func (m *Manager) save() error {
 	return os.Rename(tmpPath, m.filePath)
 }
 
+func (m *Manager) EnsureFile() error {
+	m.mu.Lock()
+	if _, err := os.Stat(m.filePath); err == nil {
+		m.mu.Unlock()
+		return nil
+	}
+	m.mu.Unlock()
+	return m.save()
+}
+
 func (m *Manager) AddEntry(entry Entry) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()

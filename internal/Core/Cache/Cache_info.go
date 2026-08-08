@@ -7,9 +7,9 @@ import (
 )
 
 type Info struct {
-	CacheDir     string         `json:"cacheDir"`
-	TotalEntries int            `json:"totalEntries"`
-	Categories   map[string]int `json:"categories"`
+	CacheDir     string            `json:"cacheDir"`
+	TotalEntries int               `json:"totalEntries"`
+	Categories   map[string]int    `json:"categories"`
 	TTLs         map[string]string `json:"ttls"`
 }
 

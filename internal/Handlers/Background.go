@@ -19,15 +19,10 @@ import (
 const maxBackgroundWidth = 1920
 const maxBackgroundHeight = 1080
 
-// SetContext guarda el contexto de Wails para los dialogos nativos.
 func (a *App) SetContext(ctx context.Context) {
 	a.ctx = ctx
 }
 
-// PickBackgroundFile abre el dialogo nativo del sistema para elegir una
-// imagen o video de fondo. Valida formato, peso y resolucion, lo importa al
-// workdir y devuelve la ruta relativa (ej: "backgrounds/1234.png").
-// Devuelve "" si el usuario cancela el dialogo.
 func (a *App) PickBackgroundFile(kind string) (string, error) {
 	if a.ctx == nil {
 		return "", fmt.Errorf("contexto no disponible")
@@ -58,8 +53,6 @@ func (a *App) PickBackgroundFile(kind string) (string, error) {
 	return a.ImportBackground(path, kind)
 }
 
-// checkResolution valida que el archivo tenga una resolucion menor a 1080p.
-// Si no se puede leer la resolucion (ej: webp sin decodificador) se omite.
 func checkResolution(src, kind string) error {
 	ext := strings.ToLower(filepath.Ext(src))
 	var w, h int
@@ -96,8 +89,6 @@ func gifDimensions(src string) (int, int) {
 	return int(binary.LittleEndian.Uint16(data[6:8])), int(binary.LittleEndian.Uint16(data[8:10]))
 }
 
-// mp4Dimensions lee el ultimo box tkhd: las dimensiones son los ultimos
-// 8 bytes del contenido (width/height fixed point 16.16).
 func mp4Dimensions(src string) (int, int) {
 	data, err := os.ReadFile(src)
 	if err != nil {
@@ -121,7 +112,6 @@ func mp4Dimensions(src string) (int, int) {
 	return w, h
 }
 
-// webmDimensions recorre la estructura EBML buscando PixelWidth/PixelHeight.
 func webmDimensions(src string) (int, int) {
 	data, err := os.ReadFile(src)
 	if err != nil {
@@ -149,13 +139,13 @@ func webmDimensions(src string) (int, int) {
 				return
 			}
 			switch id {
-			case 0x18538067, 0x1654AE6B, 0xAE, 0x1F43B675: // Segment, Tracks, TrackEntry, Cluster
+			case 0x18538067, 0x1654AE6B, 0xAE, 0x1F43B675:
 				walk(p, p+size)
-			case 0xB0: // PixelWidth
+			case 0xB0:
 				if p+4 <= end {
 					w = int(binary.BigEndian.Uint32(data[p:]))
 				}
-			case 0xBA: // PixelHeight
+			case 0xBA:
 				if p+4 <= end {
 					h = int(binary.BigEndian.Uint32(data[p:]))
 				}
@@ -167,7 +157,6 @@ func webmDimensions(src string) (int, int) {
 	return w, h
 }
 
-// ebmlVint lee un valor vint de largo variable (ID o tamaño) en la posicion.
 func ebmlVint(data []byte, pos int) (int, int) {
 	if pos >= len(data) {
 		return 0, 0

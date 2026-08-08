@@ -168,5 +168,3 @@ func readZipFile(f *zip.File) ([]byte, error) {
 	defer rc.Close()
 	return io.ReadAll(rc)
 }
-
-

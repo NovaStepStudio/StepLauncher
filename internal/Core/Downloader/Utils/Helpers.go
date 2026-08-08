@@ -1,4 +1,4 @@
-﻿package utils
+package utils
 
 func CalcPercent(mbDownloaded, mbTotal float64, filesDone, filesTotal int) float64 {
 	if filesTotal > 0 {

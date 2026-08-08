@@ -14,8 +14,6 @@ import (
 	globalutils "StepLauncher/internal/Core/Utils"
 )
 
-
-
 type fabricVersion struct {
 	Loader struct {
 		Version string `json:"version"`
@@ -25,12 +23,12 @@ type fabricVersion struct {
 
 type AbstractFabricProvider struct {
 	modloader.BaseProvider
-	NameVal     string
-	MetaBase    string
-	MavenBase   string
-	CacheDir    string
+	NameVal      string
+	MetaBase     string
+	MavenBase    string
+	CacheDir     string
 	CacheManager *cache.Manager
-	HttpClient  *http.Client
+	HttpClient   *http.Client
 }
 
 func (p *AbstractFabricProvider) Name() string { return p.NameVal }

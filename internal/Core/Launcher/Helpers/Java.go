@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"StepLauncher/internal/Core/Utils"
 )
@@ -26,11 +27,17 @@ func resolveOfficialJava(component, runtimeDir string) (string, error) {
 	javaDir := filepath.Join(runtimeDir, component, osKey)
 	javaName := "java"
 	if runtime.GOOS == "windows" {
-		javaName = "java.exe"
+		javaName = "javaw.exe"
 	}
 	javaPath := filepath.Join(javaDir, "bin", javaName)
 
-	if _, err := os.Stat(javaPath); err != nil {
+if _, err := os.Stat(javaPath); err != nil {
+		alt := filepath.Join(javaDir, "bin", "java.exe")
+		if runtime.GOOS == "windows" {
+			if _, err2 := os.Stat(alt); err2 == nil {
+				return alt, nil
+			}
+		}
 		return "", fmt.Errorf("official Java not found at %s", javaPath)
 	}
 
@@ -38,6 +45,39 @@ func resolveOfficialJava(component, runtimeDir string) (string, error) {
 }
 
 func resolveCustomJava(javaExec string) (string, error) {
+	if runtime.GOOS == "windows" {
+		if javaExec == "" || javaExec == "java" || javaExec == "java.exe" {
+			if p, err := exec.LookPath("javaw"); err == nil {
+				return p, nil
+			}
+			if p, err := exec.LookPath("java"); err == nil {
+				return p, nil
+			}
+			return "", fmt.Errorf("Java not found (se busco javaw/java en el sistema)")
+		}
+
+		dir := javaExec
+		base := ""
+		if filepath.Ext(javaExec) != "" {
+			dir = filepath.Dir(javaExec)
+			base = filepath.Base(javaExec)
+		}
+		if base == "" || strings.EqualFold(base, "java") || strings.EqualFold(base, "java.exe") {
+			javawPath := filepath.Join(dir, "javaw.exe")
+			if _, err := os.Stat(javawPath); err == nil {
+				return javawPath, nil
+			}
+		}
+
+		if _, err := os.Stat(javaExec); err == nil {
+			return javaExec, nil
+		}
+		if p, err := exec.LookPath(javaExec); err == nil {
+			return p, nil
+		}
+		return "", fmt.Errorf("Java not found: %s", javaExec)
+	}
+
 	if javaExec == "" {
 		javaExec = "java"
 	}

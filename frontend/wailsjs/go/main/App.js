@@ -6,8 +6,16 @@ export function AddInstanceVersion(arg1, arg2) {
   return window['go']['main']['App']['AddInstanceVersion'](arg1, arg2);
 }
 
+export function ApplyUpdate() {
+  return window['go']['main']['App']['ApplyUpdate']();
+}
+
 export function BuildModLoaderExecution(arg1, arg2, arg3) {
   return window['go']['main']['App']['BuildModLoaderExecution'](arg1, arg2, arg3);
+}
+
+export function CancelAuthlibLogin() {
+  return window['go']['main']['App']['CancelAuthlibLogin']();
 }
 
 export function CancelDownload(arg1) {
@@ -16,6 +24,10 @@ export function CancelDownload(arg1) {
 
 export function CancelInstanceDownload(arg1) {
   return window['go']['main']['App']['CancelInstanceDownload'](arg1);
+}
+
+export function CheckForUpdates() {
+  return window['go']['main']['App']['CheckForUpdates']();
 }
 
 export function ClearAllCache() {
@@ -30,6 +42,10 @@ export function CloneInstance(arg1, arg2, arg3) {
   return window['go']['main']['App']['CloneInstance'](arg1, arg2, arg3);
 }
 
+export function CreateAccount(arg1) {
+  return window['go']['main']['App']['CreateAccount'](arg1);
+}
+
 export function CreateInstance(arg1) {
   return window['go']['main']['App']['CreateInstance'](arg1);
 }
@@ -38,12 +54,20 @@ export function CreateProfile(arg1) {
   return window['go']['main']['App']['CreateProfile'](arg1);
 }
 
+export function DeleteAccount(arg1) {
+  return window['go']['main']['App']['DeleteAccount'](arg1);
+}
+
 export function DeleteCacheCategory(arg1) {
   return window['go']['main']['App']['DeleteCacheCategory'](arg1);
 }
 
 export function DeleteCacheEntry(arg1, arg2) {
   return window['go']['main']['App']['DeleteCacheEntry'](arg1, arg2);
+}
+
+export function DeleteFontFile(arg1) {
+  return window['go']['main']['App']['DeleteFontFile'](arg1);
 }
 
 export function DeleteHistoryEntry(arg1) {
@@ -74,12 +98,32 @@ export function FetchVersionManifest() {
   return window['go']['main']['App']['FetchVersionManifest']();
 }
 
+export function GetAccount(arg1) {
+  return window['go']['main']['App']['GetAccount'](arg1);
+}
+
+export function GetAccountAssets(arg1) {
+  return window['go']['main']['App']['GetAccountAssets'](arg1);
+}
+
+export function GetAccountsAutoRefresh() {
+  return window['go']['main']['App']['GetAccountsAutoRefresh']();
+}
+
 export function GetCacheInfo() {
   return window['go']['main']['App']['GetCacheInfo']();
 }
 
+export function GetCheckForUpdatesOnStart() {
+  return window['go']['main']['App']['GetCheckForUpdatesOnStart']();
+}
+
 export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
+}
+
+export function GetCrashHistory() {
+  return window['go']['main']['App']['GetCrashHistory']();
 }
 
 export function GetDownload(arg1) {
@@ -118,6 +162,10 @@ export function GetInstanceDownloadStatus(arg1) {
   return window['go']['main']['App']['GetInstanceDownloadStatus'](arg1);
 }
 
+export function GetLauncherAssets() {
+  return window['go']['main']['App']['GetLauncherAssets']();
+}
+
 export function GetMinecraftConfig() {
   return window['go']['main']['App']['GetMinecraftConfig']();
 }
@@ -138,8 +186,20 @@ export function GetRecentHistory(arg1) {
   return window['go']['main']['App']['GetRecentHistory'](arg1);
 }
 
+export function GetRichPresenceConfig() {
+  return window['go']['main']['App']['GetRichPresenceConfig']();
+}
+
+export function GetSelectedAccount() {
+  return window['go']['main']['App']['GetSelectedAccount']();
+}
+
 export function GetSelectedProfile() {
   return window['go']['main']['App']['GetSelectedProfile']();
+}
+
+export function GetSelectedVersion() {
+  return window['go']['main']['App']['GetSelectedVersion']();
 }
 
 export function GetUIScale() {
@@ -154,6 +214,10 @@ export function ImportBackground(arg1, arg2) {
   return window['go']['main']['App']['ImportBackground'](arg1, arg2);
 }
 
+export function ImportFont(arg1) {
+  return window['go']['main']['App']['ImportFont'](arg1);
+}
+
 export function InstallModLoader(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['InstallModLoader'](arg1, arg2, arg3, arg4);
 }
@@ -166,8 +230,20 @@ export function LaunchMinecraft(arg1) {
   return window['go']['main']['App']['LaunchMinecraft'](arg1);
 }
 
+export function ListAccounts() {
+  return window['go']['main']['App']['ListAccounts']();
+}
+
+export function ListDownloadedVersions() {
+  return window['go']['main']['App']['ListDownloadedVersions']();
+}
+
 export function ListDownloads() {
   return window['go']['main']['App']['ListDownloads']();
+}
+
+export function ListFontFiles() {
+  return window['go']['main']['App']['ListFontFiles']();
 }
 
 export function ListGames() {
@@ -190,12 +266,36 @@ export function ListProfiles() {
   return window['go']['main']['App']['ListProfiles']();
 }
 
+export function ListScreenshots() {
+  return window['go']['main']['App']['ListScreenshots']();
+}
+
 export function LocalAssetsDir() {
   return window['go']['main']['App']['LocalAssetsDir']();
 }
 
+export function LoginAuthlib(arg1) {
+  return window['go']['main']['App']['LoginAuthlib'](arg1);
+}
+
 export function MaxRAMGB() {
   return window['go']['main']['App']['MaxRAMGB']();
+}
+
+export function NewsLoadChangelog(arg1) {
+  return window['go']['main']['App']['NewsLoadChangelog'](arg1);
+}
+
+export function NewsLoadMarkdown(arg1) {
+  return window['go']['main']['App']['NewsLoadMarkdown'](arg1);
+}
+
+export function NewsLoadRelease(arg1) {
+  return window['go']['main']['App']['NewsLoadRelease'](arg1);
+}
+
+export function NewsRefreshIndex() {
+  return window['go']['main']['App']['NewsRefreshIndex']();
 }
 
 export function PauseDownload(arg1) {
@@ -204,6 +304,10 @@ export function PauseDownload(arg1) {
 
 export function PickBackgroundFile(arg1) {
   return window['go']['main']['App']['PickBackgroundFile'](arg1);
+}
+
+export function PickFontFile() {
+  return window['go']['main']['App']['PickFontFile']();
 }
 
 export function ReadLocalFile(arg1) {
@@ -218,8 +322,20 @@ export function RecommendedRAMGB() {
   return window['go']['main']['App']['RecommendedRAMGB']();
 }
 
+export function RefreshAccount(arg1) {
+  return window['go']['main']['App']['RefreshAccount'](arg1);
+}
+
+export function RefreshAllAccounts() {
+  return window['go']['main']['App']['RefreshAllAccounts']();
+}
+
 export function RefreshCache(arg1, arg2) {
   return window['go']['main']['App']['RefreshCache'](arg1, arg2);
+}
+
+export function RefreshManifests() {
+  return window['go']['main']['App']['RefreshManifests']();
 }
 
 export function RemoveInstanceVersion(arg1, arg2) {
@@ -234,6 +350,10 @@ export function ResetConfig() {
   return window['go']['main']['App']['ResetConfig']();
 }
 
+export function ResolveAccountCredentials(arg1) {
+  return window['go']['main']['App']['ResolveAccountCredentials'](arg1);
+}
+
 export function ResolveModLoaderVersion(arg1, arg2, arg3) {
   return window['go']['main']['App']['ResolveModLoaderVersion'](arg1, arg2, arg3);
 }
@@ -242,12 +362,32 @@ export function ResumeDownload(arg1) {
   return window['go']['main']['App']['ResumeDownload'](arg1);
 }
 
+export function SaveLauncherAssets(arg1) {
+  return window['go']['main']['App']['SaveLauncherAssets'](arg1);
+}
+
+export function SetAccountsAutoRefresh(arg1) {
+  return window['go']['main']['App']['SetAccountsAutoRefresh'](arg1);
+}
+
 export function SetAuthVerify(arg1) {
   return window['go']['main']['App']['SetAuthVerify'](arg1);
 }
 
+export function SetCheckForUpdatesOnStart(arg1) {
+  return window['go']['main']['App']['SetCheckForUpdatesOnStart'](arg1);
+}
+
 export function SetConcurrentDownloads(arg1) {
   return window['go']['main']['App']['SetConcurrentDownloads'](arg1);
+}
+
+export function SetHideLauncher(arg1) {
+  return window['go']['main']['App']['SetHideLauncher'](arg1);
+}
+
+export function SetIdle(arg1) {
+  return window['go']['main']['App']['SetIdle'](arg1);
 }
 
 export function SetMaxMbps(arg1) {
@@ -262,12 +402,28 @@ export function SetProxy(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['SetProxy'](arg1, arg2, arg3, arg4, arg5);
 }
 
+export function SetRichPresenceEnabled(arg1) {
+  return window['go']['main']['App']['SetRichPresenceEnabled'](arg1);
+}
+
+export function SetSelectedAccount(arg1) {
+  return window['go']['main']['App']['SetSelectedAccount'](arg1);
+}
+
 export function SetSelectedProfile(arg1) {
   return window['go']['main']['App']['SetSelectedProfile'](arg1);
 }
 
+export function SetSelectedVersion(arg1) {
+  return window['go']['main']['App']['SetSelectedVersion'](arg1);
+}
+
 export function SetUIScale(arg1) {
   return window['go']['main']['App']['SetUIScale'](arg1);
+}
+
+export function SetVerifyIntegrity(arg1) {
+  return window['go']['main']['App']['SetVerifyIntegrity'](arg1);
 }
 
 export function StartDownload(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
@@ -288,6 +444,10 @@ export function StopGame(arg1) {
 
 export function TotalRAMGB() {
   return window['go']['main']['App']['TotalRAMGB']();
+}
+
+export function UpdateAccount(arg1, arg2) {
+  return window['go']['main']['App']['UpdateAccount'](arg1, arg2);
 }
 
 export function UpdateEngineConfig(arg1) {

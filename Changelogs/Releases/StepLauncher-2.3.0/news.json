@@ -1,0 +1,7 @@
+{
+  "title": "StepLauncher 2.3.0 — Actualización importante",
+  "type": "major",
+  "body": "La actualización más completa hasta la fecha: sistema de cuentas (offline y AuthLib/Yggdrasil), presencia en Discord, actualizador automático, instalador de versiones y modloaders renovado, diagnóstico completo de crashes, soporte de Forge/NeoForge 1.21+ y decenas de errores corregidos.",
+  "date": "2026-08-07",
+  "changelog": "Changelogs/Releases/StepLauncher-2.3.0/StepLauncher-Release-2.3.0.md"
+}

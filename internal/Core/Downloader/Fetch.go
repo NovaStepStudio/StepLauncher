@@ -1,4 +1,4 @@
-﻿package downloader
+package downloader
 
 import (
 	"encoding/json"
@@ -58,7 +58,6 @@ func FetchJSON(cfg Config, url, cacheKey string, out interface{}) error {
 func fetchJSONWithCache(cfg Config, url, cacheKey string, out interface{}) error {
 	category, subkey := cacheCategory(cacheKey)
 
-	// Try cache with fallback (allows expired data)
 	found, expired, err := cfg.CacheManager.GetWithFallback(category, subkey, out)
 	if err == nil && found && !expired {
 		return nil

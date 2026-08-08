@@ -96,87 +96,49 @@ func IsNativeLibrary(lib Library) bool {
 	return false
 }
 
-func archMatches(clsName, arch string) bool {
-	if arch == "" {
-		return true
+func IsNativeClassifierEntry(lib Library) bool {
+	name := lib.Name
+	if name == "" {
+		return false
 	}
-	low := strings.ToLower(clsName)
-	switch arch {
-	case "x86_64":
-		if strings.Contains(low, "arm64") || strings.Contains(low, "aarch64") {
-			return false
-		}
-		return !strings.Contains(low, "-x86-") && !strings.Contains(low, "-x86.")
-	case "arm64":
-		return strings.Contains(low, "arm64") || strings.Contains(low, "aarch64")
-	case "x86":
-		return strings.Contains(low, "x86") && !strings.Contains(low, "x86_64") && !strings.Contains(low, "amd64")
+	idx := strings.LastIndex(name, ":")
+	if idx < 0 {
+		return false
 	}
-	return true
+	classifier := name[idx+1:]
+	return strings.HasPrefix(classifier, "natives-")
 }
 
 func ResolveNativeArtifact(lib Library, os, arch string) *Artifact {
-	if lib.Downloads == nil {
+	exact := globalutils.NativeClassifierFor(os, arch)
+	if exact == "" {
 		return nil
 	}
 
-	osPrefix := "natives-" + os
-
-	if lib.Natives != nil && lib.Natives[os] != "" {
-		template := lib.Natives[os]
-		archSuffix := "64"
-		if arch == "x86" {
-			archSuffix = "32"
-		}
-		withArch := strings.ReplaceAll(template, "${arch}", archSuffix)
-
-		if lib.Downloads.Classifiers != nil {
-			if a, ok := lib.Downloads.Classifiers[withArch]; ok && a.URL != "" {
-				return &a
-			}
-			if a, ok := lib.Downloads.Classifiers[osPrefix]; ok && a.URL != "" {
-				return &a
-			}
-			for key, a := range lib.Downloads.Classifiers {
-				if strings.HasPrefix(key, osPrefix) && a.URL != "" {
-					return &a
-				}
-			}
-		}
-	}
-
-	if lib.Downloads.Classifiers != nil {
-		for key, a := range lib.Downloads.Classifiers {
-			if strings.HasPrefix(key, osPrefix) && a.URL != "" && archMatches(key, arch) {
-				return &a
-			}
-		}
-		for key, a := range lib.Downloads.Classifiers {
-			if strings.HasPrefix(key, osPrefix) && a.URL != "" {
-				return &a
-			}
-		}
-	}
-
-	if lib.Downloads.Artifact != nil && lib.Downloads.Artifact.URL != "" {
-		path := strings.ToLower(lib.Downloads.Artifact.Path)
-		name := strings.ToLower(lib.Name)
-		pathMatches := strings.Contains(path, osPrefix)
-		nameMatches := strings.Contains(name, ":"+osPrefix)
-		genericNative := strings.Contains(name, ":natives") &&
-			!strings.Contains(name, ":natives-linux") &&
-			!strings.Contains(name, ":natives-osx") &&
-			!strings.Contains(name, ":natives-windows")
-
-		if pathMatches || nameMatches || genericNative {
+	if lib.Name != "" && strings.HasSuffix(strings.ToLower(lib.Name), ":"+exact) {
+		if lib.Downloads != nil && lib.Downloads.Artifact != nil && lib.Downloads.Artifact.URL != "" {
 			return lib.Downloads.Artifact
+		}
+		return nil
+	}
+
+	if lib.Natives != nil && lib.Downloads != nil && lib.Downloads.Classifiers != nil {
+		if raw, ok := lib.Natives[os]; ok && raw != "" {
+			archSuffix := "64"
+			if arch == "x86" {
+				archSuffix = "32"
+			}
+			if a, ok := lib.Downloads.Classifiers[strings.ReplaceAll(raw, "${arch}", archSuffix)]; ok && a.URL != "" {
+				return &a
+			}
+		}
+		if a, ok := lib.Downloads.Classifiers[exact]; ok && a.URL != "" {
+			return &a
 		}
 	}
 
 	return nil
 }
-
-
 
 func BuildTasks(cfg Config, ver *VersionJSON, version string, filter DownloadFilter) ([]DownloadTask, error) {
 	var tasks []DownloadTask
@@ -223,19 +185,29 @@ func addLibraryTasks(tasks *[]DownloadTask, ver *VersionJSON, libDir string, fil
 		if !MatchRules(lib.Rules) {
 			continue
 		}
-		if lib.Downloads != nil && lib.Downloads.Artifact != nil && lib.Downloads.Artifact.URL != "" {
-			*tasks = append(*tasks, DownloadTask{
-				URL:     lib.Downloads.Artifact.URL,
-				Dest:    filepath.Join(libDir, lib.Downloads.Artifact.Path),
-				SHA1:    lib.Downloads.Artifact.SHA1,
-				Size:    lib.Downloads.Artifact.Size,
-				Section: "libraries",
-			})
-		} else if lib.URL != "" && lib.Name != "" && !IsNativeLibrary(lib) {
+		if IsNativeClassifierEntry(lib) {
+			continue
+		}
+		if lib.Downloads != nil && lib.Downloads.Artifact != nil {
+			a := lib.Downloads.Artifact
+			url := a.URL
+			if url == "" && a.Path != "" {
+				url = LibraryRepositoryBase(lib) + "/" + a.Path
+			}
+			if url != "" {
+				*tasks = append(*tasks, DownloadTask{
+					URL:     url,
+					Dest:    filepath.Join(libDir, a.Path),
+					SHA1:    a.SHA1,
+					Size:    a.Size,
+					Section: "libraries",
+				})
+			}
+		} else if lib.Name != "" && !IsNativeLibrary(lib) && HasRepositoryFallback(lib) {
 			path := globalutils.MavenPath(lib.Name)
 			if path != "" {
 				*tasks = append(*tasks, DownloadTask{
-					URL:     lib.URL + path,
+					URL:     LibraryRepositoryBase(lib) + "/" + path,
 					Dest:    filepath.Join(libDir, path),
 					Section: "libraries",
 				})
@@ -318,11 +290,22 @@ func addJavaRuntime(tasks *[]DownloadTask, ver *VersionJSON, cfg Config, filter 
 	if !filter.Java || ver.JavaVersion.Component == "" {
 		return
 	}
+	javaTasks, err := BuildJavaRuntimeTasks(ver, cfg)
+	if err != nil {
+		return
+	}
+	*tasks = append(*tasks, javaTasks...)
+}
+
+func BuildJavaRuntimeTasks(ver *VersionJSON, cfg Config) ([]DownloadTask, error) {
+	if ver.JavaVersion.Component == "" {
+		return nil, fmt.Errorf("version has no javaVersion.component")
+	}
 	var all JavaProducts
 	if err := FetchJSON(cfg,
 		"https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json",
 		"java-products", &all); err != nil {
-		return
+		return nil, fmt.Errorf("fetch java products: %w", err)
 	}
 	key := globalutils.OsKey()
 	var products map[string][]JavaProduct
@@ -340,13 +323,18 @@ func addJavaRuntime(tasks *[]DownloadTask, ver *VersionJSON, cfg Config, filter 
 	}
 	list, ok := products[ver.JavaVersion.Component]
 	if !ok || len(list) == 0 {
-		return
+		return nil, fmt.Errorf("no java product for component %s", ver.JavaVersion.Component)
 	}
 	var jm JavaManifest
 	if err := FetchJSON(cfg, list[0].Manifest.URL, "java/"+ver.JavaVersion.Component+"/"+key, &jm); err != nil {
-		return
+		return nil, fmt.Errorf("fetch java manifest: %w", err)
 	}
-	base := filepath.Join(cfg.WorkDir, "runtime", ver.JavaVersion.Component, key)
+	runtimeBase := filepath.Join(cfg.WorkDir, "runtime")
+	if cfg.JavaRuntimeDir != "" {
+		runtimeBase = cfg.JavaRuntimeDir
+	}
+	base := filepath.Join(runtimeBase, ver.JavaVersion.Component, key)
+	var tasks []DownloadTask
 	for relPath, f := range jm.Files {
 		fullPath := filepath.Join(base, relPath)
 		if f.Type == "directory" {
@@ -357,7 +345,7 @@ func addJavaRuntime(tasks *[]DownloadTask, ver *VersionJSON, cfg Config, filter 
 			continue
 		}
 		dl := f.Downloads.Raw
-		*tasks = append(*tasks, DownloadTask{
+		tasks = append(tasks, DownloadTask{
 			URL:     dl.URL,
 			Dest:    fullPath,
 			SHA1:    dl.SHA1,
@@ -365,6 +353,10 @@ func addJavaRuntime(tasks *[]DownloadTask, ver *VersionJSON, cfg Config, filter 
 			Section: "java",
 		})
 	}
+	if len(tasks) == 0 {
+		return nil, fmt.Errorf("no java runtime files for component %s", ver.JavaVersion.Component)
+	}
+	return tasks, nil
 }
 
 func SubstituteVars(template string, vars map[string]string) string {

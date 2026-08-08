@@ -17,7 +17,6 @@ import (
 type Orchestrator struct {
 	registry   *Registry
 	workDir    string
-	sharedDir  string
 	cacheDir   string
 	httpClient *http.Client
 	broadcast  func([]byte)
@@ -25,11 +24,10 @@ type Orchestrator struct {
 	mu         sync.RWMutex
 }
 
-func NewOrchestrator(workDir, sharedDir, cacheDir string, client *http.Client, reg *Registry, broadcast func([]byte), logFn func(string, ...interface{})) *Orchestrator {
+func NewOrchestrator(workDir, cacheDir string, client *http.Client, reg *Registry, broadcast func([]byte), logFn func(string, ...interface{})) *Orchestrator {
 	return &Orchestrator{
 		registry:   reg,
 		workDir:    workDir,
-		sharedDir:  sharedDir,
 		cacheDir:   cacheDir,
 		httpClient: client,
 		broadcast:  broadcast,
@@ -44,9 +42,6 @@ func (o *Orchestrator) ModloaderCacheDir() string {
 }
 
 func (o *Orchestrator) LibrariesPath(instancePath string) string {
-	if o.sharedDir != "" {
-		return filepath.Join(o.sharedDir, "libraries")
-	}
 	return filepath.Join(instancePath, "libraries")
 }
 
@@ -164,7 +159,7 @@ func (o *Orchestrator) downloadEntries(sessionId string, entries []DownloadPlanE
 func (o *Orchestrator) saveState(instancePath string, loader *InstalledLoader) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	
+
 	state := InstallState{Loader: loader}
 	data, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
@@ -177,7 +172,7 @@ func (o *Orchestrator) saveState(instancePath string, loader *InstalledLoader) e
 func (o *Orchestrator) LoadState(instancePath string) (*InstalledLoader, error) {
 	o.mu.RLock()
 	defer o.mu.RUnlock()
-	
+
 	statePath := LoaderStatePath(instancePath)
 	data, err := os.ReadFile(statePath)
 	if err != nil {
@@ -194,7 +189,7 @@ func (o *Orchestrator) LoadState(instancePath string) (*InstalledLoader, error) 
 func (o *Orchestrator) RemoveState(instancePath string) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	
+
 	statePath := LoaderStatePath(instancePath)
 	if err := os.Remove(statePath); err != nil && !os.IsNotExist(err) {
 		return err

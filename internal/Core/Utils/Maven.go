@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-// MavenPath parses a Maven coordinate into a file path (e.g. "group:artifact:version:classifier" -> "group/artifact/version/artifact-version-classifier.jar")
 func MavenPath(name string) string {
 	parts := strings.Split(name, ":")
 	if len(parts) < 3 {

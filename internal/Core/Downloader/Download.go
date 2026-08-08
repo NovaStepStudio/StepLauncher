@@ -116,7 +116,6 @@ func tryDownload(ctx context.Context, url, tmpDest, finalDest string, client *ht
 	var lastRead atomic.Int64
 	lastRead.Store(time.Now().UnixNano())
 
-	// Stall monitor: cancels attemptCtx if no data for stallTimeout
 	go func() {
 		ticker := time.NewTicker(stallTimeout)
 		defer ticker.Stop()

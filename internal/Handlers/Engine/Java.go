@@ -1,4 +1,5 @@
 package engine
+
 import (
 	"os"
 	"os/exec"
@@ -6,7 +7,7 @@ import (
 	"runtime"
 	"strings"
 
-	"StepLauncher/internal/Core/Config"
+	engineconfig "StepLauncher/internal/Handlers/Engine/engineconfig"
 )
 
 func (e *Engine) DetectJavaInstallations() []string {
@@ -26,9 +27,6 @@ func (e *Engine) DetectJavaInstallations() []string {
 		if seen[key] {
 			return
 		}
-		// Solo instalaciones reales de Java: el ejecutable debe estar dentro
-		// de una carpeta "bin" y no en el shim "javapath" que Windows mete
-		// en el PATH (redirige al Java "por defecto", no es una instalacion).
 		if filepath.Base(filepath.Dir(real)) == "javapath" || filepath.Base(filepath.Dir(real)) != "bin" {
 			return
 		}
@@ -159,15 +157,15 @@ type MinecraftConfig struct {
 	WindowHeight int  `json:"windowHeight"`
 	Fullscreen   bool `json:"fullscreen"`
 
-	JavaArgs          string `json:"javaArgs"`
-	GameArgs          string `json:"gameArgs"`
-	OfflineMode       bool   `json:"offlineMode"`
-	CompatMode        bool   `json:"compatMode"`
-	DetailedLogs      bool   `json:"detailedLogs"`
-	ConcurrentDownloads int  `json:"concurrentDownloads"`
+	JavaArgs            string `json:"javaArgs"`
+	GameArgs            string `json:"gameArgs"`
+	OfflineMode         bool   `json:"offlineMode"`
+	CompatMode          bool   `json:"compatMode"`
+	DetailedLogs        bool   `json:"detailedLogs"`
+	ConcurrentDownloads int    `json:"concurrentDownloads"`
 }
 
-func minecraftFromConfig(cfg config.Config) MinecraftConfig {
+func minecraftFromConfig(cfg engineconfig.Config) MinecraftConfig {
 	return MinecraftConfig{
 		HardwareEnabled:      cfg.HardwareEnabled,
 		HardwareAcceleration: cfg.HardwareAcceleration,
@@ -193,7 +191,7 @@ func minecraftFromConfig(cfg config.Config) MinecraftConfig {
 	}
 }
 
-func configFromMinecraft(mc MinecraftConfig, base config.Config) config.Config {
+func configFromMinecraft(mc MinecraftConfig, base engineconfig.Config) engineconfig.Config {
 	base.HardwareEnabled = mc.HardwareEnabled
 	base.HardwareAcceleration = mc.HardwareAcceleration
 	base.GPUType = mc.GPUType

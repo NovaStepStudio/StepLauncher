@@ -2,6 +2,9 @@ package launcher
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"StepLauncher/internal/Core/Auth"
 	"StepLauncher/internal/Core/Downloader"
 
 	"StepLauncher/internal/Core/Launcher/Helpers"
@@ -27,6 +31,9 @@ type Launcher struct {
 	eventBroadcast   func([]byte)
 	onGameExit       func(*GameInstance, int)
 	gameInstance     *GameInstance
+	resolvedAuthRoot     string
+	prefetchedMeta       string
+	resolvedInjectorPath string
 }
 
 func NewLauncher(cfg LaunchConfig) *Launcher {
@@ -82,8 +89,21 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 		l.log("Auth server verified: %s", adv.AuthLibConfig.AuthServerURL)
 	}
 
+	if adv.AuthLibConfig.Enabled {
+		if err := l.prepareAuthInjector(adv.AuthLibConfig); err != nil {
+			return nil, fmt.Errorf("authlib-injector: %w", err)
+		}
+	}
+
 	if err := l.readVersionJSON(); err != nil {
 		return nil, fmt.Errorf("read version: %w", err)
+	}
+	adv = l.adv()
+
+	if adv.UseOfficialJava {
+		if err := l.ensureOfficialJava(); err != nil {
+			return nil, fmt.Errorf("official java: %w", err)
+		}
 	}
 
 	javaPath, err := helpers.ResolveJava(
@@ -95,7 +115,6 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 	if err != nil {
 		return nil, fmt.Errorf("resolve java: %w", err)
 	}
-
 	gl, err := gamelog.NewGameLogManager(gamelog.GameLogConfig{
 		LogDir:       l.cfg.LogDir,
 		LauncherName: l.cfg.LauncherName,
@@ -171,7 +190,11 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 	l.log("Classpath entries: %d", len(cpEntries))
 
 	if !adv.SkipNativeExtract {
-		extracted, err := helpers.ExtractNatives(l.ver.Libraries, adv.LibrariesDir, nativesDir)
+		var jvmArgs []interface{}
+		if l.ver.Arguments != nil {
+			jvmArgs = l.ver.Arguments.JVM
+		}
+		extracted, err := helpers.ExtractNatives(l.ver.Libraries, adv.LibrariesDir, nativesDir, jvmArgs)
 		if err != nil {
 			l.log("WARN: native extraction failed: %v", err)
 		} else {
@@ -181,23 +204,29 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 
 	l.ensureGameDir()
 
+	launcherProps := ""
+	if adv.ExecutionPlan != nil {
+		launcherProps = l.ensureLauncherProperties(adv.GameDir)
+	}
+
 	vars := helpers.BuildVarsMap(
 		helpers.VarConfig{
-			Username:         l.cfg.Username,
-			UUID:             l.cfg.UUID,
-			AccessToken:      l.cfg.AccessToken,
-			XUID:             l.cfg.XUID,
-			ClientID:         l.cfg.ClientID,
-			GameDir:          adv.GameDir,
-			AssetsDir:        adv.AssetsDir,
-			LibrariesDir:     adv.LibrariesDir,
-			LauncherName:     l.cfg.LauncherName,
-			LauncherVersion:  l.cfg.LauncherVersion,
-			DemoUser:         adv.DemoUser,
-			CustomResolution: adv.CustomResolution,
-			ResWidth:         adv.ResWidth,
-			ResHeight:        adv.ResHeight,
-			UserType:         adv.UserType,
+			Username:           l.cfg.Username,
+			UUID:               l.cfg.UUID,
+			AccessToken:        l.cfg.AccessToken,
+			XUID:               l.cfg.XUID,
+			ClientID:           l.cfg.ClientID,
+			GameDir:            adv.GameDir,
+			AssetsDir:          adv.AssetsDir,
+			LibrariesDir:       adv.LibrariesDir,
+			LauncherName:       l.cfg.LauncherName,
+			LauncherVersion:    l.cfg.LauncherVersion,
+			DemoUser:           adv.DemoUser,
+			CustomResolution:   adv.CustomResolution,
+			ResWidth:           adv.ResWidth,
+			ResHeight:          adv.ResHeight,
+			UserType:           adv.UserType,
+			LauncherProperties: launcherProps,
 		},
 		l.ver.ID, l.ver.Type, l.advAssetIndexID(),
 		classpath, nativesDir,
@@ -317,8 +346,19 @@ func (l *Launcher) advAssetIndexID() string {
 func (l *Launcher) buildJVMArgs(javaPath string, vars map[string]string, adv AdvancedConfig) []string {
 	var args []string
 
-	if l.ver.Arguments != nil {
+if l.ver.Arguments != nil {
 		args = append(args, helpers.BuildJVMArgs(l.ver.Arguments.JVM, vars)...)
+	}
+
+	hasLibPath := false
+	for _, a := range args {
+		if strings.HasPrefix(a, "-Djava.library.path") {
+			hasLibPath = true
+			break
+		}
+	}
+	if !hasLibPath {
+		args = append(args, "-Djava.library.path="+vars["natives_directory"])
 	}
 
 	minMem := adv.MinRAM
@@ -354,10 +394,6 @@ func (l *Launcher) buildJVMArgs(javaPath string, vars map[string]string, adv Adv
 	gcFlags := helpers.GCFlags(adv.GCPreset)
 	override = append(override, gcFlags...)
 
-	if l.isHWAccelDisabled() {
-		override = append(override, helpers.HWAccelDisableFlags()...)
-	}
-
 	if helpers.DetectJavaMajorVersion(javaPath) >= 17 {
 		override = append(override, "--enable-native-access=ALL-UNNAMED")
 	}
@@ -382,9 +418,16 @@ func (l *Launcher) buildJVMArgs(javaPath string, vars map[string]string, adv Adv
 		override = append(override, "-Dminecraft.window.title="+adv.WindowTitle)
 	}
 
-	if adv.AuthLibConfig.Enabled && adv.AuthLibConfig.InjectorPath != "" {
-		javaagent := fmt.Sprintf("-javaagent:%s=%s", adv.AuthLibConfig.InjectorPath, adv.AuthLibConfig.AuthServerURL)
+	if adv.AuthLibConfig.Enabled && l.resolvedInjectorPath != "" {
+		apiRoot := adv.AuthLibConfig.AuthServerURL
+		if l.resolvedAuthRoot != "" {
+			apiRoot = l.resolvedAuthRoot
+		}
+		javaagent := fmt.Sprintf("-javaagent:%s=%s", l.resolvedInjectorPath, apiRoot)
 		override = append(override, javaagent)
+	}
+	if l.prefetchedMeta != "" {
+		override = append(override, "-Dauthlibinjector.yggdrasil.prefetched="+l.prefetchedMeta)
 	}
 
 	for flag := range adv.JVMFlags {
@@ -394,16 +437,31 @@ func (l *Launcher) buildJVMArgs(javaPath string, vars map[string]string, adv Adv
 	override = append(override, adv.JavaArgs...)
 
 	cp := vars["classpath"]
+	tplHasModulePath := false
 	var filtered []string
 	for _, a := range args {
+		if a == "--module-path" || a == "-p" {
+			tplHasModulePath = true
+		}
 		if a == "-cp" || a == "--class-path" || a == cp || a == "${classpath}" {
 			continue
 		}
 		filtered = append(filtered, a)
 	}
 
+	useModulePath := adv.ExecutionPlan != nil && adv.ExecutionPlan.UseModulePath
+	if !useModulePath {
+		useModulePath = tplHasModulePath
+	}
+
 	result := append(filtered, override...)
-	result = append(result, "-cp", cp)
+	switch {
+	case useModulePath && !tplHasModulePath:
+		result = append(result, "--module-path", cp)
+	case useModulePath:
+	default:
+		result = append(result, "-cp", cp)
+	}
 
 	for i, a := range result {
 		result[i] = helpers.SubstituteVars(a, vars)
@@ -491,6 +549,72 @@ func (l *Launcher) initPaths() error {
 	return nil
 }
 
+func (l *Launcher) ensureOfficialJava() error {
+	adv := l.adv()
+	component := l.ver.JavaVersion.Component
+	if component == "" {
+		return fmt.Errorf("version has no javaVersion.component")
+	}
+	if _, err := helpers.ResolveJava(component, adv.RuntimeDir, true, ""); err == nil {
+		return nil
+	}
+	if adv.RuntimeDir == "" {
+		return fmt.Errorf("official java not found and no runtime dir configured")
+	}
+
+	l.log("Official Java component %q not found, downloading...", component)
+
+	workDir := filepath.Dir(adv.RuntimeDir)
+	cfg := downloader.Config{
+		WorkDir:        workDir,
+		CacheDir:       adv.CacheDir,
+		JavaRuntimeDir: adv.RuntimeDir,
+		HTTPClient:     downloader.DefaultHTTPClient(),
+		LogFn:          l.log,
+	}
+
+	tasks, err := downloader.BuildJavaRuntimeTasks(l.ver, cfg)
+	if err != nil {
+		return fmt.Errorf("build java runtime tasks: %w", err)
+	}
+
+	ctx := context.Background()
+	total := len(tasks)
+	failed := 0
+	for i, task := range tasks {
+		l.log("Downloading [%d/%d] %s", i+1, total, filepath.Base(task.Dest))
+		os.MkdirAll(filepath.Dir(task.Dest), 0755)
+		if err := downloader.DownloadFile(ctx, task, cfg.HTTPClient, 3, nil, 60000, 3); err != nil {
+			l.log("WARN [%d/%d] failed: %s: %v", i+1, total, filepath.Base(task.Dest), err)
+			failed++
+		}
+	}
+	if failed > 0 {
+		return fmt.Errorf("failed to download %d/%d java runtime files", failed, total)
+	}
+
+	if _, err := helpers.ResolveJava(component, adv.RuntimeDir, true, ""); err != nil {
+		return fmt.Errorf("official java still missing after download: %w", err)
+	}
+	l.log("Official Java component %q ready", component)
+	return nil
+}
+
+func (l *Launcher) prepareEmit(phase string, current, total int, label, message string, finished bool) {
+	if l.eventBroadcast == nil {
+		return
+	}
+	BroadcastPrepare(l.eventBroadcast, &GamePrepareData{
+		Version:  l.cfg.Version,
+		Phase:    phase,
+		Current:  current,
+		Total:    total,
+		Label:    label,
+		Message:  message,
+		Finished: finished,
+	})
+}
+
 func (l *Launcher) downloadMissingLibraries(cpEntries *[]helpers.ClasspathEntry) error {
 	adv := l.adv()
 	if adv.DisableLibraries {
@@ -536,13 +660,14 @@ func (l *Launcher) downloadMissingLibraries(cpEntries *[]helpers.ClasspathEntry)
 	}
 
 	l.log("Found %d missing libraries, downloading...", len(missing))
+	l.prepareEmit("libraries", 0, len(missing), "", "", false)
 
 	ctx := context.Background()
 	total := len(missing)
 	failed := 0
 
 	for i, m := range missing {
-		// handle client jar specially â€” it uses the version's client URL, not a Maven artifact
+		l.prepareEmit("libraries", i+1, total, filepath.Base(m.path), "", false)
 		if m.path == clientJar && l.ver.Downloads.Client.URL != "" {
 			label := "client jar: " + filepath.Base(m.path)
 			l.log("Downloading [%d/%d] %s", i+1, total, label)
@@ -591,11 +716,12 @@ func (l *Launcher) downloadMissingLibraries(cpEntries *[]helpers.ClasspathEntry)
 
 	*cpEntries = helpers.RecheckClasspathEntries(*cpEntries)
 
-	if failed == total {
-		return fmt.Errorf("all %d libraries failed to download", failed)
-	}
 	if failed > 0 {
 		l.log("WARN: %d/%d libraries could not be downloaded, continuing anyway", failed, total)
+	}
+	l.prepareEmit("libraries", total, total, "", "", true)
+	if failed == total {
+		return fmt.Errorf("all %d libraries failed to download", failed)
 	}
 	return nil
 }
@@ -613,9 +739,14 @@ func (l *Launcher) readVersionJSON() error {
 		if raw, err := os.ReadFile(verPath); err == nil {
 			var partial struct {
 				InheritsFrom string `json:"inheritsFrom"`
+				Jar          string `json:"jar"`
 			}
-			if json.Unmarshal(raw, &partial) == nil && partial.InheritsFrom != "" {
+			switch {
+			case json.Unmarshal(raw, &partial) == nil && partial.InheritsFrom != "":
 				adv.BaseVersion = partial.InheritsFrom
+				l.cfg.Advanced = &adv
+			case partial.Jar != "":
+				adv.BaseVersion = partial.Jar
 				l.cfg.Advanced = &adv
 			}
 		}
@@ -738,6 +869,26 @@ func (l *Launcher) ensureGameDir() {
 	os.MkdirAll(adv.GameDir, 0755)
 }
 
+func (l *Launcher) ensureLauncherProperties(gameDir string) string {
+	if gameDir == "" {
+		return ""
+	}
+	if err := os.MkdirAll(gameDir, 0755); err != nil {
+		return ""
+	}
+	path := filepath.Join(gameDir, "launcher.properties")
+	buf := make([]byte, 16)
+	if _, err := rand.Read(buf); err != nil {
+		return ""
+	}
+	content := fmt.Sprintf("fml.client.secret=%s\n", hex.EncodeToString(buf))
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		l.log("WARN: no se pudo crear %s: %v", path, err)
+		return ""
+	}
+	return path
+}
+
 func (l *Launcher) scanLogForCrashPatterns(logPath string) (category, reason string) {
 	data, err := os.ReadFile(logPath)
 	if err != nil {
@@ -765,6 +916,8 @@ func (l *Launcher) waitForExit(instance *GameInstance, mcLogFile *os.File) {
 	err := instance.cmd.Wait()
 	instance.mu.Lock()
 
+	stoppedByUser := instance.Status == GameStopped
+
 	cleanMarker := gamelog.HasCleanShutdownMarker(instance.LogPath)
 	exitCode := 0
 
@@ -774,18 +927,30 @@ func (l *Launcher) waitForExit(instance *GameInstance, mcLogFile *os.File) {
 		}
 	}
 
-	if exitCode == 0 || cleanMarker {
+	if exitCode == 0 || cleanMarker || stoppedByUser {
 		if exitCode != 0 && cleanMarker {
 			l.log("Game exited with code %d but clean shutdown detected via log marker", exitCode)
 		}
-		instance.ExitCode = 0
+		instance.ExitCode = exitCode
 		instance.Status = GameExited
+		if stoppedByUser {
+			instance.Status = GameStopped
+			l.log("Game stopped by user (exit code %d)", exitCode)
+		}
 		instance.CrashReason = helpers.CrashReasonLabel(0)
 		instance.CrashCategory = helpers.CrashCategory(0, "")
 		l.log("Game exited cleanly")
-		l.gameLog.WriteGameExit(0)
+		writeExit := exitCode
+		if stoppedByUser {
+			writeExit = 0
+		}
+		l.gameLog.WriteGameExit(writeExit)
 		instance.mu.Unlock()
-		BroadcastExited(l.eventBroadcast, instance)
+		if stoppedByUser {
+			BroadcastStopped(l.eventBroadcast, instance)
+		} else {
+			BroadcastExited(l.eventBroadcast, instance)
+		}
 	} else {
 		instance.ExitCode = exitCode
 		instance.Status = GameCrashed
@@ -841,6 +1006,8 @@ func (l *Launcher) recordCrash(instance *GameInstance) {
 		l.log("Crash report: %s", crashFile)
 	}
 
+instance.CrashLogContent = readCrashLogText(crashFile, contextLines)
+
 	if instance.CrashReason == "" {
 		instance.CrashReason = helpers.CrashReasonLabel(instance.ExitCode)
 	}
@@ -857,6 +1024,37 @@ func (l *Launcher) recordCrash(instance *GameInstance) {
 	if l.cfg.LogFn != nil {
 		l.cfg.LogFn("[Crash] Game %s crashed: %s/%s (exit %d)", instance.ID, instance.CrashCategory, instance.CrashReason, instance.ExitCode)
 	}
+}
+
+func readCrashLogText(crashFile string, contextLines []string) string {
+	const maxBytes = 32 * 1024
+	const maxLines = 400
+
+	if crashFile != "" {
+		data, err := os.ReadFile(crashFile)
+		if err == nil && len(data) > 0 {
+			if len(data) > maxBytes {
+				data = data[len(data)-maxBytes:]
+			}
+			text := string(data)
+			lines := strings.Split(text, "\n")
+			if len(lines) > maxLines {
+				lines = lines[len(lines)-maxLines:]
+			}
+			if joined := strings.Join(lines, "\n"); strings.TrimSpace(joined) != "" {
+				return joined
+			}
+		}
+	}
+
+	if len(contextLines) == 0 {
+		return ""
+	}
+	lines := contextLines
+	if len(lines) > maxLines {
+		lines = lines[len(lines)-maxLines:]
+	}
+	return strings.Join(lines, "\n")
 }
 
 func (l *Launcher) scheduleCleanup() {
@@ -912,6 +1110,55 @@ func (l *Launcher) log(format string, args ...interface{}) {
 	if l.cfg.LogFn != nil {
 		l.cfg.LogFn("[GameLauncher] "+format, args...)
 	}
+}
+
+func (l *Launcher) prepareAuthInjector(cfg AuthLibConfig) error {
+	if cfg.InjectorPath != "" {
+		if st, err := os.Stat(cfg.InjectorPath); err != nil || st.Size() == 0 {
+			return fmt.Errorf("el jar de authlib-injector configurado no existe: %s", cfg.InjectorPath)
+		}
+		l.resolvedInjectorPath = cfg.InjectorPath
+	} else {
+		adv := l.adv()
+		dir := adv.CacheDir
+		if dir == "" {
+			dir = filepath.Join(filepath.Dir(adv.VersionsDir), "authlib-injector")
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+		defer cancel()
+		jarPath, err := authlib.EnsureInjector(ctx, filepath.Join(dir, authlib.InjectorFileName), false)
+		if err != nil {
+			return err
+		}
+		l.resolvedInjectorPath = jarPath
+		l.log("Authlib-injector listo: %s", jarPath)
+	}
+
+	if err := l.prefetchAuthMeta(cfg); err != nil {
+		l.log("WARN: no se pudo precargar la metadata del auth server: %v", err)
+	}
+	return nil
+}
+
+func (l *Launcher) prefetchAuthMeta(cfg AuthLibConfig) error {
+	if cfg.AuthServerURL == "" {
+		return fmt.Errorf("auth server URL is empty")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	root, err := authlib.ResolveServerURL(ctx, cfg.AuthServerURL)
+	if err != nil {
+		return err
+	}
+	meta, err := authlib.FetchMetadata(ctx, root)
+	if err != nil {
+		return err
+	}
+	l.resolvedAuthRoot = root
+	l.prefetchedMeta = base64.StdEncoding.EncodeToString(meta)
+	l.log("Auth server metadata precargada: %s (%d bytes)", root, len(meta))
+	return nil
 }
 
 func (l *Launcher) preVerifyAuthServer(cfg AuthLibConfig) error {

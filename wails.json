@@ -3,10 +3,16 @@
   "name": "StepLauncher",
   "version": "2.3.0",
   "outputfilename": "StepLauncher",
-  "frontend:install": "npm install",
-  "frontend:build": "npm run build",
-  "frontend:dev:watcher": "npm run dev",
+  "frontend:install": "bun install",
+  "frontend:build": "bun run build",
+  "frontend:dev:watcher": "bun run dev",
   "frontend:dev:serverUrl": "auto",
+  "info": {
+    "productName": "StepLauncher",
+    "productVersion": "2.3.0",
+    "companyName": "NovaStepStudio",
+    "comments": "El mejor launcher No Prmeium para Minecraft: Java Edition"
+  },
   "author": {
     "name": "NovaStepStudio",
     "email": "stepnicka012@gmail.com"

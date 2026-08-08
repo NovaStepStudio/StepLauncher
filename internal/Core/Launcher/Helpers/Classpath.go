@@ -27,8 +27,17 @@ func BuildClasspath(libraries []downloader.Library, librariesDir, versionsDir, v
 			continue
 		}
 
-		if downloader.IsNativeLibrary(lib) && lib.Natives == nil {
+		if downloader.IsNativeClassifierEntry(lib) {
 			continue
+		}
+
+if downloader.IsNativeLibrary(lib) {
+			if lib.Natives == nil {
+				continue
+			}
+			if lib.Downloads == nil || lib.Downloads.Artifact == nil || lib.Downloads.Artifact.Path == "" {
+				continue
+			}
 		}
 
 		var libPath string
@@ -87,15 +96,21 @@ func RecheckClasspathEntries(entries []ClasspathEntry) []ClasspathEntry {
 }
 
 func ResolveLibraryDownload(lib downloader.Library, librariesDir string) (dest, url, sha1 string, size int64) {
-	if lib.Downloads != nil && lib.Downloads.Artifact != nil && lib.Downloads.Artifact.URL != "" {
+	if lib.Downloads != nil && lib.Downloads.Artifact != nil {
 		a := lib.Downloads.Artifact
-		return filepath.Join(librariesDir, a.Path), a.URL, a.SHA1, a.Size
+		artifactURL := a.URL
+		if artifactURL == "" && a.Path != "" {
+			artifactURL = downloader.LibraryRepositoryBase(lib) + "/" + a.Path
+		}
+		if artifactURL != "" {
+			return filepath.Join(librariesDir, a.Path), artifactURL, a.SHA1, a.Size
+		}
 	}
-	if lib.Name != "" {
+	if lib.Name != "" && !downloader.IsNativeLibrary(lib) {
 		p := utils.MavenPath(lib.Name)
-		base := lib.URL
+		base := downloader.LibraryRepositoryBase(lib)
 		if base == "" {
-			base = "https://libraries.minecraft.net"
+			return "", "", "", 0
 		}
 		return filepath.Join(librariesDir, p), strings.TrimRight(base, "/") + "/" + p, "", 0
 	}

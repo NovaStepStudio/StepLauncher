@@ -162,6 +162,9 @@ func (p *AbstractForgeProvider) BuildExecution(loader *modloader.InstalledLoader
 	if profile.Arguments != nil {
 		for _, a := range profile.Arguments.JVM {
 			if s, ok := a.(string); ok {
+				if s == "--module-path" || s == "-p" {
+					plan.UseModulePath = true
+				}
 				plan.AdditionalJVMArgs = append(plan.AdditionalJVMArgs, s)
 			}
 		}

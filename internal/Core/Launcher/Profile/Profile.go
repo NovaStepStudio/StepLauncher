@@ -12,6 +12,7 @@ import (
 type Profile struct {
 	Name             string            `json:"name"`
 	Version          string            `json:"version,omitempty"`
+	LastVersionID    string            `json:"lastVersionId,omitempty"`
 	GameDir          string            `json:"gameDir,omitempty"`
 	JavaExec         string            `json:"javaExec,omitempty"`
 	JavaArgs         string            `json:"javaArgs,omitempty"`
@@ -29,6 +30,7 @@ type Profile struct {
 type ProfilesFile struct {
 	Profiles        map[string]*Profile `json:"profiles"`
 	SelectedProfile string              `json:"selectedProfile,omitempty"`
+	SelectedVersion string              `json:"selectedVersion,omitempty"`
 }
 
 type Manager struct {
@@ -62,15 +64,62 @@ func (m *Manager) Load() error {
 	if m.data.Profiles == nil {
 		m.data.Profiles = make(map[string]*Profile)
 	}
+	for _, p := range m.data.Profiles {
+		if p.Version == "" && p.LastVersionID != "" {
+			p.Version = p.LastVersionID
+		}
+	}
 	return nil
 }
 
 func (m *Manager) save() error {
-	data, err := json.MarshalIndent(m.data, "", "  ")
+	if m.filePath == "" {
+		return nil
+	}
+	if err := os.MkdirAll(filepath.Dir(m.filePath), 0755); err != nil {
+		return err
+	}
+	raw := map[string]json.RawMessage{}
+	if b, err := os.ReadFile(m.filePath); err == nil {
+		json.Unmarshal(b, &raw)
+	}
+	for _, p := range m.data.Profiles {
+		if p.Version == "" {
+			p.LastVersionID = ""
+		} else {
+			p.LastVersionID = p.Version
+		}
+	}
+	profilesJSON, err := json.Marshal(m.data.Profiles)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(m.filePath, data, 0644)
+	selJSON, err := json.Marshal(m.data.SelectedProfile)
+	if err != nil {
+		return err
+	}
+	verJSON, err := json.Marshal(m.data.SelectedVersion)
+	if err != nil {
+		return err
+	}
+	raw["profiles"] = profilesJSON
+	raw["selectedProfile"] = selJSON
+	raw["selectedVersion"] = verJSON
+	out, err := json.MarshalIndent(raw, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(m.filePath, out, 0644)
+}
+
+func (m *Manager) EnsureFile() error {
+	m.mu.RLock()
+	if _, err := os.Stat(m.filePath); err == nil {
+		m.mu.RUnlock()
+		return nil
+	}
+	m.mu.RUnlock()
+	return m.save()
 }
 
 func (m *Manager) List() map[string]*Profile {
@@ -147,5 +196,18 @@ func (m *Manager) SetSelected(name string) error {
 		}
 	}
 	m.data.SelectedProfile = name
+	return m.save()
+}
+
+func (m *Manager) SelectedVersion() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.data.SelectedVersion
+}
+
+func (m *Manager) SetSelectedVersion(version string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.data.SelectedVersion = version
 	return m.save()
 }

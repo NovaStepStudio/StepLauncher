@@ -16,23 +16,9 @@ var nativeExts = map[string]bool{
 	".jnilib": true,
 }
 
-func isNativeFile(name string) bool {
+func IsNativeFile(name string) bool {
 	ext := strings.ToLower(filepath.Ext(name))
 	return nativeExts[ext]
-}
-
-func nativeSubDir(jarPath string) string {
-	lower := strings.ToLower(filepath.ToSlash(jarPath))
-	switch {
-	case strings.Contains(lower, "/lwjgl/"):
-		return "lwjgl"
-	case strings.Contains(lower, "/jna/"):
-		return "jna"
-	case strings.Contains(lower, "/netty/"):
-		return "netty"
-	default:
-		return "java"
-	}
 }
 
 func ExtractNatives(jarPaths []string, nativesDir string) (int, error) {
@@ -46,13 +32,7 @@ func ExtractNatives(jarPaths []string, nativesDir string) (int, error) {
 	extracted := 0
 	var errs []string
 	for _, jarPath := range jarPaths {
-		subDir := nativeSubDir(jarPath)
-		extractDir := filepath.Join(nativesDir, subDir)
-		if err := os.MkdirAll(extractDir, 0755); err != nil {
-			errs = append(errs, fmt.Sprintf("mkdir %s: %v", subDir, err))
-			continue
-		}
-		n, err := ExtractJarNatives(jarPath, extractDir)
+		n, err := ExtractJarNatives(jarPath, nativesDir)
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("%s: %v", filepath.Base(jarPath), err))
 			continue
@@ -81,7 +61,7 @@ func ExtractJarNatives(jarPath, extractDir string) (int, error) {
 		if strings.HasPrefix(name, "META-INF") {
 			continue
 		}
-		if !isNativeFile(name) {
+		if !IsNativeFile(name) {
 			continue
 		}
 
@@ -91,6 +71,9 @@ func ExtractJarNatives(jarPath, extractDir string) (int, error) {
 		}
 
 		dest := filepath.Join(extractDir, fileName)
+		if _, err := os.Stat(dest); err == nil {
+			continue
+		}
 
 		rc, err := f.Open()
 		if err != nil {

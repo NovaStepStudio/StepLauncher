@@ -9,11 +9,22 @@ type GameEventType string
 
 const (
 	EvGameStarting GameEventType = "game_starting"
+	EvGamePrepare  GameEventType = "game_prepare"
 	EvGameStarted  GameEventType = "game_started"
 	EvGameExited   GameEventType = "game_exited"
 	EvGameCrashed  GameEventType = "game_crashed"
 	EvGameStopped  GameEventType = "game_stopped"
 )
+
+type GamePrepareData struct {
+	Version  string `json:"version"`
+	Phase    string `json:"phase"`
+	Current  int    `json:"current"`
+	Total    int    `json:"total"`
+	Label    string `json:"label,omitempty"`
+	Message  string `json:"message,omitempty"`
+	Finished bool   `json:"finished,omitempty"`
+}
 
 type GameEventData struct {
 	ID            string `json:"id"`
@@ -24,6 +35,7 @@ type GameEventData struct {
 	Status        string `json:"status"`
 	ExitCode      int    `json:"exitCode,omitempty"`
 	CrashLog      string `json:"crashLog,omitempty"`
+	CrashLogText  string `json:"crashLogText,omitempty"`
 	CrashReason   string `json:"crashReason,omitempty"`
 	CrashCategory string `json:"crashCategory,omitempty"`
 	UptimeMs      int64  `json:"uptimeMs,omitempty"`
@@ -45,6 +57,7 @@ func NewGameEventData(inst *GameInstance) *GameEventData {
 		Status:        string(inst.GetStatus()),
 		ExitCode:      inst.GetExitCode(),
 		CrashLog:      inst.CrashLog,
+		CrashLogText:  inst.CrashLogContent,
 		CrashReason:   inst.CrashReason,
 		CrashCategory: inst.CrashCategory,
 		Timestamp:     time.Now().UTC().Format(time.RFC3339),
@@ -61,6 +74,17 @@ func broadcastEvent(fn func([]byte), evt *GameEvent) {
 	}
 	data, _ := json.Marshal(evt)
 	fn(data)
+}
+
+func BroadcastPrepare(fn func([]byte), data *GamePrepareData) {
+	if fn == nil {
+		return
+	}
+	raw, _ := json.Marshal(map[string]interface{}{
+		"type": string(EvGamePrepare),
+		"data": data,
+	})
+	fn(raw)
 }
 
 func BroadcastStarting(fn func([]byte), inst *GameInstance) {

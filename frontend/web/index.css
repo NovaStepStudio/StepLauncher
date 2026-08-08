@@ -13,27 +13,44 @@
     src: url('./assets/fonts/Fredoka.woff2');
 }
 
-*{
+* {
     outline: none;
     user-select: none;
-    img{
+
+    img {
         pointer-events: none;
         image-rendering: optimizeSpeed, optimizeQuality;
         object-fit: cover;
     }
 }
 
-:root{
+:root {
     --background-body: url('./assets/background/bg.webp');
     --background-sidebar: #0005;
     --background-sidebar-items: #0008;
     --background-bottom-control-version: #0005;
+    --background-modal-primary: #111;
+
+    --border-modal-style: 1px solid #222;
+    --border-style: 1px solid rgba(37, 37, 37, 0.3);
+
+    --progress-color: #5ed89a;
+
     --background-play-button: #111;
     --background-button-primary: #111;
-    --background-modal-primray: #111;
 
-    --border-modal-style: 1px solid color-mix(in srgb, var(--background-modal-primray) 50%, gray 25%);
-    --border-style: 1px solid color-mix(in srgb, var(--background-sidebar) 50%, gray 20%);
+    --color-error: #ff6b6b;
+    --color-success: #5ed89a;
+    --color-tag: #a974ff;
+    --color-warning: #ffb347;
+
+    --control-bg: rgba(255, 255, 255, 0.04);
+    --control-bg-soft: rgba(255, 255, 255, 0.06);
+    --control-bg-dark: rgba(0, 0, 0, 0.2);
+    --control-option-bg: #1a1a2e;
+    --control-toggle-thumb: #fff;
+    --control-border: rgba(255, 255, 255, 0.08);
+    --control-border-strong: rgba(255, 255, 255, 0.1);
 
     --transition-play-button: background 100ms ease-in-out;
     --transition-sidebar-item: background 50ms ease-in-out, border 150ms ease-in-out, scale 100ms ease;
@@ -50,13 +67,12 @@
     --font-primary: 'Lexend';
     --font-secundary: 'Inter';
 
-    /* Colores configurables desde Personalizacion.
-       Sus defaults reproducen los valores base del launcher. */
-    --color-sidebar: #0005;
-    --color-modal: #111;
-    --color-button: #111;
-    --color-border-modal: #494949;
-    --color-border: rgba(37, 37, 37, 0.3);
+    --font-size-primary: 1;
+    --font-size-secundary: 1;
+
+    --text-shadow-primary: none;
+    --text-shadow-secundary: none;
+    --text-shadow-intensity: 1;
 }
 
 :root[data-anim="off"] *,
@@ -66,43 +82,47 @@
     animation: none !important;
 }
 
-:root[data-blur="off"]{
+:root[data-blur="off"] {
     --filter-blur: blur(0px);
 }
 
-:root[data-shadows="off"]{
+:root[data-shadows="off"] {
     --shadow-settings-normal: none;
 }
 
-html{
+:root[data-textshadow="on"] {
+    --text-shadow-primary: 0 0 calc(0.35rem * var(--text-shadow-intensity, 1)) color-mix(in srgb, var(--text-primary) 80%, transparent);
+    --text-shadow-secundary: 0 0 calc(0.3rem * var(--text-shadow-intensity, 1)) color-mix(in srgb, var(--text-secondary) 80%, transparent);
+}
+
+html {
     overflow: hidden;
 }
 
-body{
+body {
     background: var(--background-body);
     background-position: center center;
     background-attachment: fixed;
     background-size: cover;
     color: var(--text-primary);
-    padding:0;
-    margin:0;
+    padding: 0;
+    margin: 0;
     font-family: var(--font-secundary), Arial, Helvetica, sans-serif;
 }
 
-::-webkit-scrollbar{
+::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 
-::-webkit-scrollbar-track{
+::-webkit-scrollbar-track {
     background: transparent;
 }
 
-::-webkit-scrollbar-thumb{
+::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.15);
-    border-radius: 3px;
 }
 
-::-webkit-scrollbar-thumb:hover{
+::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.25);
 }

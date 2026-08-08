@@ -1,4 +1,5 @@
 package engine
+
 import (
 	"sort"
 
@@ -7,8 +8,14 @@ import (
 
 type HistoryEntry = lhistory.Entry
 
+type CrashEntry = lhistory.CrashEntry
+
 func (e *Engine) GetHistory() []HistoryEntry {
 	return e.history.GetEntries()
+}
+
+func (e *Engine) GetCrashHistory() []CrashEntry {
+	return e.crashHist.GetEntries()
 }
 
 func (e *Engine) GetHistoryByVersion(version string) []HistoryEntry {

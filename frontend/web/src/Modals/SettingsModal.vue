@@ -7,9 +7,10 @@ export interface SectionConfig {
 </script>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { IconX, IconSettings } from '@tabler/icons-vue';
 import appInfo from '../../../../wails.json';
+import { previewColorFieldId } from '../Stores/Colorfield';
 
 const appName = appInfo.name ?? 'StepLauncher';
 const appVersion = appInfo.version ?? '0.0.0';
@@ -17,16 +18,33 @@ const appVersion = appInfo.version ?? '0.0.0';
 const props = defineProps<{
     visible: boolean;
     sections?: SectionConfig[];
+    initialSection?: string;
 }>();
 
 const emit = defineEmits<{
     (e: 'update:visible', val: boolean): void;
 }>();
 
+const previewMode = computed(() => previewColorFieldId.value !== null);
+
 const defaultSections: SectionConfig[] = [];
 const mergedSections = computed(() => props.sections ?? defaultSections);
 const activeIndex = ref(0);
 const activeSection = computed(() => mergedSections.value[activeIndex.value] ?? null);
+
+watch(
+    () => props.visible,
+    (v) => {
+        if (!v) {
+            activeIndex.value = 0;
+            return;
+        }
+        if (props.initialSection) {
+            const idx = mergedSections.value.findIndex((s) => s.name === props.initialSection);
+            if (idx >= 0) activeIndex.value = idx;
+        }
+    }
+);
 
 function close() {
     emit('update:visible', false);
@@ -34,6 +52,7 @@ function close() {
 
 function onOverlayClick(e: MouseEvent) {
     if ((e.target as HTMLElement).classList.contains('SettingsModal_Overlay')) {
+        if (previewMode.value) return;
         close();
     }
 }
@@ -42,7 +61,7 @@ function onOverlayClick(e: MouseEvent) {
 <template>
     <Teleport to="body">
         <Transition name="SettingsModal">
-            <div v-if="visible" class="SettingsModal_Overlay" @click="onOverlayClick">
+            <div v-if="visible" class="SettingsModal_Overlay" :class="{ preview: previewMode }" @click="onOverlayClick">
                 <div class="SettingsModal">
                     <div class="SettingsModal_Header">
                         <div class="SettingsModal_Title">
@@ -71,11 +90,13 @@ function onOverlayClick(e: MouseEvent) {
                         </aside>
                         <main class="SettingsModal_Content">
                             <Transition name="SettingsModal_Section" mode="out-in">
-                                <component
-                                    v-if="activeSection"
-                                    :key="activeIndex"
-                                    :is="activeSection.component"
-                                />
+                                <KeepAlive>
+                                    <component
+                                        v-if="activeSection"
+                                        :key="activeSection.name"
+                                        :is="activeSection.component"
+                                    />
+                                </KeepAlive>
                             </Transition>
                         </main>
                     </div>
@@ -95,14 +116,15 @@ function onOverlayClick(e: MouseEvent) {
     justify-content: center;
     align-items: center;
     z-index: 10;
+    transition: background 200ms ease, backdrop-filter 200ms ease;
 }
 
 .SettingsModal {
     width: 90%;
     height: 90%;
-    background: var(--background-modal-primray);
-    border: 1px solid var(--border-modal-style);
-    border-radius: 0.75rem;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    border-radius: 0.5rem;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -116,7 +138,7 @@ function onOverlayClick(e: MouseEvent) {
     height: 1rem;
     padding: 0.5rem 1rem;
     flex-shrink: 0;
-    background: #0005;
+    background: var(--background-sidebar);
     border-bottom: var(--border-modal-style);
 
     .SettingsModal_Title {
@@ -124,10 +146,11 @@ function onOverlayClick(e: MouseEvent) {
         align-items: center;
         gap: 0.5rem;
         color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
 
         h2 {
             margin: 0;
-            font-size: .75rem;
+            font-size: calc(.75rem * var(--font-size-primary, 1));
             font-family: var(--font-primary), Arial, sans-serif;
             font-weight: 600;
         }
@@ -167,7 +190,7 @@ function onOverlayClick(e: MouseEvent) {
     position: relative;
     width: 12.5rem;
     flex-shrink: 0;
-    background: #0005;
+    background: var(--background-sidebar);
     border-right: var(--border-modal-style);
     padding: 0.75rem;
     padding-bottom: 2.2rem;
@@ -182,7 +205,7 @@ function onOverlayClick(e: MouseEvent) {
     bottom: .5rem;
     left: .5rem;
     font-family: var(--font-secundary), Arial, sans-serif;
-    font-size: .65rem;
+    font-size: calc(.65rem * var(--font-size-secundary, 1));
     opacity: .4;
     pointer-events: none;
     white-space: nowrap;
@@ -197,21 +220,25 @@ function onOverlayClick(e: MouseEvent) {
     border: none;
     background: transparent;
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    text-shadow: var(--text-shadow-secundary, none);
+    font-size: calc(0.85rem * var(--font-size-secundary, 1));
     font-family: var(--font-secundary), Arial, sans-serif;
     cursor: pointer;
     transition: background 150ms, color 150ms;
     &:hover {
         background: color-mix(in srgb, var(--background-button-primary) 50%, gray 25%);
         color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
     }
     &:active{
         background: color-mix(in srgb, var(--background-button-primary) 50%, gray 30%);
         color: var(--text-primary);        
+        text-shadow: var(--text-shadow-primary, none);
     }
     &.active {
         background: color-mix(in srgb, var(--background-button-primary) 50%, gray 20%);
         color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
     }
 
     .SettingsModal_SidebarIcon {
@@ -227,10 +254,27 @@ function onOverlayClick(e: MouseEvent) {
     font-size: 0.8rem;
 }
 
+.SettingsModal_Overlay.preview {
+    background: transparent;
+    backdrop-filter: none;
+
+    .SettingsModal {
+        visibility: hidden;
+    }
+
+    :deep(.Cf.previewing) {
+        visibility: visible;
+    }
+}
+
 .SettingsModal_Content {
     flex: 1;
     overflow-y: auto;
     color: var(--text-primary);
+}
+
+.SettingsModal_Content::-webkit-scrollbar {
+    width: 10px;
 }
 
 .SettingsModal-enter-active,

@@ -1,4 +1,5 @@
 package engine
+
 import (
 	"StepLauncher/internal/Core/Downloader"
 )
@@ -20,10 +21,10 @@ const (
 )
 
 type DownloadInfo struct {
-	ID      string         `json:"id"`
-	Version string         `json:"version"`
-	State   DownloadState  `json:"state"`
-	Error   string         `json:"error,omitempty"`
+	ID      string        `json:"id"`
+	Version string        `json:"version"`
+	State   DownloadState `json:"state"`
+	Error   string        `json:"error,omitempty"`
 }
 
 func (e *Engine) StartDownload(version string, filter DownloadFilter, maxRetries, maxConcurrency int, skipVerify bool, stallTimeoutMs, maxStallRetries int) *DownloadInfo {
@@ -40,7 +41,8 @@ func (e *Engine) StartFullDownload(version string) *DownloadInfo {
 		Assets:    true,
 		Java:      true,
 	}
-	return e.StartDownload(version, filter, 0, 0, false, 0, 0)
+	skipVerify := !e.GetConfig().VerifyIntegrity
+	return e.StartDownload(version, filter, 0, 0, skipVerify, 0, 0)
 }
 
 func (e *Engine) GetDownloadStatus(id string) (*DownloadProgress, error) {

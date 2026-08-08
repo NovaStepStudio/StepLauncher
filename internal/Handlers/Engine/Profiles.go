@@ -1,4 +1,5 @@
 package engine
+
 import (
 	lprofile "StepLauncher/internal/Core/Launcher/Profile"
 )
@@ -31,4 +32,12 @@ func (e *Engine) GetSelectedProfile() string {
 
 func (e *Engine) SetSelectedProfile(name string) error {
 	return e.profiles.SetSelected(name)
+}
+
+func (e *Engine) GetSelectedVersion() string {
+	return e.profiles.SelectedVersion()
+}
+
+func (e *Engine) SetSelectedVersion(version string) error {
+	return e.profiles.SetSelectedVersion(version)
 }

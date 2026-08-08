@@ -32,7 +32,7 @@ func NewManager(cacheDir string, ttls CacheTTL) *Manager {
 }
 
 func subdirs() []string {
-	return []string{"versions", "assets", "java", "forge", "neoforge", "fabric", "quilt", "legacyfabric", "assets/indexes", "assets/manifests"}
+	return []string{"manifest", "versions", "assets", "java", "forge", "neoforge", "fabric", "quilt", "legacyfabric", "assets/indexes", "assets/manifests"}
 }
 
 func (m *Manager) ensureDirs() {
@@ -230,5 +230,3 @@ func (m *Manager) cleanup() {
 		}
 	}
 }
-
-
