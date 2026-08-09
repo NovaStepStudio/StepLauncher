@@ -194,7 +194,19 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 		if l.ver.Arguments != nil {
 			jvmArgs = l.ver.Arguments.JVM
 		}
-		extracted, err := helpers.ExtractNatives(l.ver.Libraries, adv.LibrariesDir, nativesDir, jvmArgs)
+		l.prepareEmit("natives", 0, 0, "", "Extrayendo archivos nativos…", false)
+		extracted, err := helpers.ExtractNatives(l.ver.Libraries, adv.LibrariesDir, nativesDir, jvmArgs, func(cur, total int, name string) {
+			switch {
+			case total == 0:
+				l.prepareEmit("natives", 0, 0, "", "", true)
+			case cur == 0:
+				l.prepareEmit("natives", 0, total, "", "Extrayendo archivos nativos…", false)
+			case cur < total:
+				l.prepareEmit("natives", cur, total, name, "Extrayendo archivos nativos…", false)
+			default:
+				l.prepareEmit("natives", total, total, "", "", true)
+			}
+		})
 		if err != nil {
 			l.log("WARN: native extraction failed: %v", err)
 		} else {

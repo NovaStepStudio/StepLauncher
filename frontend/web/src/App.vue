@@ -31,6 +31,7 @@ import CrashModal from './Modals/CrashModal.vue';
 import ScreenshotsModal from './Modals/ScreenshotsModal.vue';
 import UpdateModal from './Modals/UpdateModal.vue';
 import NewsModal from './Modals/NewsModal.vue';
+import DownloadWidget from './Widgets/DownloadWidget/DownloadWidget.vue';
 import {
     selectedLabel,
     loadAccounts,
@@ -55,10 +56,12 @@ import {
     launchError,
     launchPrepare,
     launchPrepareText,
+    launchingPhaseLabel,
     loadVersions,
     loadProfiles,
     refreshAfterDownload,
     crashInfo,
+    hideLaunchMessage,
 } from './Stores/Launcher';
 import { EventsOn } from '@wailsjs/runtime/runtime';
 import { ListScreenshots } from '@wailsjs/go/main/App';
@@ -80,13 +83,14 @@ const showNews = ref(false);
 
 const playLabel = computed(() => {
     if (!launching.value) return 'Jugar';
-    return launchPrepare.value.active ? 'Descargando…' : 'Lanzando…';
+    return launchingPhaseLabel.value;
 });
 
 const playHint = computed(() => {
     if (launchError.value) return launchError.value;
     if (launchPrepare.value.active) return launchPrepareText.value;
-    return launchMsg.value;
+    if (launching.value) return launchMsg.value;
+    return '';
 });
 
 watch(crashInfo, (val) => {
@@ -116,9 +120,6 @@ function openShots() {
     checkShots();
 }
 
-const widgetPercent = computed(() =>
-    Math.round(Math.min(100, Math.max(0, download.value?.percent ?? 0)))
-);
 const widgetVisible = computed(() => download.value !== null && isDownloading.value && !showInstall.value);
 
 const userMenuOpen = ref(false);
@@ -444,6 +445,7 @@ try {
     });
 
     gameEventOffs = [
+        EventsOn('game_started', hideLaunchMessage),
         EventsOn('game_exited', onGameClosed),
         EventsOn('game_crashed', onGameClosed),
         EventsOn('game_stopped', onGameClosed),
@@ -546,18 +548,7 @@ onUnmounted(() => {
         <NewsModal v-model:visible="showNews" />
 
         <Transition name="DownloadWidget">
-            <button v-if="widgetVisible" class="DownloadWidget" @click="showInstall = true" title="Ver descarga">
-                <span class="DownloadWidget_Head">
-                    <span class="DownloadWidget_Icon"><IconDownload stroke="2" /></span>
-                    <span class="DownloadWidget_Txt">
-                        <span class="DownloadWidget_Title">Descargando {{ download?.version }}</span>
-                        <span class="DownloadWidget_Sub">Progreso {{ widgetPercent }}%</span>
-                    </span>
-                </span>
-                <span class="DownloadWidget_Bar">
-                    <span class="DownloadWidget_BarFill" :style="{ width: widgetPercent + '%' }"></span>
-                </span>
-            </button>
+            <DownloadWidget v-if="widgetVisible" @open="showInstall = true" />
         </Transition>
         <div class="Content">
             <div v-if="hasVersions" class="BottomControlVersion">
@@ -829,18 +820,19 @@ onUnmounted(() => {
     position: absolute;
     bottom: calc(100% + 0.55rem);
     right: 0;
-    max-width: 16rem;
+    max-width: 20rem;
+    min-width: 10rem;
     font-family: var(--font-secundary), Arial, sans-serif;
     font-size: 0.66rem;
+    line-height: 1.4;
     padding: 0.4rem 0.6rem;
     border-radius: 0.45rem;
     background: var(--background-modal-primary);
     border: var(--border-modal-style);
     box-shadow: var(--shadow-settings-normal) #000a;
     color: var(--background-button-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    text-align: left;
+    word-break: break-word;
 
     &.error {
         color: var(--color-error);
@@ -856,97 +848,6 @@ onUnmounted(() => {
 .LaunchMsgFade-leave-to {
     opacity: 0;
     transform: translateY(-4px);
-}
-
-.DownloadWidget {
-    position: fixed;
-    right: 0.75rem;
-    bottom: 5rem;
-    z-index: 5;
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-    width: 16rem;
-    max-width: calc(100vw - 1.5rem);
-    padding: 0.65rem 0.75rem;
-    border-radius: 0.6rem;
-    background: var(--background-modal-primary);
-    border: var(--border-style);
-    box-shadow: var(--shadow-settings-normal) #000a;
-    backdrop-filter: var(--filter-blur);
-    color: var(--text-primary);
-    text-shadow: var(--text-shadow-primary, none);
-    font-family: var(--font-secundary), Arial, sans-serif;
-    text-align: left;
-    cursor: pointer;
-    transition: border-color 150ms, transform 150ms;
-
-    &:hover {
-        border-color: color-mix(in srgb, var(--background-button-primary) 75%, white 15%);
-        transform: translateY(-2px);
-    }
-}
-
-.DownloadWidget_Head {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    min-width: 0;
-}
-
-.DownloadWidget_Icon {
-    width: 2.1rem;
-    height: 2.1rem;
-    flex-shrink: 0;
-    border-radius: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: color-mix(in srgb, var(--background-button-primary) 60%, transparent);
-    border: var(--border-style);
-    color: var(--text-primary);
-
-    svg {
-        width: 1.05rem;
-        height: 1.05rem;
-    }
-}
-
-.DownloadWidget_Txt {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.06rem;
-}
-
-.DownloadWidget_Title {
-    font-size: 0.74rem;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.DownloadWidget_Sub {
-    font-size: 0.64rem;
-    opacity: 0.6;
-}
-
-.DownloadWidget_Bar {
-    height: 0.42rem;
-    border-radius: 0.3rem;
-    background: rgba(0, 0, 0, 0.3);
-    border: var(--border-style);
-    overflow: hidden;
-}
-
-.DownloadWidget_BarFill {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: var(--progress-color, var(--background-button-primary));
-    transition: width 200ms ease;
 }
 
 .DownloadWidget-enter-active,

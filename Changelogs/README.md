@@ -103,6 +103,21 @@ Cada cambio registrado en `Changes/` indica la **`Release`** donde se menciona q
 
 Si el cambio todavía no está publicado: `StepLauncher-2.3.0 (en desarrollo)`.
 
+## Una tarea, un solo MD (consolidación de entradas)
+
+Cada `StepLauncher-Error-N.md` o `StepLauncher-Change-N.md` representa **una tarea completa**, no un archivo tocado ni un subcambio aislado.
+
+Si una misma petición o sesión de trabajo implica **más de un cambio** (varias funcionalidades, varios módulos, varios archivos) o **más de un error relacionado** (misma investigación, misma causa raíz, misma tanda de trabajo), se documenta todo en **UN SOLO MD** con subsecciones (p. ej. `### 1.`, `### 2.`...). No se genera un MD por cada cambio o error suelto: eso fragmenta el historial y dispara la numeración sin aportar trazabilidad.
+
+Criterios:
+
+- **Tarea = 1 entrada**: una petición que toca varios sitios (backend, frontend, config, bindings...) agrupa todo en un `StepLauncher-Change-N.md` que enumera los bloques.
+- **Causa raíz = 1 error**: varios síntomas del mismo origen comparten el `StepLauncher-Error-N.md`. Solo se abre un error nuevo cuando la causa raíz es independiente (otro módulo, otro comportamiento, otra sesión).
+- **Ampliar antes que duplicar**: si la tarea ya tiene una entrada en la versión en curso, se extiende esa entrada; no se crea una nueva para lo mismo.
+- **Numeración baja = historial legible**: un MD con varias secciones es preferible a varias entradas de una sola línea.
+
+La regla práctica: **cuando una petición tenga más de un cambio o error, se juntan en un único MD**.
+
 ---
 
 ## Cómo se arma una release (flujo obligatorio)
@@ -267,6 +282,7 @@ Comandos/validaciones que confirmaron el arreglo
 
 ## Qué cambió
 Archivos/componentes tocados (backend Go, frontend Vue, config...).
+Si la tarea agrupa varios cambios, enumerarlos con subsecciones (`### 1.`, `### 2.`, ...).
 
 ## Por qué
 Motivación del cambio o mejora.
@@ -323,6 +339,7 @@ Cuando un agente investiga un bug complejo, el flujo obligatorio es:
 
 - **SIEMPRE consulta esta carpeta antes de diagnosticar o modificar el proyecto**: lo que hiciste pudo haber pasado antes, y la solución ya está documentada.
 - **SIEMPRE crea la entrada correspondiente en la carpeta de la versión en curso** al terminar de corregir un error o implementar un cambio relevante. No se da una tarea por terminada sin su registro en `Changelogs/`.
+- **Una tarea, un solo MD**: si una petición o sesión de trabajo implica varios cambios o errores relacionados, se documentan juntos en una única entrada (con subsecciones); no se fragmenta la documentación en varias entradas (ver "Una tarea, un solo MD").
 - **Cada versión nueva crea sus carpetas** `Errors/StepLauncher-X.Y.Z/`, `Changes/StepLauncher-X.Y.Z/` y `Releases/StepLauncher-X.Y.Z/`, y la numeración `N` de errores y cambios **empieza de nuevo desde 1** en cada una.
 - **Los `index.json` se regeneran SOLO al publicar la release** (con `generate_indexes.ps1`), nunca al crear un error o cambio: esos se registran en su carpeta de versión y listos; el generador los recogerá cuando toque la release.
 - **Toda release publicada necesita su carpeta `StepLauncher-X.Y.Z/`** con el changelog completo y su `news.json` para el centro de noticias — no basta con mencionar la release suelta.

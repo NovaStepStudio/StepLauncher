@@ -209,6 +209,8 @@ export function SetHideLauncher(arg1:boolean):Promise<void>;
 
 export function SetIdle(arg1:Config.IdleConfig):Promise<void>;
 
+export function SetLaunchAfterInstall(arg1:boolean):Promise<void>;
+
 export function SetMaxMbps(arg1:number):Promise<void>;
 
 export function SetMaxRAM(arg1:number):Promise<void>;

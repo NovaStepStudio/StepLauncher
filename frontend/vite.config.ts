@@ -33,6 +33,7 @@ export default defineConfig({
           if (!norm.includes('node_modules')) {
             if (norm.includes('/Layouts/Sections/Settings/')) return 'settings';
             if (norm.includes('/Modals/')) return 'modals';
+            if (norm.includes('/Widgets/')) return 'widgets';
             if (norm.includes('/Composables/SkinPlayer/')) return 'skin-player';
             if (norm.includes('/stores/')) return 'stores';
             if (norm.includes('/Composables/')) return 'composables';

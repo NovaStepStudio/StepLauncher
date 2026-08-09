@@ -9,6 +9,7 @@ const maxMbps = ref(0);
 const hideLauncher = ref(true);
 const verifyIntegrity = ref(true);
 const richPresence = ref(true);
+const launchAfterInstall = ref(false);
 
 const zoom = computed(() => uiScale.value);
 
@@ -76,6 +77,7 @@ async function loadConfig() {
             proxyUser.value = mc.proxyUser ?? '';
             proxyPass.value = mc.proxyPass ?? '';
             checkOnStart.value = cfg.launcher?.checkForUpdatesOnStart ?? false;
+            launchAfterInstall.value = cfg.launcher?.launchAfterInstall ?? false;
         }
     } catch { }
 }
@@ -237,6 +239,12 @@ async function saveCheckOnStart() {
         await (window as any).go?.main?.App?.SetCheckForUpdatesOnStart?.(checkOnStart.value);
     } catch { }
 }
+
+async function saveLaunchAfterInstall() {
+    try {
+        await (window as any).go?.main?.App?.SetLaunchAfterInstall?.(launchAfterInstall.value);
+    } catch { }
+}
 </script>
 
 <template>
@@ -292,6 +300,15 @@ async function saveCheckOnStart() {
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="richPresence" @change="saveRichPresence"><span class="SsTgS"></span></label>
+                </div>
+            </div>
+            <div class="SsRow">
+                <div class="SsInfo">
+                    <span class="SsLabel">Lanzar Minecraft al terminar una instalación</span>
+                    <span class="SsDesc">Cuando una descarga de versión (con o sin ModLoader) termine, el launcher la abre automáticamente y lanza el juego sin tocar nada más.</span>
+                </div>
+                <div class="SsCtrl">
+                    <label class="SsTg"><input type="checkbox" v-model="launchAfterInstall" @change="saveLaunchAfterInstall"><span class="SsTgS"></span></label>
                 </div>
             </div>
         </div>

@@ -264,6 +264,13 @@ func (a *App) SetCheckForUpdatesOnStart(v bool) {
 	a.config.SetCheckForUpdatesOnStart(v)
 }
 
+func (a *App) SetLaunchAfterInstall(v bool) {
+	if a.config == nil {
+		return
+	}
+	a.config.SetLaunchAfterInstall(v)
+}
+
 func (a *App) GetConfig() Config.Config {
 	if a.config == nil {
 		return Config.Default()

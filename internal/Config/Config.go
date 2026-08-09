@@ -46,6 +46,7 @@ type LauncherConfig struct {
 	HideLauncherOnLaunch bool    `json:"hideLauncherOnLaunch"`
 	VerifyIntegrity *bool `json:"verifyIntegrity"`
 	CheckForUpdatesOnStart bool `json:"checkForUpdatesOnStart"`
+	LaunchAfterInstall     bool `json:"launchAfterInstall"`
 }
 
 func (l LauncherConfig) VerifyEnabled() bool {
@@ -667,6 +668,14 @@ func (m *Manager) SetCheckForUpdatesOnStart(v bool) error {
 	m.cfg.Launcher.CheckForUpdatesOnStart = v
 	m.mu.Unlock()
 	m.logf("CheckForUpdatesOnStart -> %v", v)
+	return m.Save()
+}
+
+func (m *Manager) SetLaunchAfterInstall(v bool) error {
+	m.mu.Lock()
+	m.cfg.Launcher.LaunchAfterInstall = v
+	m.mu.Unlock()
+	m.logf("LaunchAfterInstall -> %v", v)
 	return m.Save()
 }
 

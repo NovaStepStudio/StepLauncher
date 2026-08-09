@@ -171,6 +171,7 @@ export namespace Config {
 	    hideLauncherOnLaunch: boolean;
 	    verifyIntegrity?: boolean;
 	    checkForUpdatesOnStart: boolean;
+	    launchAfterInstall: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new LauncherConfig(source);
@@ -184,6 +185,7 @@ export namespace Config {
 	        this.hideLauncherOnLaunch = source["hideLauncherOnLaunch"];
 	        this.verifyIntegrity = source["verifyIntegrity"];
 	        this.checkForUpdatesOnStart = source["checkForUpdatesOnStart"];
+	        this.launchAfterInstall = source["launchAfterInstall"];
 	    }
 	}
 	export class MinecraftConfig {

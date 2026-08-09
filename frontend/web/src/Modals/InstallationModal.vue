@@ -13,6 +13,7 @@ import {
 } from '@tabler/icons-vue';
 import { CLOSE_OVERLAYS_EVENT } from '../Stores/Idle';
 import { setDownload, clearDownload } from '../Stores/Downloads';
+import { refreshAfterDownload, selectVersion, launchGame } from '../Stores/Launcher';
 import { EventsOn } from '@wailsjs/runtime/runtime';
 import {
     FetchVersionManifest,
@@ -441,6 +442,7 @@ function resetRun() {
     loaderTotal.value = 0;
     loaderLogs.value = [];
     lastLogLine = '';
+    autoLaunchHandled.value = false;
 }
 
 function syncDownloadWidget() {
@@ -606,6 +608,27 @@ watch(
 
 let doneResetTimer: number | null = null;
 
+const autoLaunchHandled = ref(false);
+
+async function maybeAutoLaunch() {
+    if (autoLaunchHandled.value) return;
+    let cfg: any = null;
+    try {
+        cfg = await (window as any).go?.main?.App?.GetConfig?.();
+    } catch { }
+    if (!cfg?.launcher?.launchAfterInstall) return;
+    autoLaunchHandled.value = true;
+    const installed = selectedVersion.value;
+    try {
+        await refreshAfterDownload();
+        if (installed) selectVersion(installed);
+    } catch { }
+    emit('update:visible', false);
+    window.setTimeout(() => {
+        void launchGame();
+    }, 300);
+}
+
 function scheduleDoneReset() {
     if (doneResetTimer !== null) {
         window.clearTimeout(doneResetTimer);
@@ -622,7 +645,10 @@ watch(phase, (p) => {
         window.clearTimeout(doneResetTimer);
         doneResetTimer = null;
     }
-    if (p === 'done') scheduleDoneReset();
+    if (p === 'done') {
+        scheduleDoneReset();
+        void maybeAutoLaunch();
+    }
 });
 
 function parseDownloadEvent(raw: unknown): { id: string; data: any } | null {

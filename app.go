@@ -159,6 +159,12 @@ func (a *App) SetCheckForUpdatesOnStart(v bool) {
 	}
 }
 
+func (a *App) SetLaunchAfterInstall(v bool) {
+	if a.handler != nil {
+		a.handler.SetLaunchAfterInstall(v)
+	}
+}
+
 func (a *App) GetUIScale() int {
 	return a.handler.GetUIScale()
 }

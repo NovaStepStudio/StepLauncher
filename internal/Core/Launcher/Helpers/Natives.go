@@ -82,7 +82,7 @@ func nativesSubDirFromString(arg string) string {
 	return sub
 }
 
-func ExtractNatives(libraries []downloader.Library, librariesDir, nativesDir string, jvmArgs []interface{}) (int, error) {
+func ExtractNatives(libraries []downloader.Library, librariesDir, nativesDir string, jvmArgs []interface{}, onProgress func(current, total int, name string)) (int, error) {
 	osName := utils.OsName()
 
 	var jarPaths []string
@@ -94,6 +94,9 @@ func ExtractNatives(libraries []downloader.Library, librariesDir, nativesDir str
 		jarPaths = append(jarPaths, jarPath)
 	}
 	if len(jarPaths) == 0 {
+		if onProgress != nil {
+			onProgress(0, 0, "")
+		}
 		return 0, nil
 	}
 
@@ -121,13 +124,23 @@ func ExtractNatives(libraries []downloader.Library, librariesDir, nativesDir str
 		}
 	}
 
+	total := len(jarPaths)
+	if onProgress != nil {
+		onProgress(0, total, "")
+	}
 	extracted := 0
-	for _, jarPath := range jarPaths {
+	for i, jarPath := range jarPaths {
+		if onProgress != nil {
+			onProgress(i+1, total, filepath.Base(jarPath))
+		}
 		n, err := utils.ExtractJarNatives(jarPath, extractDir)
 		if err != nil {
 			continue
 		}
 		extracted += n
+	}
+	if onProgress != nil {
+		onProgress(total, total, "")
 	}
 	return extracted, nil
 }

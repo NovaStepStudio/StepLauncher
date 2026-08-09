@@ -390,6 +390,10 @@ export function SetIdle(arg1) {
   return window['go']['main']['App']['SetIdle'](arg1);
 }
 
+export function SetLaunchAfterInstall(arg1) {
+  return window['go']['main']['App']['SetLaunchAfterInstall'](arg1);
+}
+
 export function SetMaxMbps(arg1) {
   return window['go']['main']['App']['SetMaxMbps'](arg1);
 }
