@@ -552,10 +552,10 @@ func (l *Launcher) buildGameArgs(vars map[string]string, adv AdvancedConfig) []s
 
 	var raw []interface{}
 	var mcArgs string
-	if l.ver.Arguments != nil {
-		raw = l.ver.Arguments.Game
-	} else {
+	if l.ver.MinecraftArguments != "" {
 		mcArgs = l.ver.MinecraftArguments
+	} else if l.ver.Arguments != nil {
+		raw = l.ver.Arguments.Game
 	}
 
 	result := helpers.BuildGameArgs(raw, mcArgs, vars, features, adv.Fullscreen)

@@ -5,9 +5,9 @@
 
 ## Resumen
 
-Esta actualización pone el foco en la **estabilidad del lanzamiento** y en convertir a las **instancias** en un sistema completo y cómodo: panel propio, varias versiones por instancia, modloaders por instancia, capturas y ajustes independientes. Además estrena un **nuevo diálogo de bienvenida** en el primer inicio (con modelo 3D de jugador), un **directorio del launcher configurable** (Normal, Minecraft, Portable o Custom), un **verificador de integridad manual**, la vista previa completa de personalización y una tanda importante de correcciones — entre ellas, la más crítica: **vanilla y NeoForge/Forge moderno vuelven a arrancar** (classpath/module path corregido) y el soporte de **instaladores legacy de Forge (1.8.9 y anteriores)** queda reparado.
+Esta actualización pone el foco en la **estabilidad del lanzamiento** y en convertir a las **instancias** en un sistema completo y cómodo: panel propio, varias versiones por instancia, modloaders por instancia, capturas y ajustes independientes. Además estrena un **nuevo diálogo de bienvenida** en el primer inicio, un **directorio del launcher configurable** (Normal, Minecraft, Portable o Custom), un **verificador de integridad manual**, la vista previa completa de personalización y una tanda importante de correcciones — entre ellas, la más crítica: **vanilla y NeoForge/Forge moderno vuelven a arrancar** (classpath/module path corregido) y el soporte de **instaladores legacy de Forge (1.8.9 y anteriores)** queda reparado.
 
-Se tocaron más de 30 cambios registrados entre backend Go y frontend Vue.
+Se tocaron más de 35 cambios registrados entre backend Go y frontend Vue.
 
 ---
 
@@ -24,7 +24,7 @@ Se tocaron más de 30 cambios registrados entre backend Go y frontend Vue.
 
 ### 2. Bienvenida nueva en el primer inicio
 - Diálogo de bienvenida en **3 pasos**: bienvenida → **personalizar el launcher** (7 paletas de acento en vivo, animaciones/desenfoque/sombras) → **crear la primera cuenta**.
-- **Modelo 3D de jugador** (Skin3D) con skins aleatorias y el formulario de cuenta integrado; sin salidas laterales: solo avanzar o configurar.
+- Formulario de cuenta integrado en el último paso; sin salidas laterales: solo avanzar o configurar.
 - **La carpeta del launcher pasa a ser el primer paso obligatorio**: sin carpeta configurada no hay escapatoria de la bienvenida (selector Normal/Minecraft/Portable/Custom con detección de `.minecraft` existente).
 - Nuevo indicador de carga: el pollo de Minecraft (`chicken_jockey_run.gif`) en todas las pantallas de espera.
 
@@ -76,6 +76,7 @@ Todos los incidentes mencionados abajo fueron detectados durante el desarrollo, 
 - **RAM mínima siempre 512 MB**: eliminado el fallback de "la mitad de la máxima" (podía generar `-Xms2048M` absurdos).
 - **Java 8 oficial (jre-legacy) para versiones antiguas**: si la versión no declara Java y el del sistema es moderno (≥ 17), se conmuta automáticamente al runtime oficial adecuado (Forge 1.12.2 ya no crashea con Java 25).
 - **Forge antiguo con fallback `-universal.jar`**: si el jar exacto da 404 en Maven, se reintenta con el universal.
+- **Versiones legacy (Forge 1.7.10) reciben `--userProperties`**: el `minecraftArguments` del version.json se lee con prioridad cuando existe (antes podía quedar ignorado si el campo `arguments` estaba presente pero vacío) y el juego ya no muere al instante con `Missing required option(s) ['userProperties']`.
 - **Fases reales en el botón Jugar**: ahora distingue "Descargando… → Extrayendo nativos… → Lanzando…" y el globo de estado se limpia al arrancar el juego.
 
 ### Modloaders
@@ -113,6 +114,7 @@ Todos los incidentes mencionados abajo fueron detectados durante el desarrollo, 
 - **Verificador de integridad por fases** en goroutine (sin bloquear bindings): índice → existencia → reintento → SHA1.
 - **Directorio de trabajo desacoplado**: la preferencia se persiste fuera del workdir (`%APPDATA%\StepLauncher\directory.json`) con validación de bloqueo y reinicio.
 - **Caché con TTL y escritura atómica** (tmp + rename) y reporte de tamaños reales por categoría.
+- **Cache bajo demanda**: las carpetas del cache solo se crean al escribir realmente en ellas (antes se creaban las 12 categorías en el primer arranque); las carpetas obsoletas vacías (`fabric`, `forge`, `neoforge`, `quilt`, `legacyfabric`, `assets/indexes`, `assets/manifests`) se eliminan solas del disco, y `assets/indexes` del juego se crea solo al descargar el primer índice.
 - **Estilos SCSS separados** de los `.vue` (~5.300 líneas movidas a módulos) y variables de transición unificadas (de 59 a 13).
 
 ---
@@ -126,5 +128,4 @@ Todos los incidentes mencionados abajo fueron detectados durante el desarrollo, 
 
 ## Cómo actualizar a esta versión
 
-- **Actualización automática**: la app te ofrecerá la nueva release desde GitHub (`NovaStepStudio/StepLauncher`) con el botón "Actualizar" (en Windows se lanza el `StepLauncher-Updater.exe`).
 - **Actualización manual**: descarga la release desde la página de GitHub del proyecto y reemplaza el ejecutable; tus datos de configuración se conservan.

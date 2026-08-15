@@ -152,7 +152,6 @@ func BuildTasks(cfg Config, ver *VersionJSON, version string, filter DownloadFil
 	os.MkdirAll(verDir, 0755)
 	os.MkdirAll(libDir, 0755)
 	os.MkdirAll(filepath.Join(cfg.WorkDir, "assets", "objects"), 0755)
-	os.MkdirAll(filepath.Join(cfg.WorkDir, "assets", "indexes"), 0755)
 
 	addClient(&tasks, ver, version, verDir, filter)
 	addLibraryTasks(&tasks, ver, libDir, filter)

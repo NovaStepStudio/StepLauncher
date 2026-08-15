@@ -68,14 +68,16 @@ Impulsado por **Wails v2** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="fronten
 - **Hardware**: aceleración por hardware con tipo de GPU detectada, y preajustes de rendimiento.
 - **Actualizaciones automáticas**: comprobación en el arranque contra GitHub Releases y, en Windows, descarga y ejecución del actualizador (`StepLauncher-Updater.exe`) que reemplaza el ejecutable.
 - **Reposo y mantenimiento**: cierre automático de modales por inactividad, verificación periódica de la configuración y limpieza inteligente de la caché.
-- **Caché**: manifiestos y JSON con TTL por categoría (manifest, version, assets, forge, java...), limpieza por categoría o entrada desde el frontend y reutilización de archivos descargados.
+- **Caché**: manifiestos y JSON con TTL por categoría (manifest, versions, assets, java...), limpieza por categoría o entrada desde el frontend y reutilización de archivos descargados.
 - **Nativo y ligero**: ventana WebView2 sin marcos de navegador; los datos persisten en `%APPDATA%\.StepLauncher` con logs a archivo rotados por día.
 
 ## 🚀 Novedades en la 2.3.1
 
-- **Diálogo de bienvenida en el primer inicio**: onboarding con modelo 3D de jugador (Skin3D) y creación de la primera cuenta, además de un nuevo indicador de carga.
+- **Diálogo de bienvenida en el primer inicio**: onboarding con personalización del launcher y creación de la primera cuenta, además de un nuevo indicador de carga.
 - **Lanzamiento corregido**: classpath/module path arreglado (vanilla y NeoForge/Forge moderno ya arrancan), deduplicación del classpath y RAM mínima fija de **512 MB**.
 - **Soporte legacy de modloaders**: instaladores de Forge 1.8.9 y anteriores corregidos, con logs guardados y progreso en vivo (X/Y) durante la verificación.
+- **Versiones legacy (Forge 1.7.10)**: el launcher lee el `minecraftArguments` del version.json y el juego recibe el parámetro obligatorio `--userProperties {}`.
+- **Cache bajo demanda**: las carpetas del cache solo se crean al escribir en ellas; las obsoletas vacías se eliminan solas.
 - **Modal de crash rediseñado**: más datos de diagnóstico (Java, RAM máxima, versión base), organización en grilla y copiado del log.
 - **Navegación por capas con ESC**, widgets flotantes independientes, botón Jugar con fases reales y opción de **lanzar Minecraft al terminar una instalación**.
 

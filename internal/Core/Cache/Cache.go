@@ -31,20 +31,24 @@ func NewManager(cacheDir string, ttls CacheTTL) *Manager {
 	return m
 }
 
+// subdirs son las categorías de cache que almacenan JSON con metadatos.
+// No se crean al arrancar: Set() crea únicamente la carpeta de la categoría
+// que realmente se escribe, cuando se escribe.
 func subdirs() []string {
-	return []string{"default", "manifest", "versions", "assets", "java", "forge", "neoforge", "fabric", "quilt", "legacyfabric", "assets/indexes", "assets/manifests"}
+	return []string{"default", "manifest", "versions", "assets", "java"}
+}
+
+// obsoleteDirs son carpetas que versiones antiguas del launcher creaban al
+// arrancar pero que nunca se usan como almacenamiento (no guardan nada). Se
+// eliminan del disco si quedaron vacías.
+func obsoleteDirs() []string {
+	return []string{"forge", "neoforge", "fabric", "quilt", "legacyfabric", "assets/indexes", "assets/manifests"}
 }
 
 // artifactDirs son carpetas de cache que no almacenan JSON con metadatos
 // (instaladores de modloaders y sus logs) y se limpian por antigüedad.
 func artifactDirs() []string {
 	return []string{"modloader", "modloader-logs"}
-}
-
-func (m *Manager) ensureDirs() {
-	for _, sub := range subdirs() {
-		os.MkdirAll(filepath.Join(m.cacheDir, sub), 0755)
-	}
 }
 
 func (m *Manager) keyToPath(category, key string) string {
@@ -56,7 +60,6 @@ func (m *Manager) keyToPath(category, key string) string {
 func (m *Manager) Set(category, key string, data interface{}) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.ensureDirs()
 
 	raw, err := json.Marshal(data)
 	if err != nil {
@@ -278,6 +281,23 @@ func (m *Manager) cleanup() {
 			}
 		}
 	}
+
+	// Carpetas obsoletas que quedaron de versiones antiguas: se eliminan solo
+	// si están vacías (nunca se escribió nada en ellas).
+	for _, sub := range obsoleteDirs() {
+		dir := filepath.Join(m.cacheDir, sub)
+		if isEmptyDir(dir) {
+			os.Remove(dir)
+		}
+	}
+}
+
+func isEmptyDir(dir string) bool {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return false
+	}
+	return len(entries) == 0
 }
 
 func isArtifactDir(category string) bool {
