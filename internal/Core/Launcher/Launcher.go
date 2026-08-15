@@ -15,12 +15,13 @@ import (
 	"strings"
 	"time"
 
-	"StepLauncher/internal/Core/Auth"
-	"StepLauncher/internal/Core/Downloader"
+	authlib "StepLauncher/internal/Core/Auth"
+	downloader "StepLauncher/internal/Core/Downloader"
+	globalutils "StepLauncher/internal/Core/Utils"
 
-	"StepLauncher/internal/Core/Launcher/Helpers"
+	helpers "StepLauncher/internal/Core/Launcher/Helpers"
 	gamelog "StepLauncher/internal/Core/Launcher/Log"
-	"StepLauncher/internal/Core/Launcher/Utils"
+	utils "StepLauncher/internal/Core/Launcher/Utils"
 )
 
 type Launcher struct {
@@ -67,12 +68,13 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 	adv := l.adv()
 
 	instance := &GameInstance{
-		Version:    l.cfg.Version,
-		InstanceID: l.cfg.InstanceID,
-		PlayerName: l.cfg.Username,
-		StartTime:  time.Now(),
-		Status:     GameStarting,
-		done:       make(chan struct{}),
+		Version:      l.cfg.Version,
+		InstanceID:   l.cfg.InstanceID,
+		InstanceName: l.cfg.InstanceName,
+		PlayerName:   l.cfg.Username,
+		StartTime:    time.Now(),
+		Status:       GameStarting,
+		done:         make(chan struct{}),
 	}
 	l.gameInstance = instance
 
@@ -100,24 +102,61 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 	}
 	adv = l.adv()
 
-	if adv.UseOfficialJava {
+	// Los builds tardíos de Forge para 1.16.5 (36.2.34+) parchean
+	// MainWindow.class con los callbacks *CallbackI que solo existen en
+	// LWJGL 3.3+, pero vanilla declara LWJGL 3.2.2: el juego muere al arrancar
+	// con NoClassDefFoundError. Si el client jar de Forge usa esos callbacks,
+	// todas las librerías org.lwjgl 3.2.x se suben a 3.3.1 (igual que hacen
+	// otros launchers); las nuevas se descargan al lanzar si faltan.
+	if forgeClientNeedsNewLWJGL(l.ver.Libraries, adv.LibrariesDir) {
+		if n := overrideLWJGLVersion(l.ver.Libraries, lwjglCompatOverrideVersion); n > 0 {
+			l.log("LWJGL 3.2.x → %s: %d librerías org.lwjgl reescritas (compatibilidad con el client de Forge)", lwjglCompatOverrideVersion, n)
+		}
+	}
+
+	// Las versiones antiguas (pre-1.17) no declaran javaVersion.component en su
+	// version.json; el launcher oficial usa entonces jre-legacy (Java 8), el
+	// único runtime compatible con los modloaders de esas versiones.
+	component := l.ver.JavaVersion.Component
+	useOfficial := adv.UseOfficialJava
+	if component == "" {
+		component = "jre-legacy"
+		if !useOfficial && adv.JavaExec == "" {
+			// Auto-conmutación: si el Java del sistema es >= 17, los modloaders
+			// antiguos (Forge 1.12.2, etc.) no arrancan. Se usa el Java 8
+			// oficial automáticamente, igual que hace el launcher oficial.
+			if sys, err := helpers.ResolveJava("", adv.RuntimeDir, false, ""); err == nil {
+				if major := helpers.DetectJavaMajorVersion(sys); major >= 17 {
+					useOfficial = true
+					l.log("Java del sistema (%s, mayor %d) incompatible con %s; usando Java 8 oficial (jre-legacy)", sys, major, l.cfg.Version)
+				}
+			}
+		}
+	}
+
+	if useOfficial {
 		if err := l.ensureOfficialJava(); err != nil {
-			return nil, fmt.Errorf("official java: %w", err)
+			l.log("WARN: Java oficial no disponible (%v); usando el Java del sistema", err)
+			useOfficial = false
 		}
 	}
 
 	javaPath, err := helpers.ResolveJava(
-		l.ver.JavaVersion.Component,
+		component,
 		adv.RuntimeDir,
-		adv.UseOfficialJava,
+		useOfficial,
 		adv.JavaExec,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("resolve java: %w", err)
 	}
+	logName := l.cfg.LauncherName
+	if l.cfg.InstanceName != "" {
+		logName = l.cfg.InstanceName
+	}
 	gl, err := gamelog.NewGameLogManager(gamelog.GameLogConfig{
 		LogDir:       l.cfg.LogDir,
-		LauncherName: l.cfg.LauncherName,
+		LauncherName: logName,
 		Version:      l.cfg.Version,
 		Limit:        adv.GameLogLines,
 		KeepDays:     adv.LogKeepDays,
@@ -148,6 +187,19 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 		baseVer = l.cfg.Version
 	}
 
+	effectiveMain := l.ver.MainClass
+	if adv.ExecutionPlan != nil && adv.ExecutionPlan.MainClass != "" {
+		effectiveMain = adv.ExecutionPlan.MainClass
+	}
+
+	clientJarVer := baseVer
+	if strings.Contains(effectiveMain, "bootstraplauncher") {
+		clientJarVer = l.cfg.Version
+		if err := ensureClientJarCopy(adv.VersionsDir, baseVer, l.cfg.Version); err != nil {
+			l.log("WARN: no se pudo copiar el client jar para %s: %v", l.cfg.Version, err)
+		}
+	}
+
 	nativesDir := adv.NativesDir
 	if nativesDir == "" {
 		nativesDir = helpers.NativesDir(adv.NativesBaseDir, baseVer)
@@ -157,7 +209,7 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 		l.ver.Libraries,
 		adv.LibrariesDir,
 		adv.VersionsDir,
-		baseVer,
+		clientJarVer,
 	)
 
 	if adv.ExecutionPlan != nil && len(adv.ExecutionPlan.AdditionalClasspath) > 0 {
@@ -182,7 +234,7 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 		}
 	}
 
-	if err := l.downloadMissingLibraries(&cpEntries); err != nil {
+	if err := l.downloadMissingLibraries(&cpEntries, clientJarVer); err != nil {
 		l.gameLog.Close()
 		return nil, fmt.Errorf("missing libraries: %w", err)
 	}
@@ -246,10 +298,7 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 
 	jvmArgs := l.buildJVMArgs(javaPath, vars, adv)
 	gameArgs := l.buildGameArgs(vars, adv)
-	mainClass := l.ver.MainClass
-	if adv.ExecutionPlan != nil && adv.ExecutionPlan.MainClass != "" {
-		mainClass = adv.ExecutionPlan.MainClass
-	}
+	mainClass := effectiveMain
 	if adv.ExecutionPlan != nil {
 		extraJVM := make([]string, len(adv.ExecutionPlan.AdditionalJVMArgs))
 		for i, a := range adv.ExecutionPlan.AdditionalJVMArgs {
@@ -299,6 +348,8 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 	for _, d := range renderNatives {
 		preInfo.Natives = append(preInfo.Natives, gamelog.NativeEntry{Path: d})
 	}
+	preInfoCopy := preInfo
+	instance.PreInfo = &preInfoCopy
 	l.gameLog.WritePreLaunchInfo(preInfo)
 
 	if adv.PreLaunchCommand != "" {
@@ -373,10 +424,10 @@ if l.ver.Arguments != nil {
 		args = append(args, "-Djava.library.path="+vars["natives_directory"])
 	}
 
-	minMem := adv.MinRAM
 	maxMem := adv.MaxRAM
-	if minMem <= 0 && maxMem > 0 {
-		minMem = maxMem / 2
+	minMem := helpers.MinRAM
+	if maxMem > 0 && minMem > maxMem {
+		minMem = maxMem
 	}
 
 	var override []string
@@ -449,11 +500,22 @@ if l.ver.Arguments != nil {
 	override = append(override, adv.JavaArgs...)
 
 	cp := vars["classpath"]
-	tplHasModulePath := false
+
+	tplModulePath := false
+	tplModulePathValue := ""
 	var filtered []string
-	for _, a := range args {
+	for i := 0; i < len(args); i++ {
+		a := args[i]
 		if a == "--module-path" || a == "-p" {
-			tplHasModulePath = true
+			tplModulePath = true
+			if i+1 < len(args) {
+				nxt := args[i+1]
+				if nxt != "${classpath}" && nxt != cp {
+					tplModulePathValue = nxt
+				}
+				i++
+			}
+			continue
 		}
 		if a == "-cp" || a == "--class-path" || a == cp || a == "${classpath}" {
 			continue
@@ -462,15 +524,18 @@ if l.ver.Arguments != nil {
 	}
 
 	useModulePath := adv.ExecutionPlan != nil && adv.ExecutionPlan.UseModulePath
-	if !useModulePath {
-		useModulePath = tplHasModulePath
-	}
 
 	result := append(filtered, override...)
 	switch {
-	case useModulePath && !tplHasModulePath:
+	case tplModulePath && tplModulePathValue != "":
+		result = append(result, "--module-path", tplModulePathValue)
+		result = append(result, "-cp", cp)
+	case tplModulePath:
 		result = append(result, "--module-path", cp)
+		result = append(result, "-cp", cp)
 	case useModulePath:
+		result = append(result, "--module-path", cp)
+		result = append(result, "-cp", cp)
 	default:
 		result = append(result, "-cp", cp)
 	}
@@ -564,8 +629,10 @@ func (l *Launcher) initPaths() error {
 func (l *Launcher) ensureOfficialJava() error {
 	adv := l.adv()
 	component := l.ver.JavaVersion.Component
+	// Las versiones antiguas (pre-1.17) no declaran componente: se usa
+	// jre-legacy (Java 8), el runtime oficial para esas versiones.
 	if component == "" {
-		return fmt.Errorf("version has no javaVersion.component")
+		component = "jre-legacy"
 	}
 	if _, err := helpers.ResolveJava(component, adv.RuntimeDir, true, ""); err == nil {
 		return nil
@@ -627,7 +694,7 @@ func (l *Launcher) prepareEmit(phase string, current, total int, label, message 
 	})
 }
 
-func (l *Launcher) downloadMissingLibraries(cpEntries *[]helpers.ClasspathEntry) error {
+func (l *Launcher) downloadMissingLibraries(cpEntries *[]helpers.ClasspathEntry, clientJarVer string) error {
 	adv := l.adv()
 	if adv.DisableLibraries {
 		l.log("Library download disabled by config, skipping")
@@ -644,6 +711,23 @@ func (l *Launcher) downloadMissingLibraries(cpEntries *[]helpers.ClasspathEntry)
 			missing = append(missing, missingEntry{path: e.Path})
 		}
 	}
+	// Los jars nativos también se comprueban: el override de LWJGL por
+	// compatibilidad (3.2.x → 3.3.1) introduce jars que el instalador de la
+	// versión no bajó (descargó los 3.2.2); sin ellos la extracción de
+	// natives no encuentra nada y el juego muere con UnsatisfiedLinkError.
+	for _, lib := range l.ver.Libraries {
+		if !downloader.MatchRules(lib.Rules) || !downloader.IsNativeLibrary(lib) {
+			continue
+		}
+		dest, _, _, _ := helpers.ResolveNativeJarDownload(lib, adv.LibrariesDir, globalutils.OsName())
+		if dest == "" {
+			continue
+		}
+		if _, err := os.Stat(dest); err == nil {
+			continue
+		}
+		missing = append(missing, missingEntry{path: dest})
+	}
 	if len(missing) == 0 {
 		return nil
 	}
@@ -658,11 +742,21 @@ func (l *Launcher) downloadMissingLibraries(cpEntries *[]helpers.ClasspathEntry)
 			libByPath[dest] = lib
 		}
 	}
-	clientVer := adv.BaseVersion
-	if clientVer == "" {
-		clientVer = l.cfg.Version
+	// Nativos: mismo mapa para poder resolver la URL en el bucle de descarga.
+	for _, lib := range l.ver.Libraries {
+		if !downloader.MatchRules(lib.Rules) || !downloader.IsNativeLibrary(lib) {
+			continue
+		}
+		dest, _, _, _ := helpers.ResolveNativeJarDownload(lib, adv.LibrariesDir, globalutils.OsName())
+		if dest != "" {
+			libByPath[dest] = lib
+		}
 	}
-	clientJar := filepath.Join(adv.VersionsDir, clientVer, clientVer+".jar")
+	// El client jar debe llevar el id de la versión lanzada (clientJarVer)
+	// para que el ignoreList del bootstraplauncher lo excluya del procesado
+	// de módulos; si la copia temprana falló porque faltaba el jar base, se
+	// descarga directamente al destino correcto.
+	clientJar := filepath.Join(adv.VersionsDir, clientJarVer, clientJarVer+".jar")
 
 	for i := range missing {
 		p := &missing[i]
@@ -705,6 +799,9 @@ func (l *Launcher) downloadMissingLibraries(cpEntries *[]helpers.ClasspathEntry)
 		}
 
 		_, url, sha1, size := helpers.ResolveLibraryDownload(m.lib, adv.LibrariesDir)
+		if url == "" && downloader.IsNativeLibrary(m.lib) {
+			_, url, sha1, size = helpers.ResolveNativeJarDownload(m.lib, adv.LibrariesDir, globalutils.OsName())
+		}
 		if url == "" {
 			l.log("WARN [%d/%d] no URL for %s", i+1, total, m.lib.Name)
 			failed++
@@ -719,6 +816,17 @@ func (l *Launcher) downloadMissingLibraries(cpEntries *[]helpers.ClasspathEntry)
 		os.MkdirAll(filepath.Dir(m.path), 0755)
 		task := downloader.DownloadTask{URL: url, Dest: m.path, SHA1: sha1, Size: size}
 		if err := downloader.DownloadFile(ctx, task, http.DefaultClient, 3, nil, 60000, 3); err != nil {
+			// Los version.json antiguos de Forge apuntan al jar "plain"
+			// (forge-X.jar) que ya no existe en maven; el jar real se llama
+			// forge-X-universal.jar. Se reintenta con ese sufijo.
+			if fbURL := universalForgeURL(m.lib, url); fbURL != "" {
+				l.log("Retrying [%d/%d] %s with -universal.jar", i+1, total, m.lib.Name)
+				fbTask := downloader.DownloadTask{URL: fbURL, Dest: m.path}
+				if err2 := downloader.DownloadFile(ctx, fbTask, http.DefaultClient, 3, nil, 60000, 3); err2 == nil {
+					l.log("  âœ“ [%d/%d] %s", i+1, total, m.lib.Name)
+					continue
+				}
+			}
 			l.log("WARN [%d/%d] failed: %s: %v", i+1, total, m.lib.Name, err)
 			failed++
 		} else {
@@ -738,13 +846,29 @@ func (l *Launcher) downloadMissingLibraries(cpEntries *[]helpers.ClasspathEntry)
 	return nil
 }
 
+// universalForgeURL devuelve la URL del jar -universal de Forge cuando la URL
+// original apunta al jar "plain" (forge-X.jar), que ya no existe en maven pero
+// que los version.json antiguos de Forge referencian (p. ej. Forge 1.12.2).
+func universalForgeURL(lib downloader.Library, url string) string {
+	if !strings.Contains(lib.Name, ":forge:") {
+		return ""
+	}
+	if filepath.Ext(url) != ".jar" {
+		return ""
+	}
+	base := strings.TrimSuffix(url, ".jar")
+	if strings.HasSuffix(base, "-universal") {
+		return ""
+	}
+	return base + "-universal.jar"
+}
+
 func (l *Launcher) readVersionJSON() error {
 	ver, err := l.loadVersion(l.cfg.Version)
 	if err != nil {
 		return err
 	}
 	l.ver = ver
-
 	adv := l.adv()
 	if adv.BaseVersion == "" {
 		verPath := filepath.Join(adv.VersionsDir, l.cfg.Version, l.cfg.Version+".json")
@@ -822,7 +946,7 @@ func mergeVersions(parent, child *downloader.VersionJSON) *downloader.VersionJSO
 	merged.ID = child.ID
 	merged.InheritsFrom = ""
 
-	merged.Libraries = append(parent.Libraries, child.Libraries...)
+	merged.Libraries = mergeLibraries(parent.Libraries, child.Libraries)
 
 	if child.MainClass != "" {
 		merged.MainClass = child.MainClass
@@ -876,6 +1000,47 @@ func mergeVersions(parent, child *downloader.VersionJSON) *downloader.VersionJSO
 	return &merged
 }
 
+func mergeLibraries(parent, child []downloader.Library) []downloader.Library {
+	type entry struct {
+		lib  downloader.Library
+		from string
+	}
+	keyOf := func(lib downloader.Library) string {
+		parts := strings.Split(lib.Name, ":")
+		if len(parts) >= 4 {
+			return parts[0] + ":" + parts[1] + ":" + parts[3]
+		}
+		if len(parts) >= 2 {
+			return parts[0] + ":" + parts[1]
+		}
+		return lib.Name
+	}
+	idx := make(map[string]int, len(parent)+len(child))
+	out := make([]entry, 0, len(parent)+len(child))
+	add := func(lib downloader.Library, from string) {
+		k := keyOf(lib)
+		if i, ok := idx[k]; ok {
+			if from == "child" && out[i].from == "parent" {
+				out[i] = entry{lib: lib, from: from}
+			}
+			return
+		}
+		idx[k] = len(out)
+		out = append(out, entry{lib: lib, from: from})
+	}
+	for _, lib := range parent {
+		add(lib, "parent")
+	}
+	for _, lib := range child {
+		add(lib, "child")
+	}
+	merged := make([]downloader.Library, 0, len(out))
+	for _, e := range out {
+		merged = append(merged, e.lib)
+	}
+	return merged
+}
+
 func (l *Launcher) ensureGameDir() {
 	adv := l.adv()
 	os.MkdirAll(adv.GameDir, 0755)
@@ -894,9 +1059,13 @@ func (l *Launcher) ensureLauncherProperties(gameDir string) string {
 		return ""
 	}
 	content := fmt.Sprintf("fml.client.secret=%s\n", hex.EncodeToString(buf))
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	written, err := globalutils.SafeWriteFile(path, []byte(content), 0644)
+	if err != nil {
 		l.log("WARN: no se pudo crear %s: %v", path, err)
 		return ""
+	}
+	if !written {
+		l.log("launcher.properties ya existe, no se sobrescribe: %s", path)
 	}
 	return path
 }
@@ -1019,6 +1188,7 @@ func (l *Launcher) recordCrash(instance *GameInstance) {
 	}
 
 instance.CrashLogContent = readCrashLogText(crashFile, contextLines)
+	instance.GameOutput = gamelog.ReadGameOutput(instance.LogPath)
 
 	if instance.CrashReason == "" {
 		instance.CrashReason = helpers.CrashReasonLabel(instance.ExitCode)
@@ -1191,4 +1361,27 @@ func (l *Launcher) preVerifyAuthServer(cfg AuthLibConfig) error {
 		return fmt.Errorf("auth server returned status %d", resp.StatusCode)
 	}
 	return nil
+}
+
+func ensureClientJarCopy(versionsDir, baseVer, launchVer string) error {
+	if launchVer == "" || launchVer == baseVer {
+		return nil
+	}
+	src := filepath.Join(versionsDir, baseVer, baseVer+".jar")
+	dst := filepath.Join(versionsDir, launchVer, launchVer+".jar")
+	srcInfo, err := os.Stat(src)
+	if err != nil {
+		return fmt.Errorf("client jar base no encontrado: %w", err)
+	}
+	if dstInfo, err := os.Stat(dst); err == nil && dstInfo.Size() == srcInfo.Size() {
+		return nil
+	}
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return err
+	}
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(dst, data, 0644)
 }

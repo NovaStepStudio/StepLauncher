@@ -170,6 +170,7 @@ export namespace Config {
 	    concurrentDownloads: number;
 	    hideLauncherOnLaunch: boolean;
 	    verifyIntegrity?: boolean;
+	    integritySector: string;
 	    checkForUpdatesOnStart: boolean;
 	    launchAfterInstall: boolean;
 	
@@ -184,6 +185,7 @@ export namespace Config {
 	        this.concurrentDownloads = source["concurrentDownloads"];
 	        this.hideLauncherOnLaunch = source["hideLauncherOnLaunch"];
 	        this.verifyIntegrity = source["verifyIntegrity"];
+	        this.integritySector = source["integritySector"];
 	        this.checkForUpdatesOnStart = source["checkForUpdatesOnStart"];
 	        this.launchAfterInstall = source["launchAfterInstall"];
 	    }
@@ -209,6 +211,7 @@ export namespace Config {
 	    offlineMode: boolean;
 	    compatMode: boolean;
 	    detailedLogs: boolean;
+	    separateGameDir?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new MinecraftConfig(source);
@@ -236,6 +239,7 @@ export namespace Config {
 	        this.offlineMode = source["offlineMode"];
 	        this.compatMode = source["compatMode"];
 	        this.detailedLogs = source["detailedLogs"];
+	        this.separateGameDir = source["separateGameDir"];
 	    }
 	}
 	export class Config {
@@ -245,6 +249,7 @@ export namespace Config {
 	    idle: IdleConfig;
 	    richPresence: RichPresenceConfig;
 	    extraData: ExtraData;
+	    firstLaunch: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -258,6 +263,7 @@ export namespace Config {
 	        this.idle = this.convertValues(source["idle"], IdleConfig);
 	        this.richPresence = this.convertValues(source["richPresence"], RichPresenceConfig);
 	        this.extraData = this.convertValues(source["extraData"], ExtraData);
+	        this.firstLaunch = source["firstLaunch"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -461,7 +467,9 @@ export namespace cache {
 	export class Info {
 	    cacheDir: string;
 	    totalEntries: number;
+	    totalBytes: number;
 	    categories: Record<string, number>;
+	    sizes: Record<string, number>;
 	    ttls: Record<string, string>;
 	
 	    static createFrom(source: any = {}) {
@@ -472,7 +480,9 @@ export namespace cache {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.cacheDir = source["cacheDir"];
 	        this.totalEntries = source["totalEntries"];
+	        this.totalBytes = source["totalBytes"];
 	        this.categories = source["categories"];
+	        this.sizes = source["sizes"];
 	        this.ttls = source["ttls"];
 	    }
 	}
@@ -684,6 +694,32 @@ export namespace downloader {
 
 export namespace engine {
 	
+	export class DirectoryInfo {
+	    mode: string;
+	    customPath: string;
+	    configured: boolean;
+	    workDir: string;
+	    normalDir: string;
+	    minecraftDir: string;
+	    minecraftExists: boolean;
+	    portableDir: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new DirectoryInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.mode = source["mode"];
+	        this.customPath = source["customPath"];
+	        this.configured = source["configured"];
+	        this.workDir = source["workDir"];
+	        this.normalDir = source["normalDir"];
+	        this.minecraftDir = source["minecraftDir"];
+	        this.minecraftExists = source["minecraftExists"];
+	        this.portableDir = source["portableDir"];
+	    }
+	}
 	export class DownloadInfo {
 	    id: string;
 	    version: string;
@@ -776,6 +812,81 @@ export namespace engine {
 	        this.type = source["type"];
 	    }
 	}
+	export class IntegritySkipped {
+	    file: string;
+	    reason: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new IntegritySkipped(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.file = source["file"];
+	        this.reason = source["reason"];
+	    }
+	}
+	export class IntegrityProgress {
+	    state: string;
+	    phase: string;
+	    scope: string;
+	    currentVersion: string;
+	    currentFile: string;
+	    tasksTotal: number;
+	    tasksDone: number;
+	    filesMissing: number;
+	    filesRestored: number;
+	    filesCorrupt: number;
+	    filesSkipped: number;
+	    versionsScanned: number;
+	    percent: number;
+	    startedAt?: string;
+	    finishedAt?: string;
+	    skipped?: IntegritySkipped[];
+	
+	    static createFrom(source: any = {}) {
+	        return new IntegrityProgress(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.state = source["state"];
+	        this.phase = source["phase"];
+	        this.scope = source["scope"];
+	        this.currentVersion = source["currentVersion"];
+	        this.currentFile = source["currentFile"];
+	        this.tasksTotal = source["tasksTotal"];
+	        this.tasksDone = source["tasksDone"];
+	        this.filesMissing = source["filesMissing"];
+	        this.filesRestored = source["filesRestored"];
+	        this.filesCorrupt = source["filesCorrupt"];
+	        this.filesSkipped = source["filesSkipped"];
+	        this.versionsScanned = source["versionsScanned"];
+	        this.percent = source["percent"];
+	        this.startedAt = source["startedAt"];
+	        this.finishedAt = source["finishedAt"];
+	        this.skipped = this.convertValues(source["skipped"], IntegritySkipped);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
 	export class ModLoaderInstallResult {
 	    sessionId: string;
 	    status: string;
@@ -871,6 +982,7 @@ export namespace engineconfig {
 	    detailedLogs: boolean;
 	    concurrentDownloads: number;
 	    verifyIntegrity: boolean;
+	    separateGameDir?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -917,6 +1029,7 @@ export namespace engineconfig {
 	        this.detailedLogs = source["detailedLogs"];
 	        this.concurrentDownloads = source["concurrentDownloads"];
 	        this.verifyIntegrity = source["verifyIntegrity"];
+	        this.separateGameDir = source["separateGameDir"];
 	    }
 	}
 
@@ -956,12 +1069,12 @@ export namespace history {
 	    id: string;
 	    timestamp: number;
 	    instance_id?: string;
+	    instance_name?: string;
 	    version: string;
 	    player_name: string;
 	    play_time_seconds: number;
 	    exit_code: number;
 	    crash_reason?: string;
-	    modloader?: string;
 	    max_ram?: number;
 	
 	    static createFrom(source: any = {}) {
@@ -973,14 +1086,80 @@ export namespace history {
 	        this.id = source["id"];
 	        this.timestamp = source["timestamp"];
 	        this.instance_id = source["instance_id"];
+	        this.instance_name = source["instance_name"];
 	        this.version = source["version"];
 	        this.player_name = source["player_name"];
 	        this.play_time_seconds = source["play_time_seconds"];
 	        this.exit_code = source["exit_code"];
 	        this.crash_reason = source["crash_reason"];
-	        this.modloader = source["modloader"];
 	        this.max_ram = source["max_ram"];
 	    }
+	}
+	export class VersionStat {
+	    version: string;
+	    playCount: number;
+	    totalPlayed: number;
+	    firstPlayed: number;
+	    lastPlayed: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new VersionStat(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.version = source["version"];
+	        this.playCount = source["playCount"];
+	        this.totalPlayed = source["totalPlayed"];
+	        this.firstPlayed = source["firstPlayed"];
+	        this.lastPlayed = source["lastPlayed"];
+	    }
+	}
+	export class InstanceStats {
+	    totalPlayTime: number;
+	    totalSessions: number;
+	    firstPlayed: number;
+	    lastPlayed: number;
+	    weeklyPlayTime: number;
+	    weeklySessions: number;
+	    weeklyVersions: string[];
+	    versions: VersionStat[];
+	    running: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new InstanceStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.totalPlayTime = source["totalPlayTime"];
+	        this.totalSessions = source["totalSessions"];
+	        this.firstPlayed = source["firstPlayed"];
+	        this.lastPlayed = source["lastPlayed"];
+	        this.weeklyPlayTime = source["weeklyPlayTime"];
+	        this.weeklySessions = source["weeklySessions"];
+	        this.weeklyVersions = source["weeklyVersions"];
+	        this.versions = this.convertValues(source["versions"], VersionStat);
+	        this.running = source["running"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 
 }
@@ -1140,11 +1319,10 @@ export namespace instance {
 	    description?: string;
 	    icon?: string;
 	    banner?: string;
-	    background?: string;
-	    accentColor?: string;
 	    group?: string;
 	    tags?: string[];
 	    favorite?: boolean;
+	    pinned?: boolean;
 	    launchConfig?: InstanceLaunchConfig;
 	
 	    static createFrom(source: any = {}) {
@@ -1159,11 +1337,10 @@ export namespace instance {
 	        this.description = source["description"];
 	        this.icon = source["icon"];
 	        this.banner = source["banner"];
-	        this.background = source["background"];
-	        this.accentColor = source["accentColor"];
 	        this.group = source["group"];
 	        this.tags = source["tags"];
 	        this.favorite = source["favorite"];
+	        this.pinned = source["pinned"];
 	        this.launchConfig = this.convertValues(source["launchConfig"], InstanceLaunchConfig);
 	    }
 	
@@ -1190,6 +1367,7 @@ export namespace instance {
 	    title: string;
 	    versions: string[];
 	    favorite: boolean;
+	    pinned: boolean;
 	    group: string;
 	    lastPlayed: string;
 	    playTime: number;
@@ -1204,6 +1382,7 @@ export namespace instance {
 	        this.title = source["title"];
 	        this.versions = source["versions"];
 	        this.favorite = source["favorite"];
+	        this.pinned = source["pinned"];
 	        this.group = source["group"];
 	        this.lastPlayed = source["lastPlayed"];
 	        this.playTime = source["playTime"];
@@ -1237,11 +1416,10 @@ export namespace instance {
 	    description: string;
 	    icon: string;
 	    banner: string;
-	    background: string;
-	    accentColor: string;
 	    group: string;
 	    tags: string[];
 	    favorite: boolean;
+	    pinned: boolean;
 	    createdAt: string;
 	    lastPlayed: string;
 	    playTime: number;
@@ -1260,11 +1438,10 @@ export namespace instance {
 	        this.description = source["description"];
 	        this.icon = source["icon"];
 	        this.banner = source["banner"];
-	        this.background = source["background"];
-	        this.accentColor = source["accentColor"];
 	        this.group = source["group"];
 	        this.tags = source["tags"];
 	        this.favorite = source["favorite"];
+	        this.pinned = source["pinned"];
 	        this.createdAt = source["createdAt"];
 	        this.lastPlayed = source["lastPlayed"];
 	        this.playTime = source["playTime"];
@@ -1277,11 +1454,10 @@ export namespace instance {
 	    description?: string;
 	    icon?: string;
 	    banner?: string;
-	    background?: string;
-	    accentColor?: string;
 	    group?: string;
 	    tags?: string[];
 	    favorite?: boolean;
+	    pinned?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new UpdateMetadataReq(source);
@@ -1293,11 +1469,10 @@ export namespace instance {
 	        this.description = source["description"];
 	        this.icon = source["icon"];
 	        this.banner = source["banner"];
-	        this.background = source["background"];
-	        this.accentColor = source["accentColor"];
 	        this.group = source["group"];
 	        this.tags = source["tags"];
 	        this.favorite = source["favorite"];
+	        this.pinned = source["pinned"];
 	    }
 	}
 	export class VerifyIssue {
@@ -1570,6 +1745,7 @@ export namespace launcher {
 	    Version: string;
 	    Username: string;
 	    InstanceID: string;
+	    InstanceName: string;
 	    UUID: string;
 	    AccessToken: string;
 	    XUID: string;
@@ -1589,6 +1765,7 @@ export namespace launcher {
 	        this.Version = source["Version"];
 	        this.Username = source["Username"];
 	        this.InstanceID = source["InstanceID"];
+	        this.InstanceName = source["InstanceName"];
 	        this.UUID = source["UUID"];
 	        this.AccessToken = source["AccessToken"];
 	        this.XUID = source["XUID"];

@@ -28,6 +28,10 @@ const (
 	dialTimeout      = 2 * time.Second
 	writeTimeout     = 3 * time.Second
 	handshakeTimeout = 5 * time.Second
+	// maxDialAttempts es el número de fallos de conexión consecutivos tras el
+	// que se suspenden los reintentos (Discord cerrado o sin cliente IPC).
+	// Solo se reanuda al volver a activar la presencia (SetEnabled(true)).
+	maxDialAttempts = 5
 )
 
 type Activity struct {
@@ -42,13 +46,14 @@ type frame struct {
 }
 
 type Manager struct {
-	mu       sync.Mutex
-	enabled  bool
-	started  bool
-	closed   bool
-	conn     net.Conn
-	activity *Activity
-	logFn    func(format string, args ...interface{})
+	mu        sync.Mutex
+	enabled   bool
+	started   bool
+	closed    bool
+	suspended bool // true tras maxDialAttempts fallos: no se reintenta hasta re-activar
+	conn      net.Conn
+	activity  *Activity
+	logFn     func(format string, args ...interface{})
 
 	quit chan struct{}
 	wake chan struct{}
@@ -85,6 +90,11 @@ func (m *Manager) SetEnabled(v bool) {
 	m.mu.Lock()
 	changed := m.enabled != v
 	m.enabled = v
+	if v {
+		// Una activación (inicio o toggle del usuario) levanta la suspensión
+		// por fallos repetidos y reanuda los reintentos.
+		m.suspended = false
+	}
 	if v && !m.started {
 		m.started = true
 		m.wg.Add(1)
@@ -146,6 +156,33 @@ func (m *Manager) loop() {
 			attempts++
 			if attempts == 1 || attempts%10 == 0 {
 				m.logf("[Discord] Cliente no disponible (intento %d): %v", attempts, err)
+			}
+			if attempts >= maxDialAttempts {
+				m.mu.Lock()
+				m.suspended = true
+				m.mu.Unlock()
+				m.logf("[Discord] Cliente no disponible tras %d intentos: se detienen los reintentos hasta volver a activar la presencia", attempts)
+				for {
+					select {
+					case <-m.quit:
+						return
+					default:
+					}
+					m.mu.Lock()
+					suspended := m.suspended
+					enabled := m.enabled
+					m.mu.Unlock()
+					if !suspended || !enabled {
+						break
+					}
+					select {
+					case <-m.quit:
+						return
+					case <-m.wake:
+					}
+				}
+				attempts = 0
+				continue
 			}
 			select {
 			case <-m.quit:

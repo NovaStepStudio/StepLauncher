@@ -1,0 +1,444 @@
+@use '../../Common/Styles/Components' as *;
+
+.CrashModal_Overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: var(--filter-blur);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 130;
+}
+
+.CrashModal_Dialog {
+    width: min(80vw, 62rem);
+    min-width: 65vw;
+    max-width: 92vw;
+    max-height: 88vh;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    border-radius: 0.85rem;
+    box-shadow: var(--shadow-settings-normal) #000a, 0 0 0 1px color-mix(in srgb, var(--color-error) 18%, transparent);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    text-shadow: var(--text-shadow-secundary, none);
+}
+
+.CrashModal_Head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.1rem 1.35rem 0.85rem;
+    border-bottom: var(--border-modal-style);
+}
+
+.CrashModal_Icon {
+    width: 2.6rem;
+    height: 2.6rem;
+    flex-shrink: 0;
+    border-radius: 0.7rem;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--color-error) 45%, transparent), color-mix(in srgb, var(--color-error) 12%, transparent));
+    border: 1px solid color-mix(in srgb, var(--color-error) 45%, transparent);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--color-error);
+    animation: CrashModal_Pulse 2s ease-in-out infinite;
+}
+
+@keyframes CrashModal_Pulse {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-error) 30%, transparent); }
+    50% { box-shadow: 0 0 0 0.35rem color-mix(in srgb, var(--color-error) 0%, transparent); }
+}
+
+.CrashModal_Titles {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+
+    h3 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.95rem * var(--font-size-primary, 1));
+        font-weight: 600;
+    }
+
+    p {
+        margin: 0;
+        font-size: 0.68rem;
+        opacity: 0.5;
+    }
+}
+
+.CrashModal_CatBadge {
+    align-self: flex-start;
+    margin-top: 0.15rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-error);
+    background: color-mix(in srgb, var(--color-error) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-error) 35%, transparent);
+    border-radius: 0.35rem;
+    padding: 0.15rem 0.5rem;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.CrashModal_Close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 2rem;
+    width: 2rem;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    svg {
+        width: 1.1rem;
+        height: 1.1rem;
+    }
+
+    &:hover {
+        background: #1111;
+        color: var(--text-primary);
+    }
+}
+
+.CrashModal_Icon svg {
+    width: 1.3rem;
+    height: 1.3rem;
+}
+
+.CrashModal_Tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.9rem 1.35rem 0;
+    flex-shrink: 0;
+}
+
+.CrashModal_Tab {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    padding: 0.45rem 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+
+    svg {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+
+    &:hover {
+        background: color-mix(in srgb, var(--background-button-primary) 50%, gray 10%);
+        color: var(--text-primary);
+    }
+
+    &.active {
+        border-color: color-mix(in srgb, var(--background-button-primary) 55%, gray 50%);
+        background-color: color-mix(in srgb, var(--background-button-primary) 80%, gray 15%);
+        color: var(--text-primary);
+    }
+}
+
+.CrashModal_Body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: 1.1rem 1.35rem;
+    overflow-y: auto;
+}
+
+.CrashModal_Grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+}
+
+.Logs_Code{
+    display: grid;
+    gap: 0.6rem;
+    grid-template-columns: 1fr;
+    pre{
+        height: 100%;
+        width: 100%;
+        text-wrap: nowrap;
+        text-overflow: clip;
+    }
+}
+
+.CrashModal_LogBoxMain {
+    order: -1;
+}
+
+.CrashModal_Cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.5rem;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    min-width: 0;
+    transition: var(--transition);
+
+    &:hover {
+        border-color: color-mix(in srgb, var(--control-border) 60%, var(--color-accent) 40%);
+    }
+}
+
+.CrashModal_CellFull {
+    grid-column: 1 / -1;
+}
+
+.CrashModal_LogsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.CrashModal_LogRow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.5rem;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+}
+
+.CrashModal_LogRowInfo {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.CrashModal_LogPath {
+    font-size: 0.68rem;
+    font-family: Consolas, 'Courier New', monospace;
+    color: var(--text-secondary);
+    word-break: break-all;
+    opacity: 0.8;
+}
+
+.CrashModal_OpenBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: color-mix(in srgb, var(--background-button-primary) 80%, gray 15%);
+    border: 1px solid color-mix(in srgb, var(--background-button-primary) 55%, gray 50%);
+    color: var(--text-primary);
+    border-radius: 0.4rem;
+    font-size: 0.65rem;
+    padding: 0.35rem 0.7rem;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    svg {
+        width: 0.9rem;
+        height: 0.9rem;
+    }
+
+    &:hover {
+        filter: brightness(1.15);
+    }
+}
+
+.CrashModal_LaunchBox {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-radius: 0.5rem;
+    background: rgba(0, 0, 0, 0.35);
+    border: var(--border-style);
+    overflow: hidden;
+}
+
+.CrashModal_LaunchPre {
+    max-height: 40vh;
+}
+
+.CrashModal_Key {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.45;
+}
+
+.CrashModal_Val {
+    font-size: 0.78rem;
+    font-family: var(--font-secundary), Arial, sans-serif;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    word-break: break-word;
+}
+
+.CrashModal_Explain {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0.7rem 0.85rem;
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--color-error) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-error) 25%, transparent);
+    border-radius: 0.5rem;
+    opacity: 0.95;
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+        color: var(--color-error);
+    }
+}
+
+.CrashModal_LogBox {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-radius: 0.5rem;
+    background: rgba(0, 0, 0, 0.35);
+    border: var(--border-style);
+    overflow: hidden;
+}
+
+.CrashModal_LogHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.55rem 0.8rem;
+    border-bottom: var(--border-style);
+    flex-shrink: 0;
+}
+
+.CrashModal_LogTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.68rem;
+    opacity: 0.75;
+
+    svg {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+}
+
+.CrashModal_Copy {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    color: var(--text-secondary);
+    border-radius: 0.4rem;
+    font-size: 0.65rem;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+    transition: var(--transition);
+
+    svg {
+        width: 0.85rem;
+        height: 0.85rem;
+    }
+
+    &:hover {
+        background: color-mix(in srgb, var(--background-button-primary) 50%, gray 10%);
+        color: var(--text-primary);
+    }
+
+    &.copied {
+        border-color: color-mix(in srgb, var(--color-success, #3fb950) 60%, transparent);
+        color: var(--color-success, #3fb950);
+    }
+}
+
+.CrashModal_Log {
+    margin: 0;
+    padding: 0.8rem;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 0.68rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+    opacity: 0.85;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-y: auto;
+    max-height: 46vh;
+    user-select: text;
+    -webkit-user-select: text;
+    cursor: text;
+}
+
+.CrashModal_Footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.85rem 1.35rem 1.1rem;
+    border-top: var(--border-modal-style);
+}
+
+.CrashModal_CopyBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    svg {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+
+    &.copied {
+        border-color: color-mix(in srgb, var(--color-success, #3fb950) 60%, transparent);
+        color: var(--color-success, #3fb950);
+    }
+}
+
+.CrashModal-enter-active,
+.CrashModal-leave-active {
+    transition: var(--transition);
+
+    .CrashModal_Dialog {
+        transition: var(--transition-slow);
+    }
+}
+
+.CrashModal-enter-from,
+.CrashModal-leave-to {
+    opacity: 0;
+
+    .CrashModal_Dialog {
+        transform: translateY(8px) scale(0.97);
+        opacity: 0;
+    }
+}

@@ -6,7 +6,6 @@
       "name": "steplauncher",
       "dependencies": {
         "marked": "^18.0.9",
-        "sass-embedded": "^1.100.0",
         "vue": "^3.5.40",
       },
       "devDependencies": {
@@ -17,6 +16,7 @@
         "@vue/tsconfig": "^0.9.1",
         "npm-run-all2": "^9.0.2",
         "oxfmt": "^0.59.0",
+        "sass-embedded": "^1.100.0",
         "typescript": "~6.0.0",
         "vite": "^8.1.5",
         "vite-plugin-vue-devtools": "^8.1.5",
@@ -316,6 +316,8 @@
     "is-wsl": ["is-wsl@3.1.1", "", { "dependencies": { "is-inside-container": "^1.0.0" } }, "sha512-e6rvdUCiQCAuumZslxRJWR/Doq4VpPR82kqclvcS0efgt430SlGIk05vdCN58+VrzgtIcfNODjozVielycD4Sw=="],
 
     "isexe": ["isexe@4.0.0", "", {}, "sha512-FFUtZMpoZ8RqHS3XeXEmHWLA4thH+ZxCv2lOiPIn1Xc7CxrqhWzNSDzD+/chS/zbYezmiwWLdQC09JdQKmthOw=="],
+
+    "jiti": ["jiti@2.7.0", "", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ=="],
 
     "js-tokens": ["js-tokens@4.0.0", "", {}, "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ=="],
 

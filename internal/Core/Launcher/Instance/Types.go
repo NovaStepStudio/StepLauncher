@@ -13,11 +13,10 @@ type InstanceMetadata struct {
 	Description string   `json:"description"`
 	Icon        string   `json:"icon"`
 	Banner      string   `json:"banner"`
-	Background  string   `json:"background"`
-	AccentColor string   `json:"accentColor"`
 	Group       string   `json:"group"`
 	Tags        []string `json:"tags"`
 	Favorite    bool     `json:"favorite"`
+	Pinned      bool     `json:"pinned"`
 	CreatedAt   string   `json:"createdAt"`
 	LastPlayed  string   `json:"lastPlayed"`
 	PlayTime    int64    `json:"playTime"`
@@ -34,8 +33,8 @@ type InstanceLaunchConfig struct {
 	UseOfficialJava      *bool  `json:"useOfficialJava,omitempty"`
 	Fullscreen           *bool  `json:"fullscreen,omitempty"`
 	HardwareAcceleration *bool  `json:"hardwareAcceleration,omitempty"`
-	GCPreset             string `json:"gcPreset,omitempty"`
-	GPUPreference        string `json:"gpuPreference,omitempty"`
+	GCPreset             *string `json:"gcPreset,omitempty"`
+	GPUPreference        *string `json:"gpuPreference,omitempty"`
 	CustomResolution     *bool  `json:"customResolution,omitempty"`
 	ResWidth             *int   `json:"resWidth,omitempty"`
 	ResHeight            *int   `json:"resHeight,omitempty"`
@@ -96,6 +95,7 @@ type InstanceInfo struct {
 	Title      string   `json:"title"`
 	Versions   []string `json:"versions"`
 	Favorite   bool     `json:"favorite"`
+	Pinned     bool     `json:"pinned"`
 	Group      string   `json:"group"`
 	LastPlayed string   `json:"lastPlayed"`
 	PlayTime   int64    `json:"playTime"`
@@ -108,11 +108,10 @@ type CreateInstanceReq struct {
 	Description  string                `json:"description,omitempty"`
 	Icon         string                `json:"icon,omitempty"`
 	Banner       string                `json:"banner,omitempty"`
-	Background   string                `json:"background,omitempty"`
-	AccentColor  string                `json:"accentColor,omitempty"`
 	Group        string                `json:"group,omitempty"`
 	Tags         []string              `json:"tags,omitempty"`
 	Favorite     *bool                 `json:"favorite,omitempty"`
+	Pinned       *bool                 `json:"pinned,omitempty"`
 	LaunchConfig *InstanceLaunchConfig `json:"launchConfig,omitempty"`
 }
 
@@ -121,11 +120,10 @@ type UpdateMetadataReq struct {
 	Description string   `json:"description,omitempty"`
 	Icon        string   `json:"icon,omitempty"`
 	Banner      string   `json:"banner,omitempty"`
-	Background  string   `json:"background,omitempty"`
-	AccentColor string   `json:"accentColor,omitempty"`
 	Group       string   `json:"group,omitempty"`
 	Tags        []string `json:"tags,omitempty"`
 	Favorite    *bool    `json:"favorite,omitempty"`
+	Pinned      *bool    `json:"pinned,omitempty"`
 }
 
 type CloneInstanceReq struct {

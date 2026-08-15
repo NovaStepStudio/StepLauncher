@@ -3,35 +3,49 @@ package modloader
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	"StepLauncher/internal/Core/Downloader"
 	"StepLauncher/internal/Core/Downloader/Utils"
+	"StepLauncher/internal/Core/ModLoader/Installer"
 )
 
+// El estado del modloader instalado vive en memoria (caché) y, si es necesario,
+// se deriva del disco escaneando los version.json del destino: el usuario no
+// quiere archivos de estado sueltos (carpeta loader-states/, loader-state.json).
 type Orchestrator struct {
-	registry   *Registry
-	workDir    string
-	cacheDir   string
-	httpClient *http.Client
-	broadcast  func([]byte)
-	logFn      func(string, ...interface{})
-	mu         sync.RWMutex
+	registry     *Registry
+	workDir      string
+	cacheDir     string
+	httpClient   *http.Client
+	broadcast    func([]byte)
+	logFn        func(string, ...interface{})
+	mu           sync.RWMutex
+	stateCache   map[string]*InstalledLoader
+	stateRemoved map[string]bool
 }
 
 func NewOrchestrator(workDir, cacheDir string, client *http.Client, reg *Registry, broadcast func([]byte), logFn func(string, ...interface{})) *Orchestrator {
+	// Limpieza de la persistencia antigua (carpeta loader-states/): el estado
+	// ya no se guarda en archivos; se elimina lo que quedara de versiones
+	// anteriores (best-effort, nunca condiciona el arranque).
+	os.RemoveAll(filepath.Join(workDir, "loader-states"))
 	return &Orchestrator{
-		registry:   reg,
-		workDir:    workDir,
-		cacheDir:   cacheDir,
-		httpClient: client,
-		broadcast:  broadcast,
-		logFn:      logFn,
+		registry:     reg,
+		workDir:      workDir,
+		cacheDir:     cacheDir,
+		httpClient:   client,
+		broadcast:    broadcast,
+		logFn:        logFn,
+		stateCache:   make(map[string]*InstalledLoader),
+		stateRemoved: make(map[string]bool),
 	}
 }
 
@@ -50,7 +64,15 @@ func (o *Orchestrator) GetVersions(loaderName, mcVersion string) ([]LoaderVersio
 	if err != nil {
 		return nil, err
 	}
-	return p.GetVersions(mcVersion)
+	versions, err := p.GetVersions(mcVersion)
+	if err != nil {
+		return nil, err
+	}
+	// Garantía única de orden: todos los providers devuelven la lista de mayor
+	// a menor versión (numérica, no lexicográfica) para que la UI y el
+	// algoritmo de recomendación tomen siempre la más reciente/estable.
+	SortLoaderVersionsDesc(versions)
+	return versions, nil
 }
 
 func (o *Orchestrator) ResolveVersion(loaderName, mcVersion, strategy string) (string, error) {
@@ -63,6 +85,8 @@ func (o *Orchestrator) ResolveVersion(loaderName, mcVersion, strategy string) (s
 	}
 	switch strategy {
 	case "recommended":
+		// La lista llega ordenada de mayor a menor: la primera estable es la
+		// versión más reciente y estable; si ninguna lo es, la más reciente.
 		for _, v := range versions {
 			if v.Stable {
 				return v.LoaderVersion, nil
@@ -109,6 +133,13 @@ func (o *Orchestrator) Install(sessionId, loaderName, loaderVersion, mcVersion, 
 	}
 
 	versionJsonID := p.VersionJsonID(mcVersion, loaderVersion)
+	// El instalador oficial puede escribir el version.json con un id propio
+	// (p. ej. "26.2-forge-65.1.0" en lugar del derivado "forge-26.2-65.1.0"):
+	// usar el id real de disco para que BuildExecution/ProfileVersion apunten
+	// al archivo que de verdad existe.
+	if realID := installer.LookupInstalledJsonID(instancePath, loaderName, loaderVersion); realID != "" {
+		versionJsonID = realID
+	}
 	installed := NewInstalledLoader(loaderName, loaderVersion, mcVersion, versionJsonID, plan.InstallerDest)
 
 	if err := o.saveState(instancePath, installed); err != nil {
@@ -156,45 +187,154 @@ func (o *Orchestrator) downloadEntries(sessionId string, entries []DownloadPlanE
 	return nil
 }
 
-func (o *Orchestrator) saveState(instancePath string, loader *InstalledLoader) error {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-
-	state := InstallState{Loader: loader}
-	data, err := json.MarshalIndent(state, "", "  ")
+// stateKey normaliza el path del destino de instalación para usarlo como
+// clave de la caché en memoria (sin distinguir mayúsculas en Windows).
+func (o *Orchestrator) stateKey(instancePath string) string {
+	abs, err := filepath.Abs(instancePath)
 	if err != nil {
-		return err
+		abs = instancePath
 	}
+	return strings.ToLower(abs)
+}
 
-	return os.WriteFile(LoaderStatePath(instancePath), data, 0644)
+var errNoLoaderState = errors.New("no modloader installed")
+
+func (o *Orchestrator) saveState(instancePath string, loader *InstalledLoader) error {
+	key := o.stateKey(instancePath)
+	o.mu.Lock()
+	o.stateCache[key] = loader
+	delete(o.stateRemoved, key)
+	o.mu.Unlock()
+	// Migración: elimina el loader-state.json legacy que quedaba en la raíz
+	// del destino de instalación (best-effort, nunca condiciona la escritura).
+	os.Remove(filepath.Join(instancePath, "loader-state.json"))
+	return nil
 }
 
 func (o *Orchestrator) LoadState(instancePath string) (*InstalledLoader, error) {
-	o.mu.RLock()
-	defer o.mu.RUnlock()
+	key := o.stateKey(instancePath)
 
-	statePath := LoaderStatePath(instancePath)
-	data, err := os.ReadFile(statePath)
+	o.mu.RLock()
+	if o.stateRemoved[key] {
+		o.mu.RUnlock()
+		return nil, errNoLoaderState
+	}
+	if loader := o.stateCache[key]; loader != nil {
+		o.mu.RUnlock()
+		return loader, nil
+	}
+	o.mu.RUnlock()
+
+	// Sin caché (p. ej. tras reiniciar el launcher): el estado se reconstruye
+	// desde el disco escaneando los version.json del destino.
+	loader, err := o.deriveFromDisk(instancePath)
 	if err != nil {
 		return nil, err
 	}
-
-	var state InstallState
-	if err := json.Unmarshal(data, &state); err != nil {
-		return nil, err
-	}
-	return state.Loader, nil
+	o.mu.Lock()
+	o.stateCache[key] = loader
+	delete(o.stateRemoved, key)
+	o.mu.Unlock()
+	return loader, nil
 }
 
 func (o *Orchestrator) RemoveState(instancePath string) error {
+	key := o.stateKey(instancePath)
 	o.mu.Lock()
-	defer o.mu.Unlock()
-
-	statePath := LoaderStatePath(instancePath)
-	if err := os.Remove(statePath); err != nil && !os.IsNotExist(err) {
+	delete(o.stateCache, key)
+	o.stateRemoved[key] = true
+	o.mu.Unlock()
+	// Limpie el archivo legacy por si quedó de una instalación anterior.
+	legacyPath := filepath.Join(instancePath, "loader-state.json")
+	if err := os.Remove(legacyPath); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	return nil
+}
+
+// deriveFromDisk reconstruye el estado del modloader instalado escaneando los
+// version.json del destino (versions/*.json con inheritsFrom): el id y el
+// inheritsFrom bastan para clasificar el loader y su versión.
+func (o *Orchestrator) deriveFromDisk(instancePath string) (*InstalledLoader, error) {
+	versionsDir := filepath.Join(instancePath, "versions")
+	entries, err := os.ReadDir(versionsDir)
+	if err != nil {
+		return nil, errNoLoaderState
+	}
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		id := e.Name()
+		jsonPath := filepath.Join(versionsDir, id, id+".json")
+		raw, err := os.ReadFile(jsonPath)
+		if err != nil {
+			continue
+		}
+		var vj struct {
+			ID           string `json:"id"`
+			InheritsFrom string `json:"inheritsFrom"`
+		}
+		if err := json.Unmarshal(raw, &vj); err != nil {
+			continue
+		}
+		if vj.InheritsFrom == "" {
+			continue
+		}
+		jsonID := vj.ID
+		if jsonID == "" {
+			jsonID = id
+		}
+		loaderType, ok := DetectLoaderFromID(jsonID)
+		if !ok {
+			continue
+		}
+		loaderVersion := extractLoaderVersion(jsonID, vj.InheritsFrom, loaderType)
+		if o.logFn != nil {
+			o.logFn("Modloader %s %s detectado en disco para MC %s", loaderType, loaderVersion, vj.InheritsFrom)
+		}
+		return NewInstalledLoader(loaderType, loaderVersion, vj.InheritsFrom, id, ""), nil
+	}
+	return nil, errNoLoaderState
+}
+
+// DetectLoaderFromID clasifica el tipo de modloader a partir del id del
+// version.json (o del nombre de carpeta) del perfil instalado. El orden es
+// importante: neoforge contiene "forge" y fabric-loader empieza por "fabric-".
+func DetectLoaderFromID(id string) (string, bool) {
+	switch {
+	case strings.HasPrefix(id, "fabric-loader-"), strings.HasPrefix(id, "fabric-"):
+		return "fabric", true
+	case strings.HasPrefix(id, "legacyfabric-loader-"), strings.HasPrefix(id, "legacyfabric-"):
+		return "legacyfabric", true
+	case strings.HasPrefix(id, "quilt-loader-"), strings.HasPrefix(id, "quilt-"):
+		return "quilt", true
+	case strings.HasPrefix(id, "neoforge-"), strings.Contains(id, "-neoforge-"):
+		return "neoforge", true
+	case strings.HasPrefix(id, "forge-"), strings.Contains(id, "-forge-"):
+		return "forge", true
+	}
+	return "", false
+}
+
+// extractLoaderVersion quita del id el prefijo "<mc>-<loader>-" para obtener la
+// versión del modloader (p. ej. "1.12.2-forge-14.23.5.2864" -> "14.23.5.2864").
+func extractLoaderVersion(id, mcVersion, loaderType string) string {
+	v := id
+	if mcVersion != "" && strings.HasPrefix(v, mcVersion+"-") {
+		v = strings.TrimPrefix(v, mcVersion+"-")
+	}
+	switch loaderType {
+	case "fabric", "quilt":
+		v = strings.TrimPrefix(v, loaderType+"-loader-")
+		v = strings.TrimPrefix(v, loaderType+"-")
+	case "legacyfabric":
+		v = strings.TrimPrefix(v, "legacyfabric-loader-")
+		v = strings.TrimPrefix(v, "legacyfabric-")
+	default:
+		v = strings.TrimPrefix(v, loaderType+"-")
+	}
+	return v
 }
 
 func (o *Orchestrator) GetInstalledLoader(instancePath string) (*InstalledLoader, error) {

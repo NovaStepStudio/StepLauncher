@@ -9,7 +9,7 @@ import (
 
 const (
 	AppName    = "StepLauncher"
-	AppVersion = "2.3.0"
+	AppVersion = "2.3.1"
 	AppAuthor  = "NovaStepStudio"
 )
 
@@ -66,11 +66,24 @@ type Config struct {
 	ConcurrentDownloads int `json:"concurrentDownloads"`
 
 	VerifyIntegrity bool `json:"verifyIntegrity"`
+
+	// SeparateGameDir indica si el gameDir es <workDir>/game (true) o el
+	// propio workDir (false). nil equivale a true. En modo Minecraft se
+	// fuerza a false para usar .minecraft directamente como gameDir.
+	SeparateGameDir *bool `json:"separateGameDir,omitempty"`
+}
+
+func (c Config) SeparateGameDirValue() bool {
+	if c.SeparateGameDir == nil {
+		return true
+	}
+	return *c.SeparateGameDir
 }
 
 type Manager struct {
 	cfg        Config
 	configPath string
+	bootstrap  Bootstrap
 }
 
 func DefaultConfig() Config {
@@ -105,25 +118,15 @@ func DefaultConfig() Config {
 }
 
 func NewManager() *Manager {
-	return &Manager{cfg: DefaultConfig()}
-}
-
-func defaultStepLauncherDir() string {
-	if runtime.GOOS == "windows" {
-		appData := os.Getenv("APPDATA")
-		if appData != "" {
-			return filepath.Join(appData, ".StepLauncher")
-		}
-	}
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".StepLauncher")
+	return &Manager{cfg: DefaultConfig(), bootstrap: LoadBootstrap()}
 }
 
 func (m *Manager) Load() error {
 	m.cfg = DefaultConfig()
+	m.bootstrap = LoadBootstrap()
 
 	if m.cfg.WorkDir == "" {
-		m.cfg.WorkDir = defaultStepLauncherDir()
+		m.cfg.WorkDir = m.bootstrap.ResolveWorkDir()
 	}
 	if m.cfg.CacheDir == "" {
 		m.cfg.CacheDir = filepath.Join(m.cfg.WorkDir, "cache")
@@ -146,9 +149,10 @@ func (m *Manager) LoadFile(path string) error {
 	}
 	m.cfg = fileCfg
 	m.configPath = path
+	m.bootstrap = LoadBootstrap()
 
 	if m.cfg.WorkDir == "" {
-		m.cfg.WorkDir = defaultStepLauncherDir()
+		m.cfg.WorkDir = m.bootstrap.ResolveWorkDir()
 	}
 	if m.cfg.CacheDir == "" {
 		m.cfg.CacheDir = filepath.Join(m.cfg.WorkDir, "cache")
@@ -174,6 +178,18 @@ func (m *Manager) ensureDirs() error {
 
 func (m *Manager) Get() Config     { return m.cfg }
 func (m *Manager) RootDir() string { return m.cfg.WorkDir }
+
+// Bootstrap devuelve la preferencia de directorio cargada.
+func (m *Manager) Bootstrap() Bootstrap { return m.bootstrap }
+
+// SetBootstrap actualiza la preferencia de directorio en memoria y la persiste.
+func (m *Manager) SetBootstrap(b Bootstrap) error {
+	if err := SaveBootstrap(b); err != nil {
+		return err
+	}
+	m.bootstrap = b
+	return nil
+}
 
 func (m *Manager) UpdateConfig(cfg Config) {
 	m.cfg = cfg

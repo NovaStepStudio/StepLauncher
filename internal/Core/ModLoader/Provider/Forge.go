@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"StepLauncher/internal/Core/Cache"
@@ -28,6 +27,12 @@ type AbstractForgeProvider struct {
 	CacheDir     string
 	CacheManager *cache.Manager
 	httpClient   *http.Client
+	// JavaResolver devuelve la ruta de un ejecutable de Java válido para correr
+	// el instalador oficial de una versión concreta (recibe la versión base de
+	// MC y el directorio de la instancia para poder usar el runtime oficial que
+	// el launcher descargó para esa MC). Si es nil, los instaladores con
+	// procesadores (forge/neoforge modernos) fallan con un error claro.
+	JavaResolver func(mcVersion, instancePath string) (string, error)
 }
 
 func (p *AbstractForgeProvider) Name() string { return p.NameVal }
@@ -42,10 +47,6 @@ func (p *AbstractForgeProvider) GetVersions(mcVersion string) ([]modloader.Loade
 	if !ok {
 		return nil, nil
 	}
-
-	sort.Slice(versions, func(i, j int) bool {
-		return versions[i] > versions[j]
-	})
 
 	result := make([]modloader.LoaderVersion, 0, len(versions))
 	for _, v := range versions {
@@ -93,9 +94,30 @@ func (p *AbstractForgeProvider) RunInstaller(sessionId string, plan *modloader.D
 		broadcast(modloader.InstallingEvent(sessionId, p.NameVal, "Extracting installer..."))
 	}
 
-	profileLibs, err := installer.ExecuteInstaller(plan.InstallerDest, versionID, instancePath, librariesPath)
+	profileLibs, _, hasProcessors, err := installer.ExecuteInstaller(plan.InstallerDest, versionID, instancePath, librariesPath)
 	if err != nil {
 		return fmt.Errorf("execute installer: %w", err)
+	}
+
+	// Protocolo de ejecución (obligatorio, "sí o sí"): el instalador oficial se
+	// ejecuta SIEMPRE con --installClient, tenga procesadores o no y aunque su
+	// jar ya esté en cache (descargado no equivale a instalado). Solo el
+	// proceso real genera los jars parcheados (binarypatcher/PROCESS_MINECRAFT_JAR),
+	// deja las librerías del perfil en su lugar y produce el log que se
+	// conserva en cache. Los instaladores legacy sin soporte headless de
+	// cliente (Forge 1.8.9 y anteriores, que solo entienden --installServer /
+	// --extract) terminan con error tras imprimir ayuda o ni siquiera arrancan
+	// con Java moderno: si el perfil NO declara procesadores la extracción
+	// (version.json + maven/ + universal jar) ya dejó la versión lista y ese
+	// no-op se tolera con un aviso; si declara procesadores y la ejecución
+	// falla, la versión NO quedaría jugable → error.
+	if err := p.runOfficialInstaller(sessionId, plan, mcVersion, instancePath, broadcast); err != nil {
+		if hasProcessors {
+			return err
+		}
+		if broadcast != nil {
+			broadcast(modloader.InstallingEvent(sessionId, p.NameVal, fmt.Sprintf("El instalador oficial no pudo ejecutarse (%v): instaladores legacy sin soporte headless, la extracción del perfil ya dejó la versión lista", err)))
+		}
 	}
 
 	if len(profileLibs) > 0 && broadcast != nil {
@@ -128,6 +150,36 @@ func (p *AbstractForgeProvider) RunInstaller(sessionId string, plan *modloader.D
 		}
 	}
 
+	return nil
+}
+
+// runOfficialInstaller ejecuta el jar del instalador con Java en modo headless
+// (--installClient), que es la vía que genera los jars parcheados y deja las
+// librerías del perfil descargadas. El stdout/stderr del proceso se reenvía al
+// broadcast para que el usuario vea el progreso real del instalador. Se ejecuta
+// SIEMPRE (protocolo de instalación obligatorio), también cuando el jar ya está
+// en cache: "jar descargado" no es "versión instalada". Se usa el Java oficial
+// de la versión de MC si el launcher ya lo descargó; si no, el configurado en
+// el launcher o el del sistema (el instalador reporta por sí mismo si el Java
+// no es adecuado para esa versión).
+func (p *AbstractForgeProvider) runOfficialInstaller(sessionId string, plan *modloader.DownloadPlan, mcVersion, instancePath string, broadcast func([]byte)) error {
+	if p.JavaResolver == nil {
+		return fmt.Errorf("el instalador de %s requiere ejecutar su instalador oficial y no hay resolución de Java disponible", p.NameVal)
+	}
+	javaPath, err := p.JavaResolver(mcVersion, instancePath)
+	if err != nil {
+		return fmt.Errorf("no se encontró un Java válido para generar los jars parcheados de %s: %w", p.NameVal, err)
+	}
+	if broadcast != nil {
+		broadcast(modloader.InstallingEvent(sessionId, p.NameVal, fmt.Sprintf("Ejecutando el instalador oficial con Java: %s", javaPath)))
+	}
+	if err := installer.RunInstallerJar(javaPath, plan.InstallerDest, instancePath, filepath.Join(p.CacheDir, "modloader-logs"), func(line string) {
+		if broadcast != nil {
+			broadcast(modloader.InstallingEvent(sessionId, p.NameVal, line))
+		}
+	}); err != nil {
+		return fmt.Errorf("instalador oficial de %s: %w", p.NameVal, err)
+	}
 	return nil
 }
 
@@ -193,7 +245,7 @@ func (p *AbstractForgeProvider) libToClasspath(lib downloader.Library, libraries
 
 type ForgeProvider struct{ *AbstractForgeProvider }
 
-func NewForgeProvider(cacheDir string, client *http.Client, cacheMgr *cache.Manager) *ForgeProvider {
+func NewForgeProvider(cacheDir string, client *http.Client, cacheMgr *cache.Manager, javaResolver func(mcVersion, instancePath string) (string, error)) *ForgeProvider {
 	return &ForgeProvider{
 		AbstractForgeProvider: &AbstractForgeProvider{
 			NameVal:      "forge",
@@ -204,6 +256,7 @@ func NewForgeProvider(cacheDir string, client *http.Client, cacheMgr *cache.Mana
 			CacheDir:     cacheDir,
 			CacheManager: cacheMgr,
 			httpClient:   client,
+			JavaResolver: javaResolver,
 		},
 	}
 }

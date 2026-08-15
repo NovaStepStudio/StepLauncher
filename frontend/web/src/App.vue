@@ -17,21 +17,25 @@ import {
     IconPuzzle,
     IconBox,
 } from '@tabler/icons-vue';
-import SettingsModal, { type SectionConfig } from './Modals/SettingsModal.vue';
-import InstallationModal from './Modals/InstallationModal.vue';
-import GeneralSettings from './Layouts/Sections/Settings/GeneralSettings.vue';
-import MinecraftSettings from './Layouts/Sections/Settings/MinecraftSettings.vue';
-import PersonalizationSettings from './Layouts/Sections/Settings/PersonalizationSettings.vue';
-import AboutSettings from './Layouts/Sections/Settings/AboutSettings.vue';
-import AccountsSettings from './Layouts/Sections/Settings/AccountsSettings.vue';
-import AccountsModal from './Modals/AccountsModal.vue';
-import LoginProgressModal from './Modals/LoginProgressModal.vue';
-import VersionsModal from './Modals/VersionsModal.vue';
-import CrashModal from './Modals/CrashModal.vue';
-import ScreenshotsModal from './Modals/ScreenshotsModal.vue';
-import UpdateModal from './Modals/UpdateModal.vue';
-import NewsModal from './Modals/NewsModal.vue';
-import DownloadWidget from './Widgets/DownloadWidget/DownloadWidget.vue';
+import SettingsModal, { type SectionConfig } from '@/Settings/Settings.vue';
+import InstallationModal from '@/Downloads/Installation.vue';
+import GeneralSettings from '@/Settings/Sections/General.vue';
+import MinecraftSettings from '@/Settings/Sections/Minecraft.vue';
+import PersonalizationSettings from '@/Settings/Sections/Personalization.vue';
+import AboutSettings from '@/Settings/Sections/About.vue';
+import AccountsSettings from '@/Settings/Sections/Accounts.vue';
+import AccountsModal from '@/Accounts/Manager.vue';
+import InstancesModal from '@/Instances/Instances.vue';
+import LoginProgressModal from '@/Login/Progress.vue';
+import VersionsModal from '@/Versions/Versions.vue';
+import CrashModal from '@/Crash/Crash.vue';
+import ScreenshotsModal from '@/Screenshots/Screenshots.vue';
+import UpdateModal from '@/Updates/Update.vue';
+import NewsModal from '@/News/News.vue';
+import WelcomeModal from '@/Welcome/Welcome.vue';
+import PersonalizationPreviewModal from '@/Settings/PersonalizationPreview.vue';
+import DownloadWidget from '@/Downloads/Widget.vue';
+import DialogHost from '@/Common/Overlays/Host.vue';
 import {
     selectedLabel,
     loadAccounts,
@@ -43,7 +47,7 @@ import {
     setSelected,
     typeLabel,
     ACCOUNT_LOGIN_START_EVENT,
-} from './Stores/Accounts';
+} from '@/Accounts/Store';
 import {
     hasVersions,
     canLaunch,
@@ -61,25 +65,25 @@ import {
     loadProfiles,
     refreshAfterDownload,
     crashInfo,
+    onGameCrash,
+    maybeShowWindow,
     hideLaunchMessage,
-} from './Stores/Launcher';
+} from '@/Launcher/Store';
 import { EventsOn } from '@wailsjs/runtime/runtime';
 import { ListScreenshots } from '@wailsjs/go/main/App';
-import { setUIScale, applyPersonalization, personalization, uiScale, loadLocal, loadLocalFresh } from './Stores/Ui';
-import { ensureCustomFonts, fontByType, isBuiltinFont, cleanFontName } from './Stores/Fonts';
-import { startIdleTracking, stopIdleTracking, CLOSE_OVERLAYS_EVENT } from './Stores/Idle';
-import { download, isDownloading } from './Stores/Downloads';
-import { bindUpdateEvents, checkForUpdates } from './Stores/Update';
-import { bindNewsEvents } from './Stores/News';
-
-const showSettings = ref(false);
-const showAccounts = ref(false);
-const showLogin = ref(false);
-const showInstall = ref(false);
-const showVersions = ref(false);
-const showCrash = ref(false);
-const showShots = ref(false);
-const showNews = ref(false);
+import { setUIScale, applyPersonalization, personalization, uiScale, loadLocal, loadLocalFresh } from '@/Common/Stores/Ui';
+import { ensureCustomFonts, fontByType, isBuiltinFont, cleanFontName } from '@/Common/Stores/Fonts';
+import { startIdleTracking, stopIdleTracking, CLOSE_OVERLAYS_EVENT } from '@/Common/Stores/Idle';
+import { anyAllActive, allActiveDownloads } from '@/Instances/Store';
+import {
+    heavyPanel, openHeavyPanel, closeHeavyPanel,
+    shotsInstance, shotsReturn,
+    settingsOpen, accountsOpen, loginOpen, installOpen, versionsOpen,
+    crashOpen, newsOpen, welcomeOpen, previewOpen,
+    PERSONALIZATION_PREVIEW_EVENT,
+} from '@/Common/Overlays/Store';
+import { bindUpdateEvents, checkForUpdates } from '@/Updates/Store';
+import { bindNewsEvents } from '@/News/Store';
 
 const playLabel = computed(() => {
     if (!launching.value) return 'Jugar';
@@ -94,7 +98,7 @@ const playHint = computed(() => {
 });
 
 watch(crashInfo, (val) => {
-    showCrash.value = !!val;
+    crashOpen.value = !!val;
 });
 
 const hasShots = ref(false);
@@ -116,13 +120,36 @@ function onGameClosed() {
 }
 
 function openShots() {
-    showShots.value = true;
+    openHeavyPanel('shots');
+    shotsInstance.value = null;
+    shotsReturn.value = false;
     checkShots();
 }
 
-const widgetVisible = computed(() => download.value !== null && isDownloading.value && !showInstall.value);
+function openInstances() {
+    openHeavyPanel('instances');
+}
+
+const widgetVisible = computed(() => anyAllActive.value && !installOpen.value);
+
+function openWidget() {
+    const d = allActiveDownloads.value[0];
+    if (!d) return;
+    if (d.kind === 'version') installOpen.value = true;
+    else openInstances();
+}
 
 const userMenuOpen = ref(false);
+
+const mainMenuHidden = computed(
+    () =>
+        !!heavyPanel.value ||
+        accountsOpen.value ||
+        versionsOpen.value ||
+        newsOpen.value ||
+        welcomeOpen.value ||
+        previewOpen.value
+);
 
 function toggleUserMenu() {
     userMenuOpen.value = !userMenuOpen.value;
@@ -141,12 +168,12 @@ async function useAccount(id: string) {
 
 function openAccountsManager() {
     closeUserMenu();
-    showAccounts.value = true;
+    accountsOpen.value = true;
 }
 
 function openInstallFromVersions() {
-    showVersions.value = false;
-    showInstall.value = true;
+    versionsOpen.value = false;
+    installOpen.value = true;
 }
 
 async function onPlay() {
@@ -309,21 +336,29 @@ function onKeydown(e: KeyboardEvent) {
     } catch { }
 }
 
+function openPersonalizationPreview() {
+    settingsOpen.value = false;
+    previewOpen.value = true;
+}
+
 function handleIdle() {
-    showSettings.value = false;
-    showAccounts.value = false;
-    showLogin.value = false;
-    showInstall.value = false;
-    showVersions.value = false;
-    showShots.value = false;
-    showNews.value = false;
+    settingsOpen.value = false;
+    accountsOpen.value = false;
+    loginOpen.value = false;
+    installOpen.value = false;
+    versionsOpen.value = false;
+    newsOpen.value = false;
+    welcomeOpen.value = false;
+    previewOpen.value = false;
+    closeHeavyPanel('shots');
+    closeHeavyPanel('instances');
     closeUserMenu();
     window.dispatchEvent(new CustomEvent(CLOSE_OVERLAYS_EVENT));
 }
 
 async function verifyConfigTick() {
     try {
-        if (showSettings.value) return;
+        if (settingsOpen.value) return;
         const cfg = await (window as any).go?.main?.App?.GetConfig?.();
         if (cfg?.personalization) {
             applyPersonalization(cfg.personalization);
@@ -337,26 +372,35 @@ onMounted(async () => {
     checkShots();
 
     const onLoginStart = () => {
-        showAccounts.value = false;
-        showLogin.value = true;
+        accountsOpen.value = false;
+        loginOpen.value = true;
     };
     window.addEventListener(ACCOUNT_LOGIN_START_EVENT, onLoginStart);
     accountWindowHandlers = [{ type: ACCOUNT_LOGIN_START_EVENT, handler: onLoginStart }];
+    window.addEventListener(PERSONALIZATION_PREVIEW_EVENT, openPersonalizationPreview);
 
     const splashStart = Date.now();
     const SPLASH_MIN_MS = 900;
     const SPLASH_MAX_MS = 6000;
     let splashHidden = false;
+    let showWelcomeAfterSplash = false;
     function hideSplash() {
         if (splashHidden) return;
         splashHidden = true;
         const wait = Math.max(0, SPLASH_MIN_MS - (Date.now() - splashStart));
         splashHideTimer = window.setTimeout(() => {
             splashVisible.value = false;
+            if (showWelcomeAfterSplash) welcomeOpen.value = true;
             splashHideTimer = null;
         }, wait);
     }
     splashFailsafeTimer = window.setTimeout(hideSplash, SPLASH_MAX_MS);
+
+    try {
+        showWelcomeAfterSplash = (await (window as any).go?.main?.App?.GetFirstLaunch?.()) === true;
+    } catch {
+        showWelcomeAfterSplash = false;
+    }
 
     async function healFontNames(cfg: any) {
         try {
@@ -447,7 +491,11 @@ try {
     gameEventOffs = [
         EventsOn('game_started', hideLaunchMessage),
         EventsOn('game_exited', onGameClosed),
-        EventsOn('game_crashed', onGameClosed),
+        EventsOn('game_crashed', (data: unknown) => {
+            onGameCrash(data);
+            void maybeShowWindow();
+            onGameClosed();
+        }),
         EventsOn('game_stopped', onGameClosed),
     ];
 
@@ -467,6 +515,7 @@ onUnmounted(() => {
     accountEventOffs = [];
     accountWindowHandlers.forEach((h) => window.removeEventListener(h.type, h.handler));
     accountWindowHandlers = [];
+    window.removeEventListener(PERSONALIZATION_PREVIEW_EVENT, openPersonalizationPreview);
     if (downloadEventOff) {
         downloadEventOff();
         downloadEventOff = null;
@@ -496,7 +545,7 @@ onUnmounted(() => {
             <img class="SplashScreen_Logo" src="../assets/logo-step.png" alt="StepLauncher" draggable="false">
             <div class="SplashScreen_Bottom">
                 <span class="SplashScreen_Text">Cargando configuración...</span>
-                <img class="SplashScreen_Loader" src="../assets/gif/loading.gif" alt="">
+                <img class="SplashScreen_Loader" src="../assets/gif/chicken_jockey_run.gif" alt="">
             </div>
         </div>
     </Transition>
@@ -507,23 +556,19 @@ onUnmounted(() => {
             <img v-else-if="bg.type === 'dynamic' && dynamicImage" :key="dynamicIndex" :src="dynamicImage" alt="">
         </Transition>
         <div v-if="bg.type === 'video' && bgVideoUrl && !videoReady" class="BgLoading">
-            <img src="../assets/gif/loading.gif" alt="">
+            <img src="../assets/gif/chicken_jockey_run.gif" alt="">
         </div>
     </div>
     <Transition name="ZoomFade">
         <div v-if="zoomIndicatorVisible" class="ZoomIndicator">{{ uiScale }}%</div>
     </Transition>
-    <main class="MainContent">
+    <main class="MainContent" :class="{ menuHidden: mainMenuHidden }">
         <div class="Sidebar">
-            <div class="Item">
-                <IconHome class="Item_Icon" stroke="2"/>
-                <label class="Item_Label">Inicio</label>
-            </div>
             <div v-if="hasShots" class="Item" @click="openShots">
                 <IconPhoto class="Item_Icon" stroke="2"/>
                 <label class="Item_Label">Fotos</label>
             </div>
-            <div class="Item">
+            <div class="Item" @click="openInstances">
                 <IconBox class="Item_Icon" stroke="2"/>
                 <label class="Item_Label">Instancias</label>
             </div>
@@ -531,28 +576,18 @@ onUnmounted(() => {
                 <IconPuzzle class="Item_Icon" stroke="2"/>
                 <label class="Item_Label">Mods</label>
             </div>
-            <div class="Item" @click="showInstall = true">
+            <div class="Item" @click="installOpen = true">
                 <IconDownload class="Item_Icon" stroke="2"/>
                 <label class="Item_Label">Descargas</label>
             </div>
         </div>
 
-        <SettingsModal v-model:visible="showSettings" :sections="settingsSections" />
-        <AccountsModal v-model:visible="showAccounts" />
-        <LoginProgressModal v-model:visible="showLogin" />
-        <InstallationModal v-model:visible="showInstall" />
-        <VersionsModal v-model:visible="showVersions" @open-download="openInstallFromVersions" />
-        <CrashModal v-model:visible="showCrash" />
-        <ScreenshotsModal v-model:visible="showShots" />
-        <UpdateModal />
-        <NewsModal v-model:visible="showNews" />
-
         <Transition name="DownloadWidget">
-            <DownloadWidget v-if="widgetVisible" @open="showInstall = true" />
+            <DownloadWidget v-if="widgetVisible" @open="openWidget" />
         </Transition>
         <div class="Content">
             <div v-if="hasVersions" class="BottomControlVersion">
-                <div class="VersionSelected" @click="showVersions = true" title="Elegir versión o perfil">
+                <div class="VersionSelected" @click="versionsOpen = true" title="Elegir versión o perfil">
                     <div class="ImageVersion">
                         <img v-if="selectedProfile && profiles[selectedProfile]?.icon" :src="profiles[selectedProfile]?.icon" alt="" loading="lazy" decoding="async" fetchpriority="high">
                         <img v-else src="../assets/not_found/not_found_version.png" loading="lazy" decoding="async" fetchpriority="high">
@@ -589,11 +624,11 @@ onUnmounted(() => {
                         <IconBell stroke="2"/>
                         <label class="OptionLabel">Notificaciones</label>
                     </div>
-                    <div class="OptionOther" @click="showNews = true">
+                    <div class="OptionOther" @click="newsOpen = true">
                         <IconNews stroke="2"/>
                         <label class="OptionLabel">Noticias</label>
                     </div>
-                    <div class="OptionOther" @click="showSettings = true">
+                    <div class="OptionOther" @click="settingsOpen = true">
                         <IconSettings stroke="2"/>
                         <label class="OptionLabel">Configuracion</label>
                     </div>
@@ -641,308 +676,26 @@ onUnmounted(() => {
             </div>
         </div>
     </main>
+
+    <SettingsModal v-model:visible="settingsOpen" :sections="settingsSections" />
+    <AccountsModal v-model:visible="accountsOpen" />
+    <Transition name="InstancesModal">
+        <InstancesModal v-show="heavyPanel === 'instances'" />
+    </Transition>
+    <LoginProgressModal v-model:visible="loginOpen" />
+    <InstallationModal v-model:visible="installOpen" />
+    <VersionsModal v-model:visible="versionsOpen" @open-download="openInstallFromVersions" />
+    <CrashModal v-model:visible="crashOpen" />
+    <Transition name="ScreenshotsModal">
+        <ScreenshotsModal v-show="heavyPanel === 'shots'" />
+    </Transition>
+    <UpdateModal />
+    <NewsModal v-model:visible="newsOpen" />
+    <WelcomeModal v-model:visible="welcomeOpen" />
+    <PersonalizationPreviewModal v-model:visible="previewOpen" />
+    <DialogHost />
 </template>
 
 <style scoped lang="scss">
-@use './Styles/App.scss';
-
-.UserCardWrap {
-    position: relative;
-}
-
-.UserMenu {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    right: 0;
-    width: 12rem;
-    max-height: min(60vh, 24rem);
-    overflow-y: auto;
-    background: var(--background-modal-primary);
-    border: var(--border-modal-style);
-    border-radius: 0.6rem;
-    box-shadow: var(--shadow-settings-normal) #000a;
-    padding: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    z-index: 60;
-}
-
-.UserMenu_Head {
-    font-size: 0.62rem;
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
-    opacity: 0.4;
-    padding: 0.25rem 0.5rem 0.35rem;
-}
-
-.UserMenu_Item {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    padding: 0.45rem 0.5rem;
-    border-radius: 0.45rem;
-    background: transparent;
-    border: 1px solid transparent;
-    color: var(--text-primary);
-    text-shadow: var(--text-shadow-primary, none);
-    cursor: pointer;
-    font-family: var(--font-secundary), Arial, sans-serif;
-    text-align: left;
-
-    &:hover {
-        background: color-mix(in srgb, var(--background-button-primary) 45%, transparent);
-    }
-
-    &.active {
-        border: var(--border-style);
-        background: color-mix(in srgb, var(--background-button-primary) 35%, transparent);
-    }
-}
-
-.UserMenu_Avatar {
-    width: 1.8rem;
-    height: 1.8rem;
-    border-radius: 50%;
-    flex-shrink: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    background: color-mix(in srgb, var(--background-button-primary) 60%, transparent);
-
-    img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 50%;
-        image-rendering: pixelated;
-    }
-
-    span {
-        font-size: 0.7rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        text-shadow: var(--text-shadow-primary, none);
-    }
-}
-
-.UserMenu_Txt {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.05rem;
-}
-
-.UserMenu_Name {
-    font-size: 0.75rem;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.UserMenu_Sub {
-    font-size: 0.62rem;
-    opacity: 0.55;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.UserMenu_Check {
-    width: 0.95rem;
-    height: 0.95rem;
-    color: var(--color-success);
-    flex-shrink: 0;
-}
-
-.UserMenu_Icon {
-    width: 1rem;
-    height: 1rem;
-    opacity: 0.75;
-    flex-shrink: 0;
-}
-
-.UserMenu_Empty {
-    font-size: 0.7rem;
-    opacity: 0.5;
-    padding: 0.5rem;
-    text-align: center;
-}
-
-.UserMenu_Divider {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.08);
-    margin: 0.2rem 0;
-}
-
-.UserMenu_Manage {
-    color: var(--text-secondary);
-}
-
-.UserMenuFade-enter-active,
-.UserMenuFade-leave-active {
-    transition: opacity 160ms ease, transform 160ms ease;
-}
-
-.UserMenuFade-enter-from,
-.UserMenuFade-leave-to {
-    opacity: 0;
-    transform: translateY(-4px);
-}
-
-.ExpandButtonProfiles {
-    svg {
-        transition: transform 180ms ease;
-    }
-
-    &.open svg {
-        transform: rotate(180deg);
-    }
-}
-
-.PlayBlock {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.PlayButton.disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
-.LaunchMsg {
-    position: absolute;
-    bottom: calc(100% + 0.55rem);
-    right: 0;
-    max-width: 20rem;
-    min-width: 10rem;
-    font-family: var(--font-secundary), Arial, sans-serif;
-    font-size: 0.66rem;
-    line-height: 1.4;
-    padding: 0.4rem 0.6rem;
-    border-radius: 0.45rem;
-    background: var(--background-modal-primary);
-    border: var(--border-modal-style);
-    box-shadow: var(--shadow-settings-normal) #000a;
-    color: var(--background-button-primary);
-    text-align: left;
-    word-break: break-word;
-
-    &.error {
-        color: var(--color-error);
-    }
-}
-
-.LaunchMsgFade-enter-active,
-.LaunchMsgFade-leave-active {
-    transition: opacity 160ms ease, transform 160ms ease;
-}
-
-.LaunchMsgFade-enter-from,
-.LaunchMsgFade-leave-to {
-    opacity: 0;
-    transform: translateY(-4px);
-}
-
-.DownloadWidget-enter-active,
-.DownloadWidget-leave-active {
-    transition: opacity 160ms ease, transform 160ms ease;
-}
-
-.DownloadWidget-enter-from,
-.DownloadWidget-leave-to {
-    opacity: 0;
-    transform: translateY(8px);
-}
-
-.ZoomIndicator {
-    position: fixed;
-    top: 0.9rem;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 3rem;
-    height: 2rem;
-    padding: 0 .5rem;
-    border-radius: 0.5rem;
-    background: var(--background-modal-primary);
-    border: var(--border-modal-style);
-    box-shadow: var(--shadow-settings-normal) #0008;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-primary), Arial, sans-serif;
-    font-size: calc(.85rem * var(--font-size-primary, 1));
-    font-weight: 600;
-    color: var(--text-primary);
-    text-shadow: var(--text-shadow-primary, none);
-    pointer-events: none;
-    z-index: 200;
-}
-
-.ZoomFade-enter-active,
-.ZoomFade-leave-active {
-    transition: opacity 120ms ease;
-}
-
-.ZoomFade-enter-from,
-.ZoomFade-leave-to {
-    opacity: 0;
-}
-
-.SplashScreen {
-    position: fixed;
-    inset: 0;
-    z-index: 300;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: color-mix(in srgb, #111 85%, black 15%);
-    overflow: hidden;
-
-    .SplashScreen_Logo {
-        width: 7rem;
-        max-width: 60vw;
-        height: auto;
-    }
-
-    .SplashScreen_Bottom {
-        position: absolute;
-        inset: auto 0 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-        padding: 0 1.25rem 1.25rem 1.25rem;
-
-        .SplashScreen_Text {
-            font-family: var(--font-primary, 'Fredoka'), Arial, Helvetica, sans-serif;
-            font-size: calc(0.85rem * var(--font-size-primary, 1));
-            color: var(--text-primary, #fff);
-            text-shadow: var(--text-shadow-primary, none);
-            opacity: 0.75;
-        }
-
-        .SplashScreen_Loader {
-            width: 1rem;
-            height: auto;
-            image-rendering: pixelated;
-        }
-    }
-}
-
-.SplashFade-enter-active,
-.SplashFade-leave-active {
-    transition: opacity 400ms ease;
-}
-
-.SplashFade-enter-from,
-.SplashFade-leave-to {
-    opacity: 0;
-}
+@use './Common/Styles/App/App.scss';
 </style>

@@ -11,6 +11,7 @@ import (
 	"StepLauncher/internal/Core/Cache"
 	"StepLauncher/internal/Core/Downloader"
 	"StepLauncher/internal/Core/Launcher"
+	helpers "StepLauncher/internal/Core/Launcher/Helpers"
 	lhistory "StepLauncher/internal/Core/Launcher/History"
 	linstance "StepLauncher/internal/Core/Launcher/Instance"
 	lprofile "StepLauncher/internal/Core/Launcher/Profile"
@@ -36,6 +37,7 @@ type Engine struct {
 	accounts   *accounts.Manager
 	instances  *linstance.InstanceManager
 	sharedDl   *downloader.Manager
+	integrity  *integrityRunner
 
 	eventCb EventHandler
 
@@ -208,6 +210,7 @@ func NewEngine(opts ...Option) (*Engine, error) {
 		WorkDir:      cfg.WorkDir,
 		CacheDir:     filepath.Join(cfg.WorkDir, "cache"),
 		CacheManager: cacheMgr,
+		IDPrefix:     "ver-",
 		MaxRAM:       cfg.MaxRAMMB,
 		LogFn:        func(f string, a ...interface{}) { log.Info(f, a...) },
 		BroadcastFn:  broadcastFn,
@@ -223,10 +226,12 @@ func NewEngine(opts ...Option) (*Engine, error) {
 		LogFn:           func(f string, a ...interface{}) { log.Info(f, a...) },
 		LauncherName:    launcherName,
 		LauncherVersion: launcherVersion,
+		SeparateGameDir: cfg.SeparateGameDirValue(),
 		OnGameExitFn: func(gi *launcher.GameInstance, playTimeSeconds int) {
 			entry := lhistory.Entry{
 				Version:         gi.Version,
 				InstanceID:      gi.ID,
+				InstanceName:    gi.InstanceName,
 				PlayerName:      gi.PlayerName,
 				PlayTimeSeconds: playTimeSeconds,
 				Timestamp:       time.Now().Unix(),
@@ -295,6 +300,7 @@ func NewEngine(opts ...Option) (*Engine, error) {
 		WorkDir:      filepath.Join(cfg.WorkDir, cfg.SharedDir),
 		CacheDir:     cfg.CacheDir,
 		CacheManager: cacheMgr,
+		IDPrefix:     "inst-",
 		MaxRAM:       cfg.MaxRAMMB,
 		LogFn:        func(f string, a ...interface{}) { log.Info(f, a...) },
 		BroadcastFn:  broadcastFn,
@@ -308,17 +314,31 @@ func NewEngine(opts ...Option) (*Engine, error) {
 	sharedDir := filepath.Join(cfg.WorkDir, cfg.SharedDir)
 	instMgr := linstance.NewManager(instancesDir, sharedDir)
 	instMgr.SetSharedDownloadManager(sharedDlMgr)
+	instMgr.SetCacheDir(cfg.CacheDir)
 	instMgr.SetLaunchManager(launchMgr)
 	instMgr.SetIdentity(cfg.LauncherName, cfg.LauncherVersion)
 	instMgr.SetLogger(func(f string, a ...interface{}) { log.Info(f, a...) })
 	e.instances = instMgr
 
 	mlReg := modloader.NewRegistry()
+	// Resolver de Java para los instaladores de Forge/NeoForge, por prioridad:
+	// 1) el Java oficial que el launcher ya descargó para la versión base de MC
+	//    (runtime/<component>/...) — es el Java exacto que Mojang eligió para
+	//    esa versión y cumple el requisito del instalador correspondiente;
+	// 2) el Java configurado en el launcher (JavaCustomPath) o el del sistema.
+	//    El Java oficial de Mojang no se descarga en tiempo de instalación.
+	runtimeDir := filepath.Join(cfg.WorkDir, "runtime")
+	javaResolver := func(mcVersion, instancePath string) (string, error) {
+		if javaPath, err := helpers.ResolveMinecraftJava(runtimeDir, instancePath, mcVersion); err == nil {
+			return javaPath, nil
+		}
+		return helpers.ResolveJava("", "", false, cfg.JavaCustomPath)
+	}
 	mlReg.Register(provider.NewFabricProvider(cfg.CacheDir, httpClient, cacheMgr))
 	mlReg.Register(provider.NewQuiltProvider(cfg.CacheDir, httpClient, cacheMgr))
 	mlReg.Register(provider.NewLegacyFabricProvider(cfg.CacheDir, httpClient, cacheMgr))
-	mlReg.Register(provider.NewForgeProvider(cfg.CacheDir, httpClient, cacheMgr))
-	mlReg.Register(provider.NewNeoForgeProvider(cfg.CacheDir, httpClient, cacheMgr))
+	mlReg.Register(provider.NewForgeProvider(cfg.CacheDir, httpClient, cacheMgr, javaResolver))
+	mlReg.Register(provider.NewNeoForgeProvider(cfg.CacheDir, httpClient, cacheMgr, javaResolver))
 
 	mlOrch := modloader.NewOrchestrator(
 		cfg.WorkDir,
@@ -330,6 +350,19 @@ func NewEngine(opts ...Option) (*Engine, error) {
 	)
 	e.modloader = mlOrch
 	instMgr.SetModLoaderOrchestrator(mlOrch)
+
+	e.integrity = &integrityRunner{}
+
+	instMgr.SetOnVersionReady(func(name, version string) {
+		go e.checkInstanceExistence(name, version)
+	})
+
+	// En modo Minecraft el gameDir es SIEMPRE el propio .minecraft.
+	if cfgMgr.Bootstrap().Mode == engineconfig.ModeMinecraft {
+		launchMgr.SetSeparateGameDir(false)
+		instMgr.SetSeparateGameDir(false)
+		log.System("Modo Minecraft: gameDir = %s (separado desactivado)", cfg.WorkDir)
+	}
 
 	return e, nil
 }

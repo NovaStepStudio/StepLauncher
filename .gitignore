@@ -3,3 +3,4 @@ dist/
 node_modules/
 *.7z
 *.exe
+Investigacion/ModLoaders/**/*

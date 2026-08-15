@@ -1,6 +1,10 @@
 {
-    "latest": "2.3.0",
+    "latest": "2.3.1",
     "content": [
+        {
+            "version": "2.3.1",
+            "path": "./StepLauncher-2.3.1/news.json"
+        },
         {
             "version": "2.3.0",
             "path": "./StepLauncher-2.3.0/news.json"

@@ -1,0 +1,212 @@
+@use '../../Common/Styles/Components' as *;;
+
+.FontManager_Overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.FontManager_Dialog {
+    width: 34rem;
+    max-width: 92vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-settings-normal) #0008;
+    padding: 1.25rem 1.35rem;
+}
+
+.FontManager_Head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h3 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.95rem * var(--font-size-primary, 1));
+        font-weight: 600;
+    }
+}
+
+.FontManager_Close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.35rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 1.85rem;
+    width: 1.85rem;
+    transition: var(--transition);
+
+    &:hover {
+        background: #1111;
+        color: var(--text-primary);
+    }
+}
+
+.FontManager_Info {
+    margin: 0.6rem 0 0;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    opacity: 0.55;
+
+    strong {
+        opacity: 0.85;
+    }
+}
+
+.FontManager_Actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.FontManager_List {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 1rem;
+}
+
+.FontManager_Item {
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 0.5rem;
+    padding: 0.7rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.FontManager_ItemInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.FontManager_FileName {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.FontManager_Badge {
+    font-size: 0.62rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 0.3rem;
+    background: color-mix(in srgb, var(--background-button-primary) 60%, gray 30%);
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.FontManager_Unassigned {
+    font-size: 0.62rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 0.3rem;
+    background: var(--control-bg);
+    opacity: 0.45;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.FontManager_ItemRow {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+
+    .SsIn {
+        flex: 1;
+        min-width: 10rem;
+    }
+}
+
+.FontManager_ItemBtns {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.FontManager_Empty {
+    margin-top: 1rem;
+    text-align: center;
+    opacity: 0.5;
+    font-size: 0.78rem;
+    padding: 0.5rem 0;
+}
+
+.FontManager_Import {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 0.5rem;
+    padding: 0.9rem 1rem;
+}
+
+.FontManager_ImportFile {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    word-break: break-all;
+
+    svg {
+        flex-shrink: 0;
+        opacity: 0.6;
+    }
+}
+
+.FontManager_ImportRow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.FontManager_ImportLabel {
+    font-size: 0.72rem;
+    opacity: 0.55;
+    width: 5rem;
+    flex-shrink: 0;
+}
+
+.FontManager_ImportSlots {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.FontManager_ImportHint {
+    margin: 0;
+    font-size: 0.7rem;
+    opacity: 0.5;
+}
+
+.FontManager_ImportBtns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+.FontManager_Msg {
+    margin: 0.8rem 0 0;
+    font-size: 0.75rem;
+    opacity: 0.7;
+}

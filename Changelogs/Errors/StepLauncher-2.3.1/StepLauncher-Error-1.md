@@ -3,7 +3,7 @@
 - **Fecha**: 2026-08-08
 - **Versión**: 2.3.1
 - **Estado**: corregido
-- **Fixed?**: Sí — corregido durante el desarrollo de StepLauncher-2.3.1 (aún sin release publicada; ver Changelogs/Changes/StepLauncher-2.3.1/StepLauncher-Change-1.md, sección 2).
+- **Fixed?**: Sí — corregido y mencionado en la release StepLauncher-2.3.1.
 
 ## Síntoma
 

@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	globalutils "StepLauncher/internal/Core/Utils"
 )
 
 type MinecraftConfig struct {
@@ -37,16 +39,28 @@ type MinecraftConfig struct {
 	OfflineMode  bool `json:"offlineMode"`
 	CompatMode   bool `json:"compatMode"`
 	DetailedLogs bool `json:"detailedLogs"`
+
+	// SeparateGameDir: true = <workDir>/game, false = workDir como gameDir
+	// (nil equivale a true). En modo Minecraft se fuerza a false.
+	SeparateGameDir *bool `json:"separateGameDir,omitempty"`
+}
+
+func (mc MinecraftConfig) SeparateGameDirValue() bool {
+	if mc.SeparateGameDir == nil {
+		return true
+	}
+	return *mc.SeparateGameDir
 }
 
 type LauncherConfig struct {
-	MaxRAMGB             int     `json:"maxRamGB"`
-	MaxMbps              float64 `json:"maxMbps"`
-	ConcurrentDownloads  int     `json:"concurrentDownloads"`
-	HideLauncherOnLaunch bool    `json:"hideLauncherOnLaunch"`
-	VerifyIntegrity *bool `json:"verifyIntegrity"`
-	CheckForUpdatesOnStart bool `json:"checkForUpdatesOnStart"`
-	LaunchAfterInstall     bool `json:"launchAfterInstall"`
+	MaxRAMGB              int     `json:"maxRamGB"`
+	MaxMbps               float64 `json:"maxMbps"`
+	ConcurrentDownloads   int     `json:"concurrentDownloads"`
+	HideLauncherOnLaunch  bool    `json:"hideLauncherOnLaunch"`
+	VerifyIntegrity       *bool   `json:"verifyIntegrity"`
+	IntegritySector       string  `json:"integritySector"`
+	CheckForUpdatesOnStart bool   `json:"checkForUpdatesOnStart"`
+	LaunchAfterInstall    bool    `json:"launchAfterInstall"`
 }
 
 func (l LauncherConfig) VerifyEnabled() bool {
@@ -57,6 +71,14 @@ func (l LauncherConfig) VerifyEnabled() bool {
 }
 
 func boolPtr(b bool) *bool { return &b }
+
+func validIntegritySector(s string) bool {
+	switch s {
+	case "todo", "global", "instances":
+		return true
+	}
+	return false
+}
 
 type IdleConfig struct {
 	AutoCloseModals    bool `json:"autoCloseModals"`
@@ -175,21 +197,23 @@ type Config struct {
 	Launcher        LauncherConfig  `json:"launcher"`
 	Personalization Personalization `json:"personalization"`
 	Idle            IdleConfig      `json:"idle"`
-RichPresence RichPresenceConfig `json:"richPresence"`
+ RichPresence RichPresenceConfig `json:"richPresence"`
 	ExtraData    ExtraData          `json:"extraData"`
+	FirstLaunch    bool             `json:"firstLaunch"`
 }
 
 func Default() Config {
 	return Config{
 		MinecraftConfig: MinecraftConfig{
-			HardwareEnabled:      true,
-			HardwareAcceleration: true,
-			GPUType:              "auto",
+			HardwareEnabled:      false,
+			HardwareAcceleration: false,
+			GPUType:              "",
 			GPUPreset:            "",
-			JavaMode:             "auto",
+			JavaMode:             "official",
 			AuthVerify:           true,
 			WindowWidth:          854,
 			WindowHeight:         480,
+			SeparateGameDir:      boolPtr(true),
 		},
 		Launcher: LauncherConfig{
 			MaxRAMGB:              2,
@@ -197,9 +221,10 @@ func Default() Config {
 			ConcurrentDownloads:   4,
 			HideLauncherOnLaunch:  true,
 			VerifyIntegrity:       boolPtr(true),
-			CheckForUpdatesOnStart: false,
+			IntegritySector:       "todo",
+			CheckForUpdatesOnStart: true,
 		},		Idle: IdleConfig{
-			AutoCloseModals:    true,
+			AutoCloseModals:    false,
 			IdleMinutes:        1,
 			ConfigCheckEnabled: true,
 			ConfigCheckMinutes: 3,
@@ -214,6 +239,7 @@ func Default() Config {
 			Profiles:     FileProfiles,
 			CrashHistory: FileCrashHistory,
 		},
+		FirstLaunch: true,
 		Personalization: Personalization{
 			UIScale: 100,
 			Background: BackgroundConfig{
@@ -385,6 +411,9 @@ func (m *Manager) sanitize() {
 	}
 	if c.Launcher.VerifyIntegrity == nil {
 		c.Launcher.VerifyIntegrity = boolPtr(true)
+	}
+	if !validIntegritySector(c.Launcher.IntegritySector) {
+		c.Launcher.IntegritySector = "todo"
 	}
 	if c.Idle.IdleMinutes < 1 || c.Idle.IdleMinutes > 30 {
 		c.Idle.IdleMinutes = 1
@@ -572,7 +601,7 @@ func (m *Manager) Save() error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(m.configPath, append(data, '\n'), 0644); err != nil {
+	if _, err := globalutils.SafeWriteFile(m.configPath, append(data, '\n'), 0644); err != nil {
 		return err
 	}
 	saved = true
@@ -663,6 +692,17 @@ func (m *Manager) SetVerifyIntegrity(v bool) error {
 	return m.Save()
 }
 
+func (m *Manager) SetIntegritySector(s string) error {
+	if !validIntegritySector(s) {
+		s = "todo"
+	}
+	m.mu.Lock()
+	m.cfg.Launcher.IntegritySector = s
+	m.mu.Unlock()
+	m.logf("IntegritySector -> %s", s)
+	return m.Save()
+}
+
 func (m *Manager) SetCheckForUpdatesOnStart(v bool) error {
 	m.mu.Lock()
 	m.cfg.Launcher.CheckForUpdatesOnStart = v
@@ -709,6 +749,14 @@ func (m *Manager) UpdateIdle(idle IdleConfig) error {
 	m.mu.Unlock()
 	m.logf("Idle/check actualizado: autoClose=%v/%dmin check=%v/%dmin",
 		idle.AutoCloseModals, idle.IdleMinutes, idle.ConfigCheckEnabled, idle.ConfigCheckMinutes)
+	return m.Save()
+}
+
+func (m *Manager) SetFirstLaunchDone() error {
+	m.mu.Lock()
+	m.cfg.FirstLaunch = false
+	m.mu.Unlock()
+	m.logf("Primer inicio completado (onboarding cerrado)")
 	return m.Save()
 }
 

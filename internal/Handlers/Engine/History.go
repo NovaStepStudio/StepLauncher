@@ -10,6 +10,10 @@ type HistoryEntry = lhistory.Entry
 
 type CrashEntry = lhistory.CrashEntry
 
+type InstanceStats = lhistory.InstanceStats
+
+type VersionStat = lhistory.VersionStat
+
 func (e *Engine) GetHistory() []HistoryEntry {
 	return e.history.GetEntries()
 }
@@ -32,6 +36,19 @@ func (e *Engine) GetRecentHistory(limit int) []HistoryEntry {
 
 func (e *Engine) DeleteHistoryEntry(id string) (bool, error) {
 	return e.history.DeleteEntry(id)
+}
+
+func (e *Engine) GetInstanceStats(name string) InstanceStats {
+	stats := e.history.GetInstanceStats(name)
+	if e.launcher != nil {
+		for _, g := range e.launcher.List() {
+			if g.InstanceName == name && g.IsRunning() {
+				stats.Running = true
+				break
+			}
+		}
+	}
+	return stats
 }
 
 func (e *Engine) ClearHistory() int {

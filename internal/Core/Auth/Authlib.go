@@ -418,7 +418,7 @@ func fetchImageBytes(ctx context.Context, imageURL string) ([]byte, string, erro
 	if err != nil {
 		return nil, "", err
 	}
-	req.Header.Set("User-Agent", "StepLauncher/2.3.0")
+	req.Header.Set("User-Agent", "StepLauncher/2.3.1")
 	client := &http.Client{Timeout: 20 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {

@@ -28,9 +28,12 @@ type App struct {
 	assets *assets.Manager
 	news   *news.Manager
 	rp     *RichPresence.Manager
+
+	firstLaunchPending bool
 }
 
 func NewApp(eng *engine.Engine, configPath string) *App {
+	_, statErr := os.Stat(configPath)
 	cfgMgr := Config.NewManager(configPath)
 	if eng != nil && eng.Logger() != nil {
 		cfgMgr.SetLogFn(func(f string, a ...interface{}) { eng.Logger().Info(f, a...) })
@@ -40,9 +43,10 @@ func NewApp(eng *engine.Engine, configPath string) *App {
 		rootDir = eng.ConfigManager().RootDir()
 	}
 	a := &App{
-		engine: eng,
-		config: cfgMgr,
-		rp:     RichPresence.NewManager(),
+		engine:             eng,
+		config:             cfgMgr,
+		rp:                 RichPresence.NewManager(),
+		firstLaunchPending: os.IsNotExist(statErr),
 	}
 	a.rp.SetLogFn(func(f string, args ...interface{}) {
 		a.logf("[RichPresence] "+f, args...)
@@ -278,6 +282,21 @@ func (a *App) GetConfig() Config.Config {
 	return a.config.Get()
 }
 
+func (a *App) GetFirstLaunch() bool {
+	if a.config == nil {
+		return false
+	}
+	return a.config.Get().FirstLaunch || a.firstLaunchPending
+}
+
+func (a *App) SetFirstLaunchDone() {
+	if a.config == nil {
+		return
+	}
+	a.firstLaunchPending = false
+	a.config.SetFirstLaunchDone()
+}
+
 func (a *App) GetMinecraftConfig() Config.MinecraftConfig {
 	return a.GetConfig().MinecraftConfig
 }
@@ -351,6 +370,43 @@ func (a *App) SetVerifyIntegrity(v bool) {
 	if a.engine != nil {
 		a.engine.SetVerifyIntegrity(v)
 	}
+}
+
+func (a *App) StartIntegrityCheck(scope string) error {
+	if a.config != nil {
+		a.config.SetIntegritySector(scope)
+	}
+	if a.engine == nil {
+		return fmt.Errorf("engine no disponible")
+	}
+	return a.engine.StartIntegrityCheck(scope)
+}
+
+func (a *App) CancelIntegrityCheck() {
+	if a.engine != nil {
+		a.engine.CancelIntegrityCheck()
+	}
+}
+
+func (a *App) IntegrityStatus() engine.IntegrityProgress {
+	if a.engine == nil {
+		return engine.IntegrityProgress{State: engine.IntegrityStateIdle}
+	}
+	return a.engine.IntegrityStatus()
+}
+
+func (a *App) SetIntegritySector(s string) {
+	if a.config == nil {
+		return
+	}
+	a.config.SetIntegritySector(s)
+}
+
+func (a *App) GetIntegritySector() string {
+	if a.config == nil {
+		return "todo"
+	}
+	return a.config.Get().Launcher.IntegritySector
 }
 
 func (a *App) GetUIScale() int {
@@ -443,6 +499,27 @@ func (a *App) ListScreenshots() ([]ScreenshotInfo, error) {
 		filepath.Join(root, "game"),
 		filepath.Join(root, "screenshots"),
 	}
+	return a.listScreenshots(root, searchDirs), nil
+}
+
+func (a *App) ListInstanceScreenshots(instanceName string) ([]ScreenshotInfo, error) {
+	if a.engine == nil {
+		return nil, fmt.Errorf("engine no disponible")
+	}
+	if err := validateInstanceName(instanceName); err != nil {
+		return nil, err
+	}
+	root := a.engine.ConfigManager().RootDir()
+	instDir := filepath.Join(root, a.engine.ConfigManager().Get().InstancesDir, instanceName)
+	searchDirs := []string{
+		filepath.Join(instDir, "game", "screenshots"),
+		filepath.Join(instDir, "game"),
+		filepath.Join(instDir, "screenshots"),
+	}
+	return a.listScreenshots(root, searchDirs), nil
+}
+
+func (a *App) listScreenshots(root string, searchDirs []string) []ScreenshotInfo {
 	seen := map[string]bool{}
 	var out []ScreenshotInfo
 	for _, dir := range searchDirs {
@@ -483,7 +560,78 @@ func (a *App) ListScreenshots() ([]ScreenshotInfo, error) {
 			})
 		}
 	}
-	return out, nil
+	return out
+}
+
+var instanceAssetKinds = map[string]bool{"icon": true, "banner": true, "background": true}
+
+// validateInstanceName replica las reglas del gestor de instancias
+// (sin separadores de ruta ni "..") para validar entrada desde bindings.
+func validateInstanceName(name string) error {
+	if name == "" || strings.Contains(name, "..") || strings.ContainsAny(name, "/\\") || filepath.Base(name) != name {
+		return fmt.Errorf("nombre de instancia invalido")
+	}
+	return nil
+}
+
+func (a *App) ImportInstanceAsset(name, kind, src string) (string, error) {
+	if a.engine == nil {
+		return "", fmt.Errorf("engine no disponible")
+	}
+	if err := validateInstanceName(name); err != nil {
+		return "", err
+	}
+	if !instanceAssetKinds[kind] {
+		return "", fmt.Errorf("tipo de asset no soportado: %s", kind)
+	}
+	ext := strings.ToLower(filepath.Ext(src))
+	if !imageExts[ext] {
+		return "", fmt.Errorf("formato de imagen no soportado: %s", ext)
+	}
+	root := a.engine.ConfigManager().RootDir()
+	instDir := filepath.Join(root, a.engine.ConfigManager().Get().InstancesDir, name)
+	if _, err := os.Stat(filepath.Join(instDir, "instance.metadata.json")); err != nil {
+		return "", fmt.Errorf("la instancia %s no existe", name)
+	}
+	assetsDir := filepath.Join(instDir, "assets")
+	if err := os.MkdirAll(assetsDir, 0755); err != nil {
+		return "", err
+	}
+	dest := filepath.Join(assetsDir, kind+ext)
+	in, err := os.Open(src)
+	if err != nil {
+		return "", fmt.Errorf("no se pudo leer el archivo: %v", err)
+	}
+	defer in.Close()
+	out, err := os.Create(dest)
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+	if _, err := io.Copy(out, in); err != nil {
+		return "", err
+	}
+	rel, err := filepath.Rel(root, dest)
+	if err != nil {
+		return "", err
+	}
+	return filepath.ToSlash(rel), nil
+}
+
+func (a *App) PickInstanceAssetFile() (string, error) {
+	if a.ctx == nil {
+		return "", fmt.Errorf("contexto no disponible")
+	}
+	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Seleccionar imagen para la instancia",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "Imagenes (*.png, *.jpg, *.jpeg, *.webp, *.gif, *.bmp)", Pattern: "*.png;*.jpg;*.jpeg;*.webp;*.gif;*.bmp"},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	return path, nil
 }
 
 func (a *App) ImportBackground(src, kind string) (string, error) {
@@ -683,7 +831,39 @@ func (a *App) applyMinecraft(mc Config.MinecraftConfig) {
 		CompatMode:           mc.CompatMode,
 		DetailedLogs:         mc.DetailedLogs,
 		ConcurrentDownloads:  cur.ConcurrentDownloads,
+		SeparateGameDir:      mc.SeparateGameDir,
 	})
+}
+
+// GetSeparateGameDir indica si el gameDir es <workDir>/game (true) o el
+// propio workDir (false). En modo Minecraft siempre es false.
+func (a *App) GetSeparateGameDir() bool {
+	if a.config == nil {
+		return true
+	}
+	info := a.GetDirectoryInfoSafe()
+	if info.Mode == "minecraft" {
+		return false
+	}
+	return a.config.Get().MinecraftConfig.SeparateGameDirValue()
+}
+
+// SetSeparateGameDir persiste la opcion de gameDir separado.
+func (a *App) SetSeparateGameDir(v bool) {
+	if a.config == nil {
+		return
+	}
+	mc := a.config.Get().MinecraftConfig
+	mc.SeparateGameDir = &v
+	a.config.UpdateMinecraft(mc)
+	a.applyMinecraft(a.config.Get().MinecraftConfig)
+}
+
+func (a *App) GetDirectoryInfoSafe() engine.DirectoryInfo {
+	if a.engine == nil {
+		return engine.DirectoryInfo{}
+	}
+	return a.engine.DirectoryInfo()
 }
 
 func (a *App) Shutdown() {

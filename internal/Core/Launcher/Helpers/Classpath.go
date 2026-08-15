@@ -6,8 +6,8 @@ import (
 	"runtime"
 	"strings"
 
-	"StepLauncher/internal/Core/Downloader"
-	"StepLauncher/internal/Core/Utils"
+	downloader "StepLauncher/internal/Core/Downloader"
+	utils "StepLauncher/internal/Core/Utils"
 )
 
 type ClasspathEntry struct {
@@ -18,9 +18,21 @@ type ClasspathEntry struct {
 func BuildClasspath(libraries []downloader.Library, librariesDir, versionsDir, version string) (string, []ClasspathEntry) {
 	entries := make([]ClasspathEntry, 0, len(libraries)+1)
 
+	seen := make(map[string]struct{}, len(libraries)+1)
+	addEntry := func(path string) {
+		key := filepath.Clean(path)
+		if runtime.GOOS == "windows" {
+			key = strings.ToLower(key)
+		}
+		if _, dup := seen[key]; dup {
+			return
+		}
+		seen[key] = struct{}{}
+		entries = append(entries, ClasspathEntry{Path: path, Exists: fileExists(path)})
+	}
+
 	clientJar := filepath.Join(versionsDir, version, version+".jar")
-	exists := fileExists(clientJar)
-	entries = append(entries, ClasspathEntry{Path: clientJar, Exists: exists})
+	addEntry(clientJar)
 
 	for _, lib := range libraries {
 		if !downloader.MatchRules(lib.Rules) {
@@ -31,7 +43,7 @@ func BuildClasspath(libraries []downloader.Library, librariesDir, versionsDir, v
 			continue
 		}
 
-if downloader.IsNativeLibrary(lib) {
+		if downloader.IsNativeLibrary(lib) {
 			if lib.Natives == nil {
 				continue
 			}
@@ -51,8 +63,7 @@ if downloader.IsNativeLibrary(lib) {
 			continue
 		}
 
-		fullPath := filepath.Join(librariesDir, libPath)
-		entries = append(entries, ClasspathEntry{Path: fullPath, Exists: fileExists(fullPath)})
+		addEntry(filepath.Join(librariesDir, libPath))
 	}
 
 	sep := ";"

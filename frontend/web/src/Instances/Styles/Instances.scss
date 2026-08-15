@@ -1,0 +1,119 @@
+@use '../../Common/Styles/Components' as *;
+
+.InstancesModal_Overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--background-modal-primary);
+    display: flex;
+    flex-direction: column;
+}
+
+.InstancesModal_Head {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.95rem 1.5rem 0.8rem;
+    border-bottom: var(--border-modal-style);
+    flex-shrink: 0;
+}
+
+.InstancesModal_Title {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.InstancesModal_Icon {
+width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.6rem;
+    background: color-mix(in srgb, var(--background-modal-primary) 50%, gray 5%);
+    border: var(--border-style);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: color-mix(in srgb, var(--background-modal-primary) 25%, white 85%);
+    flex-shrink: 0;
+
+    svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+}
+
+.InstancesModal_Titles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+
+    h3 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(1rem * var(--font-size-primary, 1));
+        font-weight: 700;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    p {
+        margin: 0;
+        font-size: calc(0.68rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+        opacity: 0.5;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.InstancesModal_Close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 2.1rem;
+    width: 2.1rem;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    svg {
+        width: 1.05rem;
+        height: 1.05rem;
+    }
+
+    &:hover {
+        background: var(--control-bg);
+        color: var(--text-primary);
+    }
+}
+
+.InstancesModal_Body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+// ---------- Transición del panel ----------
+
+.InstancesModal-enter-active,
+.InstancesModal-leave-active {
+    transition: var(--transition);
+}
+
+.InstancesModal-enter-from,
+.InstancesModal-leave-to {
+    opacity: 0;
+}

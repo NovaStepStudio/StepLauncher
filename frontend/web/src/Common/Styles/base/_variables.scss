@@ -1,0 +1,87 @@
+:root {
+    --background-body: url('../../../../assets/background/bg.webp');
+    --background-sidebar: #0005;
+    --background-sidebar-items: #0008;
+    --background-bottom-control-version: #0005;
+    --background-modal-primary: #111;
+
+    --border-modal-style: 1px solid #222;
+    --border-style: 1px solid rgba(37, 37, 37, 0.3);
+
+    --progress-color: #5ed89a;
+
+    --background-play-button: #111;
+    --background-button-primary: #111;
+
+    --color-error: #ff6b6b;
+    --color-success: #5ed89a;
+    --color-tag: #a974ff;
+    --color-warning: #ffb347;
+
+    --control-bg: rgba(255, 255, 255, 0.04);
+    --control-bg-soft: rgba(255, 255, 255, 0.06);
+    --control-bg-dark: rgba(0, 0, 0, 0.2);
+    --control-option-bg: #1a1a2e;
+    --control-toggle-thumb: #fff;
+    --control-border: rgba(255, 255, 255, 0.08);
+    --control-border-strong: rgba(255, 255, 255, 0.1);
+
+    --transition-play-button: background 100ms ease-in-out;
+    --transition-sidebar-item: background 50ms ease-in-out, border 150ms ease-in-out, scale 100ms ease;
+    --transition-icon-item: width 100ms ease-in-out;
+    --transition-label-item: opacity 250ms ease-in-out, inset 300ms cubic-bezier(0.165, 0.84, 0.44, 1);
+
+    /* Transición genérica por duración: cubre fondo, borde, color, sombra, opacidad, transform y blur */
+    --transition: background 150ms, border-color 150ms, color 150ms, box-shadow 150ms, opacity 150ms ease, transform 150ms ease, filter 150ms;
+    --transition-fast: background 100ms, border-color 100ms, color 100ms, box-shadow 100ms, opacity 100ms ease, transform 100ms ease, filter 100ms;
+    --transition-slow: background 250ms, border-color 250ms, color 250ms, box-shadow 250ms, opacity 250ms ease, transform 250ms ease, filter 250ms;
+    --transition-modal: background 400ms, border-color 400ms, color 400ms, box-shadow 400ms, opacity 400ms ease, transform 400ms ease, filter 400ms;
+
+    /* Transiciones especiales (solo las que de verdad difieren) */
+    --transition-width: width 250ms ease;
+    --transition-stroke: stroke 120ms ease;
+    --transition-stroke-dashoffset: stroke-dashoffset 220ms ease;
+    --transition-rotate: rotate 250ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --transition-grid-template-rows: grid-template-rows 200ms ease;
+    --transition-inset-opacity: inset 2s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 250ms ease;
+    --transition-backdrop-filter-background: backdrop-filter 200ms ease, background 200ms ease;
+    --transition-panel: opacity 200ms ease, transform 450ms cubic-bezier(0.22, 0.8, 0.24, 1);
+    --transition-spring: border-color 200ms, box-shadow 200ms, transform 200ms cubic-bezier(0.22, 0.8, 0.24, 1);
+
+    --filter-blur: blur(4px);
+
+    --shadow-settings-normal: 0 0 .5rem;
+
+    --text-primary: #fff;
+    --text-secondary: #cfcfd6;
+
+    --font-primary: 'Lexend';
+    --font-secundary: 'Inter';
+
+    --font-size-primary: 1;
+    --font-size-secundary: 1;
+
+    --text-shadow-primary: none;
+    --text-shadow-secundary: none;
+    --text-shadow-intensity: 1;
+}
+
+:root[data-anim="off"] *,
+:root[data-anim="off"] *::before,
+:root[data-anim="off"] *::after {
+    transition: none !important;
+    animation: none !important;
+}
+
+:root[data-blur="off"] {
+    --filter-blur: blur(0px);
+}
+
+:root[data-shadows="off"] {
+    --shadow-settings-normal: none;
+}
+
+:root[data-textshadow="on"] {
+    --text-shadow-primary: 0 0 calc(0.35rem * var(--text-shadow-intensity, 1)) color-mix(in srgb, var(--text-primary) 80%, transparent);
+    --text-shadow-secundary: 0 0 calc(0.3rem * var(--text-shadow-intensity, 1)) color-mix(in srgb, var(--text-secondary) 80%, transparent);
+}

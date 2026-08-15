@@ -1,0 +1,143 @@
+@use '../../Common/Styles/Components' as *;;
+
+.SsHero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: .9rem;
+    padding: 1.75rem 2rem 1.5rem;
+
+    p {
+        margin: 0;
+        max-width: 28rem;
+        font-size: .78rem;
+        line-height: 1.6;
+        opacity: .55;
+
+        strong {
+            color: var(--text-primary);
+            text-shadow: var(--text-shadow-primary, none);
+            opacity: .9;
+        }
+    }
+}
+
+.SsHeroLogo {
+    width: 6rem;
+}
+
+.SsHeroTitle {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+
+    h3 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(1.25rem * var(--font-size-primary, 1));
+        font-weight: 600;
+    }
+}
+
+.SsHeroVersion {
+    font-size: .85rem;
+    font-weight: 600;
+    opacity: .4;
+}
+
+.SsLinks {
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+    padding: 1.1rem 2rem;
+}
+
+.SsLink {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    width: 100%;
+    padding: .85rem 1rem;
+    border-radius: .6rem;
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+transition: var(--transition);
+
+    &:hover {
+        background: rgba(255, 255, 255, .07);
+        border-color: rgba(255, 255, 255, .14);
+        transform: translateY(-1px);
+
+        .SsLinkArrow {
+            opacity: 1;
+            transform: translateX(1px);
+        }
+    }
+}
+
+.SsLinkIcon {
+    flex-shrink: 0;
+    color: var(--text-secondary);
+}
+
+.SsLinkText {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+}
+
+.SsLinkLabel {
+    font-size: .82rem;
+    font-weight: 600;
+}
+
+.SsLinkDesc {
+    font-size: .72rem;
+    line-height: 1.45;
+    opacity: .5;
+}
+
+.SsLinkArrow {
+    flex-shrink: 0;
+    opacity: .35;
+transition: var(--transition);
+}
+
+.SsCredit {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    padding: 1.5rem 2rem;
+
+    h4 {
+        margin: 0 0 .3rem;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(.9rem * var(--font-size-primary, 1));
+        font-weight: 600;
+    }
+
+    p {
+        margin: 0;
+        font-size: .72rem;
+        line-height: 1.55;
+        opacity: .55;
+    }
+}
+
+.SsWailsLogo {
+    width: 6rem;
+    flex-shrink: 0;
+}
+
+.SsCreditText {
+    flex: 1;
+    min-width: 0;
+}

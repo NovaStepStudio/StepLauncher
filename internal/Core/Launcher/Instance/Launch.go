@@ -34,13 +34,24 @@ func (m *InstanceManager) LaunchInstance(name string, auth launcher.LaunchConfig
 		return nil, fmt.Errorf("version %s not downloaded in instance %s (run version/add first)", cfg.Version, name)
 	}
 
+	// Las librerías que el instalador del modloader deja en la instancia se
+	// mueven a shared (donde se leen en el lanzamiento) y se eliminan.
+	m.mergeInstanceLibraries(instPath)
+
 	var adv launcher.AdvancedConfig
 	if cfg.Advanced != nil {
 		adv = *cfg.Advanced
 	}
 
 	adv.RuntimeDir = nonEmpty(adv.RuntimeDir, cfg.RuntimeDir, filepath.Join(filepath.Dir(m.instancesDir), "runtime"))
-	adv.GameDir = nonEmpty(adv.GameDir, cfg.GameDir, filepath.Join(instPath, "game"))
+	m.mu.RLock()
+	sep := m.separateGameDir
+	m.mu.RUnlock()
+	if sep {
+		adv.GameDir = nonEmpty(adv.GameDir, cfg.GameDir, filepath.Join(instPath, "game"))
+	} else {
+		adv.GameDir = nonEmpty(adv.GameDir, cfg.GameDir, instPath)
+	}
 	adv.AssetsDir = nonEmpty(adv.AssetsDir, cfg.AssetsDir, filepath.Join(m.sharedDir, "assets"))
 	adv.LibrariesDir = nonEmpty(adv.LibrariesDir, cfg.LibrariesDir, filepath.Join(m.sharedDir, "libraries"))
 	adv.VersionsDir = nonEmpty(adv.VersionsDir, cfg.VersionsDir, verDir)
@@ -53,8 +64,12 @@ func (m *InstanceManager) LaunchInstance(name string, auth launcher.LaunchConfig
 		adv.JavaExec = nonEmpty(adv.JavaExec, cfg.JavaExec)
 		adv.WindowTitle = nonEmpty(adv.WindowTitle, cfg.WindowTitle)
 		adv.UserType = nonEmpty(adv.UserType, cfg.UserType, "mojang")
-		adv.GCPreset = nonEmpty(adv.GCPreset, cfg.GCPreset)
-		adv.GPUPreference = nonEmpty(adv.GPUPreference, cfg.GPUPreference)
+		if cfg.GCPreset != nil {
+			adv.GCPreset = *cfg.GCPreset
+		}
+		if cfg.GPUPreference != nil {
+			adv.GPUPreference = *cfg.GPUPreference
+		}
 		adv.PreLaunchCommand = nonEmpty(adv.PreLaunchCommand, cfg.PreLaunchCommand)
 		adv.PostLaunchCommand = nonEmpty(adv.PostLaunchCommand, cfg.PostLaunchCommand)
 		adv.AssetIndexID = nonEmpty(adv.AssetIndexID, cfg.AssetIndexID)
@@ -151,6 +166,7 @@ func (m *InstanceManager) LaunchInstance(name string, auth launcher.LaunchConfig
 		ClientID:        auth.ClientID,
 		LauncherName:    m.launcherName,
 		LauncherVersion: m.launcherVersion,
+		InstanceName:    name,
 		LogDir:          filepath.Join(instPath, "logs"),
 		Advanced:        &adv,
 	}
@@ -171,6 +187,7 @@ func (m *InstanceManager) LaunchInstance(name string, auth launcher.LaunchConfig
 		return nil, fmt.Errorf("launch manager not available")
 	}
 
+	started := time.Now()
 	instance, err := m.launchManager.Launch(launchCfg)
 	if err != nil {
 		return nil, err
@@ -178,9 +195,17 @@ func (m *InstanceManager) LaunchInstance(name string, auth launcher.LaunchConfig
 
 	go func() {
 		<-instance.Done()
-		meta.LastPlayed = time.Now().Format(time.RFC3339)
-		m.writeMetadata(name, meta)
-		m.log("Instance %s stopped | PID: %d | exit: %d", name, instance.PID, instance.ExitCode)
+		now := time.Now()
+		secs := int(now.Sub(started).Seconds())
+		meta.PlayTime += int64(secs)
+		if meta.PlayTime < 0 {
+			meta.PlayTime = 0
+		}
+		meta.LastPlayed = now.Format(time.RFC3339)
+		if err := m.writeMetadata(name, meta); err != nil {
+			m.log("WARN: failed to persist playtime for %s: %v", name, err)
+		}
+		m.log("Instance %s stopped | PID: %d | exit: %d | playtime: %ds", name, instance.PID, instance.ExitCode, secs)
 	}()
 
 	return &InstanceLaunchResult{

@@ -1,0 +1,446 @@
+.Cf {
+    width: 100%;
+    max-width: 250px;
+}
+
+.Cf.previewing {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 200;
+    width: max-content;
+    max-width: min(250px, 90vw);
+    padding: .4rem;
+    border-radius: .6rem;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    box-shadow: var(--shadow-settings-normal) #0008;
+}
+
+.CfTrigger {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    width: 100%;
+    padding: .35rem .55rem .35rem .4rem;
+    border-radius: .45rem;
+    border: var(--border-style);
+    background: var(--background-modal-primary);
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
+    font-family: var(--font-secundary);
+    font-size: calc(.72rem * var(--font-size-secundary, 1));
+    cursor: pointer;
+    transition: var(--transition);
+
+    &:hover,
+    .Cf.open & {
+        border-color: rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.08);
+    }
+}
+
+.CfSwatch {
+    position: relative;
+    width: 1.6rem;
+    height: 1.6rem;
+    flex-shrink: 0;
+    border-radius: .4rem;
+    border: var(--border-style);
+    overflow: hidden;
+    background-image:
+        linear-gradient(45deg, rgba(255, 255, 255, 0.14) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.14) 75%),
+        linear-gradient(45deg, rgba(255, 255, 255, 0.14) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.14) 75%);
+    background-size: 10px 10px, 10px 10px;
+    background-position: 0 0, 5px 5px;
+}
+
+.CfSwatchColor {
+    position: absolute;
+    inset: 0;
+}
+
+.CfValue {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+    font-family: 'Consolas', 'Courier New', monospace;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+}
+
+.CfCaret {
+    flex-shrink: 0;
+    opacity: 0.5;
+transition: var(--transition);
+}
+
+.Cf.open .CfCaret {
+    transform: rotate(180deg);
+}
+
+.CfBody {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: var(--transition-grid-template-rows);
+
+    .Cf.open & {
+        grid-template-rows: 1fr;
+    }
+}
+
+.CfBodyInner {
+    overflow: hidden;
+}
+
+.CfPanel {
+    margin-top: .55rem;
+    padding: .7rem;
+    border-radius: .6rem;
+    border: var(--border-style);
+    background: color-mix(in srgb, var(--background-modal-primary) 90%, #fff 5%);
+    box-shadow: 0 .6rem 1.2rem rgba(0, 0, 0, 0.35);
+}
+
+.CfMain {
+    display: flex;
+    gap: .7rem;
+    align-items: stretch;
+}
+
+.CfReplica {
+    position: fixed;
+    top: 50%;
+    left: calc(50% + 9.5rem);
+    transform: translateY(-50%);
+    z-index: 199;
+    pointer-events: none;
+    animation: CfReplicaIn 220ms cubic-bezier(.165, .84, .44, 1);
+}
+
+@keyframes CfReplicaIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50%) translateX(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(-50%) translateX(0);
+    }
+}
+
+.CfReplicaDialog {
+    width: 15.5rem;
+    padding: .8rem;
+    border-radius: .7rem;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    box-shadow: var(--shadow-settings-normal) #0009;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+}
+
+.CfReplicaHead {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+}
+
+.CfReplicaIcon {
+    width: 1.9rem;
+    height: 1.9rem;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: .45rem;
+    background: color-mix(in srgb, v-bind(previewStyle) 22%, transparent);
+    color: var(--text-primary);
+
+    svg {
+        width: .95rem;
+        height: .95rem;
+    }
+}
+
+.CfReplicaTitles {
+    display: flex;
+    flex-direction: column;
+    gap: .05rem;
+    min-width: 0;
+}
+
+.CfReplicaTitle {
+    font-family: var(--font-primary);
+    font-size: calc(.72rem * var(--font-size-primary, 1));
+    font-weight: 600;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.CfReplicaSub {
+    font-family: var(--font-secundary);
+    font-size: .58rem;
+    opacity: .5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.CfReplicaBody {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+}
+
+.CfReplicaRing {
+    position: relative;
+    width: 3.6rem;
+    height: 3.6rem;
+    flex-shrink: 0;
+
+    svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+}
+
+.CfReplicaRingTrack {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.07);
+    stroke-width: 9;
+}
+
+.CfReplicaRingFill {
+    fill: none;
+    stroke-width: 9;
+    stroke-linecap: round;
+    transition: var(--transition-stroke);
+}
+
+.CfReplicaRingPct {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-primary);
+    font-size: calc(.72rem * var(--font-size-primary, 1));
+    font-weight: 700;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+}
+
+.CfReplicaCol {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .32rem;
+}
+
+.CfReplicaLine {
+    font-family: var(--font-secundary);
+    font-size: .6rem;
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: .75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    b {
+        font-weight: 700;
+        color: v-bind(previewStyle);
+    }
+
+    &.sub {
+        opacity: .5;
+    }
+}
+
+.CfReplicaChip {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    align-self: flex-start;
+    padding: .18rem .5rem;
+    border-radius: 99px;
+    border: var(--border-style);
+    background: rgba(0, 0, 0, 0.2);
+    font-family: var(--font-secundary);
+    font-size: .56rem;
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
+
+    svg {
+        width: .6rem;
+        height: .6rem;
+    }
+}
+
+.CfSV {
+    width: 7rem;
+    aspect-ratio: 1 / 1;
+    border-radius: .5rem;
+    border: var(--border-style);
+    cursor: crosshair;
+    touch-action: none;
+    display: block;
+    background: #000;
+}
+
+.CfHue {
+    position: relative;
+    width: .6rem;
+    flex-shrink: 0;
+    border-radius: .5rem;
+    border: var(--border-style);
+    cursor: ns-resize;
+    touch-action: none;
+}
+
+.CfThumb {
+    position: absolute;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 1px 4px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+}
+
+.CfHueThumb {
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.CfAlphaThumb {
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.CfAlpha {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    padding-top: .6rem;
+}
+
+.CfAlphaBar {
+    position: relative;
+    flex: 1;
+    height: 1rem;
+    border-radius: .4rem;
+    border: var(--border-style);
+    background-color: var(--background-modal-primary);
+    cursor: ew-resize;
+    touch-action: none;
+}
+
+.CfAlphaVal {
+    flex-shrink: 0;
+    width: 2.5rem;
+    text-align: right;
+    font-size: calc(.7rem * var(--font-size-secundary, 1));
+    font-family: var(--font-secundary);
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
+}
+
+.CfOut {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    padding-top: .6rem;
+}
+
+.CfFmt {
+    display: flex;
+    border: var(--border-style);
+    border-radius: .45rem;
+    overflow: hidden;
+    flex-shrink: 0;
+
+    button {
+        padding: .35rem .55rem;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        text-shadow: var(--text-shadow-secundary, none);
+        font-family: var(--font-secundary);
+        font-size: calc(.68rem * var(--font-size-secundary, 1));
+        cursor: pointer;
+transition: var(--transition-fast);
+
+        &.active {
+            background: var(--background-sidebar-items);
+            color: var(--text-primary);
+            text-shadow: var(--text-shadow-primary, none);
+        }
+    }
+}
+
+.CfSnippet {
+    flex: 1;
+    min-width: 0;
+    padding: .4rem .55rem;
+    border-radius: .45rem;
+    border: var(--border-style);
+    background: var(--background-modal-primary);
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: .72rem;
+    letter-spacing: .02em;
+
+    &:focus {
+        border-color: color-mix(in srgb, var(--background-modal-primary) 50%, gray 25%);
+        outline: none;
+    }
+}
+
+.CfRecents {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    padding-top: .6rem;
+}
+
+.CfRecent {
+    width: 1.55rem;
+    height: 1.55rem;
+    border-radius: .4rem;
+    border: var(--border-style);
+    padding: 0;
+    cursor: pointer;
+transition: var(--transition-fast);
+
+    &:hover {
+        transform: scale(1.12);
+    }
+
+    &.active {
+        border-color: var(--text-primary);
+        box-shadow: 0 0 0 1px var(--text-primary);
+    }
+}
+
+.CfHint {
+    padding-top: .55rem;
+    text-align: center;
+    font-family: var(--font-secundary);
+    font-size: calc(.62rem * var(--font-size-secundary, 1));
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: .72;
+}

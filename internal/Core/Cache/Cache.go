@@ -32,7 +32,13 @@ func NewManager(cacheDir string, ttls CacheTTL) *Manager {
 }
 
 func subdirs() []string {
-	return []string{"manifest", "versions", "assets", "java", "forge", "neoforge", "fabric", "quilt", "legacyfabric", "assets/indexes", "assets/manifests"}
+	return []string{"default", "manifest", "versions", "assets", "java", "forge", "neoforge", "fabric", "quilt", "legacyfabric", "assets/indexes", "assets/manifests"}
+}
+
+// artifactDirs son carpetas de cache que no almacenan JSON con metadatos
+// (instaladores de modloaders y sus logs) y se limpian por antigüedad.
+func artifactDirs() []string {
+	return []string{"modloader", "modloader-logs"}
 }
 
 func (m *Manager) ensureDirs() {
@@ -72,8 +78,13 @@ func (m *Manager) Set(category, key string, data interface{}) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return fmt.Errorf("cache mkdir: %w", err)
 	}
-	if err := os.WriteFile(path, metaRaw, 0644); err != nil {
+	tmpPath := path + ".tmp"
+	if err := os.WriteFile(tmpPath, metaRaw, 0644); err != nil {
 		return fmt.Errorf("cache write: %w", err)
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("cache rename: %w", err)
 	}
 	return nil
 }
@@ -162,6 +173,19 @@ func (m *Manager) Clear() int {
 			}
 		}
 	}
+	for _, sub := range artifactDirs() {
+		dir := filepath.Join(m.cacheDir, sub)
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if !e.IsDir() {
+				os.Remove(filepath.Join(dir, e.Name()))
+				count++
+			}
+		}
+	}
 	return count
 }
 
@@ -176,7 +200,10 @@ func (m *Manager) DeleteCategory(category string) int {
 	}
 	count := 0
 	for _, e := range entries {
-		if !e.IsDir() && strings.HasSuffix(e.Name(), ".json") {
+		if e.IsDir() {
+			continue
+		}
+		if isArtifactDir(category) || strings.HasSuffix(e.Name(), ".json") {
 			os.Remove(filepath.Join(dir, e.Name()))
 			count++
 		}
@@ -193,6 +220,7 @@ func (m *Manager) Refresh(category, key string, fetcher func() (interface{}, err
 }
 
 func (m *Manager) cleanupLoop() {
+	m.cleanup()
 	ticker := time.NewTicker(1 * time.Hour)
 	defer ticker.Stop()
 	for range ticker.C {
@@ -229,4 +257,34 @@ func (m *Manager) cleanup() {
 			}
 		}
 	}
+
+	for _, sub := range artifactDirs() {
+		dir := filepath.Join(m.cacheDir, sub)
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		ttl := m.ttlFor(sub)
+		for _, e := range entries {
+			if e.IsDir() {
+				continue
+			}
+			info, err := e.Info()
+			if err != nil {
+				continue
+			}
+			if now.Sub(info.ModTime()) > ttl {
+				os.Remove(filepath.Join(dir, e.Name()))
+			}
+		}
+	}
+}
+
+func isArtifactDir(category string) bool {
+	for _, a := range artifactDirs() {
+		if category == a {
+			return true
+		}
+	}
+	return false
 }

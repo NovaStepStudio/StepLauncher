@@ -1,0 +1,198 @@
+.SettingsModal_Overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: var(--filter-blur);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    transition: var(--transition-backdrop-filter-background);
+}
+
+.SettingsModal {
+    width: 90%;
+    height: 90%;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    border-radius: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: var(--shadow-settings-normal) #0005;
+}
+
+.SettingsModal_Header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 2rem;
+    padding: 0.5rem 1rem;
+    flex-shrink: 0;
+    background: var(--background-sidebar);
+    border-bottom: var(--border-modal-style);
+
+    .SettingsModal_Title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+
+        h2 {
+            margin: 0;
+            font-size: calc(.75rem * var(--font-size-primary, 1));
+            font-family: var(--font-primary), Arial, sans-serif;
+            font-weight: 600;
+        }
+
+        svg {
+            width: 1rem;
+        }
+    }
+
+    .SettingsModal_Close {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        border-radius: 0.35rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 1.85rem;
+        width: 1.85rem;
+        transition: var(--transition);
+
+        &:hover {
+            background: #1111;
+            color: var(--text-primary);
+        }
+    }
+}
+
+.SettingsModal_Body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.SettingsModal_Sidebar {
+    position: relative;
+    width: 12.5rem;
+    flex-shrink: 0;
+    background: var(--background-sidebar);
+    border-right: var(--border-modal-style);
+    padding: 0.75rem;
+    padding-bottom: 2.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    overflow-y: auto;
+}
+
+.SettingsModal_Version {
+    position: absolute;
+    bottom: .5rem;
+    left: .5rem;
+    font-family: var(--font-secundary), Arial, sans-serif;
+    font-size: calc(.65rem * var(--font-size-secundary, 1));
+    opacity: .4;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.SettingsModal_SidebarItem {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: .45rem .6rem;
+    border-radius: 0.4rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
+    font-size: calc(0.85rem * var(--font-size-secundary, 1));
+    font-family: var(--font-secundary), Arial, sans-serif;
+    cursor: pointer;
+    transition: var(--transition);
+    &:hover {
+        background: color-mix(in srgb, var(--background-button-primary) 50%, gray 25%);
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+    }
+    &:active{
+        background: color-mix(in srgb, var(--background-button-primary) 50%, gray 30%);
+        color: var(--text-primary);        
+        text-shadow: var(--text-shadow-primary, none);
+    }
+    &.active {
+        background: color-mix(in srgb, var(--background-button-primary) 50%, gray 20%);
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+    }
+
+    .SettingsModal_SidebarIcon {
+        width: 1.1rem;
+        flex-shrink: 0;
+    }
+}
+
+.SettingsModal_Empty {
+    padding: 1rem 0.5rem;
+    text-align: center;
+    color: #1115;
+    font-size: 0.8rem;
+}
+
+.SettingsModal_Overlay.preview {
+    background: transparent;
+    backdrop-filter: none;
+
+    .SettingsModal {
+        visibility: hidden;
+    }
+
+    :deep(.Cf.previewing) {
+        visibility: visible;
+    }
+}
+
+.SettingsModal_Content {
+    flex: 1;
+    overflow-y: auto;
+    color: var(--text-primary);
+}
+
+.SettingsModal_Content::-webkit-scrollbar {
+    width: 10px;
+}
+
+.SettingsModal-enter-active,
+.SettingsModal-leave-active {
+    transition: var(--transition-slow);
+
+    .SettingsModal {
+transition: var(--transition-slow);
+    }
+}
+
+.SettingsModal-enter-from,
+.SettingsModal-leave-to {
+    opacity: 0;
+
+    .SettingsModal {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+}
+
+.SettingsModal_Section-enter-active,
+.SettingsModal_Section-leave-active {
+transition: var(--transition-fast);
+}
+
+.SettingsModal_Section-enter-from,
+.SettingsModal_Section-leave-to {
+    opacity: 0;
+}

@@ -298,8 +298,11 @@ func addJavaRuntime(tasks *[]DownloadTask, ver *VersionJSON, cfg Config, filter 
 }
 
 func BuildJavaRuntimeTasks(ver *VersionJSON, cfg Config) ([]DownloadTask, error) {
-	if ver.JavaVersion.Component == "" {
-		return nil, fmt.Errorf("version has no javaVersion.component")
+	// Las versiones antiguas (pre-1.17) no declaran componente; se usa entonces
+	// jre-legacy (Java 8), el runtime oficial para esas versiones.
+	component := ver.JavaVersion.Component
+	if component == "" {
+		component = "jre-legacy"
 	}
 	var all JavaProducts
 	if err := FetchJSON(cfg,
@@ -321,19 +324,19 @@ func BuildJavaRuntimeTasks(ver *VersionJSON, cfg Config) ([]DownloadTask, error)
 			products = all.MacOS
 		}
 	}
-	list, ok := products[ver.JavaVersion.Component]
+	list, ok := products[component]
 	if !ok || len(list) == 0 {
-		return nil, fmt.Errorf("no java product for component %s", ver.JavaVersion.Component)
+		return nil, fmt.Errorf("no java product for component %s", component)
 	}
 	var jm JavaManifest
-	if err := FetchJSON(cfg, list[0].Manifest.URL, "java/"+ver.JavaVersion.Component+"/"+key, &jm); err != nil {
+	if err := FetchJSON(cfg, list[0].Manifest.URL, "java/"+component+"/"+key, &jm); err != nil {
 		return nil, fmt.Errorf("fetch java manifest: %w", err)
 	}
 	runtimeBase := filepath.Join(cfg.WorkDir, "runtime")
 	if cfg.JavaRuntimeDir != "" {
 		runtimeBase = cfg.JavaRuntimeDir
 	}
-	base := filepath.Join(runtimeBase, ver.JavaVersion.Component, key)
+	base := filepath.Join(runtimeBase, component, key)
 	var tasks []DownloadTask
 	for relPath, f := range jm.Files {
 		fullPath := filepath.Join(base, relPath)
@@ -354,7 +357,7 @@ func BuildJavaRuntimeTasks(ver *VersionJSON, cfg Config) ([]DownloadTask, error)
 		})
 	}
 	if len(tasks) == 0 {
-		return nil, fmt.Errorf("no java runtime files for component %s", ver.JavaVersion.Component)
+		return nil, fmt.Errorf("no java runtime files for component %s", component)
 	}
 	return tasks, nil
 }

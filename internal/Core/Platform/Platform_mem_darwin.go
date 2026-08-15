@@ -2,10 +2,10 @@
 
 package platform
 
-import "syscall"
+import "golang.org/x/sys/unix"
 
 func totalRAMMB() int64 {
-	val, err := syscall.SysctlUint64("hw.memsize")
+	val, err := unix.SysctlUint64("hw.memsize")
 	if err != nil {
 		return 4096
 	}

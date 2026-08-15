@@ -1,0 +1,132 @@
+@use '../../Common/Styles/Components' as *;;
+
+.SsCacheDetail {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: calc(0.68rem * var(--font-size-secundary, 1));
+    opacity: 0.45;
+    font-family: var(--font-secundary), Arial, sans-serif;
+}
+
+.ConfirmOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.ConfirmDialog {
+    width: 22rem;
+    max-width: 90vw;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-settings-normal) #0008;
+    padding: 1.25rem 1.35rem;
+
+    h3 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.95rem * var(--font-size-primary, 1));
+        font-weight: 600;
+    }
+
+    p {
+        margin: 0.6rem 0 0;
+        font-size: 0.78rem;
+        line-height: 1.5;
+        opacity: 0.55;
+    }
+}
+
+.ConfirmActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.1rem;
+}
+
+.SsSeg {
+    display: flex;
+    align-items: center;
+    background: var(--control-bg);
+    border: var(--border-style);
+    border-radius: 0.45rem;
+    overflow: hidden;
+
+    button {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        text-shadow: var(--text-shadow-secundary, none);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(0.72rem * var(--font-size-secundary, 1));
+        padding: 0.5rem 0.85rem;
+        cursor: pointer;
+        transition: var(--transition);
+        white-space: nowrap;
+
+        &:hover:not(:disabled):not(.active) {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            text-shadow: var(--text-shadow-primary, none);
+        }
+
+        &.active {
+            background: color-mix(in srgb, var(--background-button-primary) 22%, transparent);
+            color: var(--text-primary);
+            text-shadow: var(--text-shadow-primary, none);
+            box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--background-button-primary) 35%, transparent);
+        }
+
+        &:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+    }
+}
+
+.SsIntegrityBar {
+    width: 9rem;
+    height: 0.35rem;
+    background: var(--control-bg);
+    border: var(--border-style);
+    border-radius: 2rem;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.SsIntegrityBarFill {
+    height: 100%;
+    background: var(--progress-color, var(--background-button-primary));
+    border-radius: 2rem;
+    transition: width 0.3s ease;
+}
+
+.SsDirPick {
+    display: flex;
+    gap: 0.4rem;
+    width: 16rem;
+
+    .SsIn {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+.SsDirMsg {
+    margin: 0.25rem 0 0.5rem;
+    padding: 0.35rem 0.55rem;
+    border-radius: 0.45rem;
+    font-size: 0.68rem;
+    color: var(--color-success, #5ed89a);
+    background: color-mix(in srgb, var(--color-success, #5ed89a) 10%, transparent);
+
+    &.error {
+        color: var(--color-error, #ff6b6b);
+        background: color-mix(in srgb, var(--color-error, #ff6b6b) 10%, transparent);
+    }
+}

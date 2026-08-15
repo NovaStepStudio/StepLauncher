@@ -1,0 +1,1059 @@
+.WelcomeModal_Overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    background: #0005;
+    backdrop-filter: var(--filter-blur);
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    overflow: hidden;
+}
+
+.WelcomeModal_Stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 1.2rem;
+    overflow: hidden;
+    border-right: 1px solid #5555;
+    z-index: 2;
+}
+
+.WelcomeModal_StageImg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.85;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.WelcomeModal_StageShade {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(transparent, #0009);
+    mask: radial-gradient(circle at center center, transparent, black 50%);
+    mask-position: center center;
+    mask-size: cover;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(4px);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.WelcomeModal_StageChicken {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    img {
+        width: 3.2rem;
+        height: auto;
+        image-rendering: pixelated;
+        animation: WelcomeChickenBounce 0.6s ease-in-out infinite alternate;
+    }
+}
+
+@keyframes WelcomeChickenBounce {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(-9px);
+    }
+}
+
+.WelcomeModal_Preview {
+    position: relative;
+    z-index: 3;
+    width: min(19rem, 86%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.85rem;
+    border-radius: 1rem;
+    border: var(--border-style);
+    background: #0b0b0dcc;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 1.2rem 2.6rem #000a;
+}
+
+.WelcomeModal_PreviewHead {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-primary), Arial, sans-serif;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+
+    svg {
+        width: 0.95rem;
+        height: 0.95rem;
+        color: var(--color-tag);
+    }
+
+    span {
+        font-size: 0.72rem;
+        font-weight: 600;
+    }
+
+    small {
+        margin-left: auto;
+        font-size: 0.58rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--color-tag);
+        opacity: 0.9;
+    }
+}
+
+.WelcomeModal_PreviewMock {
+    display: grid;
+    grid-template-columns: 2.3rem 1fr;
+    border-radius: 0.7rem;
+    overflow: hidden;
+    border: 1px solid #ffffff14;
+    background: color-mix(in srgb, var(--background-modal-primary) 88%, #000);
+}
+
+.WelcomeModal_PreviewSide {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 0;
+    background: color-mix(in srgb, var(--background-modal-primary) 55%, #000);
+}
+
+.WelcomeModal_PreviewSideItem {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.4rem;
+    color: var(--text-secondary);
+    opacity: 0.55;
+
+    svg {
+        width: 0.85rem;
+        height: 0.85rem;
+    }
+
+    &.on {
+        background: color-mix(in srgb, var(--background-button-primary) 32%, transparent);
+        color: var(--color-tag);
+        opacity: 1;
+    }
+}
+
+.WelcomeModal_PreviewMain {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.65rem 0.7rem;
+    min-width: 0;
+}
+
+.WelcomeModal_PreviewVersion {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .WelcomeModal_PreviewThumb {
+        width: 1.7rem;
+        height: 1.7rem;
+        border-radius: 0.4rem;
+        border: 1px solid color-mix(in srgb, var(--background-button-primary) 55%, transparent);
+        background: linear-gradient(135deg, color-mix(in srgb, var(--background-button-primary) 45%, #222), #1a1a1c);
+        flex-shrink: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        img{
+            width: 1.5rem;
+            object-fit: cover;
+        }
+    }
+
+    .WelcomeModal_PreviewVerTxt {
+        display: flex;
+        flex-direction: column;
+        gap: 0.05rem;
+        min-width: 0;
+
+        b {
+            font-size: 0.68rem;
+            color: var(--text-primary);
+        }
+
+        small {
+            font-size: 0.52rem;
+            opacity: 0.5;
+            color: var(--text-secondary);
+        }
+    }
+
+    .WelcomeModal_PreviewBadge {
+        margin-left: auto;
+        font-size: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.12rem 0.4rem;
+        border-radius: 99rem;
+        border: var(--border-style);
+        color: var(--color-tag);
+        background: color-mix(in srgb, var(--background-button-primary) 14%, transparent);
+    }
+}
+
+.WelcomeModal_PreviewPlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.5rem;
+    border-radius: 0.6rem;
+    border: 1px solid color-mix(in srgb, var(--background-button-primary) 75%, white 25%);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--background-button-primary) 92%, white 8%), color-mix(in srgb, var(--background-button-primary) 62%, black 10%));
+    color: #fff;
+    text-shadow: 0 1px 2px #0009;
+    font-family: var(--font-primary), Arial, sans-serif;
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    b {
+        font-size: 0.66rem;
+        letter-spacing: 0.06em;
+    }
+}
+
+.WelcomeModal_PreviewRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.WelcomeModal_PreviewBar {
+    flex: 1;
+    height: 0.4rem;
+    border-radius: 99rem;
+    background: #ffffff14;
+    overflow: hidden;
+
+    .fill {
+        width: 72%;
+        height: 100%;
+        border-radius: 99rem;
+        background: linear-gradient(90deg, color-mix(in srgb, var(--progress-color) 70%, #000), var(--progress-color));
+        animation: WelcomeBarFill 1.2s ease forwards;
+    }
+}
+
+@keyframes WelcomeBarFill {
+    from {
+        width: 0;
+    }
+    to {
+        width: 72%;
+    }
+}
+
+.WelcomeModal_PreviewPct {
+    font-size: 0.55rem;
+    color: var(--progress-color);
+    font-weight: 600;
+}
+
+.WelcomeModal_PreviewMsg {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.55rem;
+    color: var(--color-success);
+
+    svg {
+        width: 0.75rem;
+        height: 0.75rem;
+    }
+}
+
+.WelcomeModal_Decor {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.4rem;
+    pointer-events: none;
+}
+
+.WelcomeModal_DecorMain {
+    width: auto;
+    height: auto;
+    max-width: 42%;
+    max-height: 50%;
+    object-fit: contain;
+    filter: drop-shadow(0 0.8rem 1.4rem #0009);
+}
+
+.WelcomeModal_DecorChars {
+    position: absolute;
+    bottom: 8rem;
+    width: auto;
+    height: auto;
+    max-width: 52%;
+    max-height: 45%;
+    rotate: -10deg;
+    object-fit: contain;
+    filter: drop-shadow(0 0.8rem 1.4rem #0009);
+}
+
+.WelcomeModal_Content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.2rem 2.6rem;
+    background-color: #0007;
+    overflow-y: auto;
+    min-width: 0;
+    min-height: 27rem;
+}
+
+.WelcomeModal_Step {
+    width: 100%;
+}
+
+.WelcomeModal_Steps {
+    display: flex;
+    gap: 0.3rem;
+
+    i {
+        width: 1.5rem;
+        height: 3px;
+        border-radius: 99rem;
+        background: #5557;
+        transition: var(--transition);
+
+        &.on {
+            background: color-mix(in srgb, var(--background-button-primary) 70%, white 10%);
+        }
+    }
+}
+
+.WelcomeModal_Welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.05rem;
+    max-width: 27rem;
+
+    .Title{
+        position: relative;
+        font-family: var(--font-primary),Arial, Helvetica, sans-serif;
+        color: var(--text-primary);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+
+        img {
+            width: 4rem;
+            margin: auto;
+            object-fit: cover;
+        }
+
+        div > *{
+            margin: .2rem 0;
+        }
+    }
+
+    h2 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(1.7rem * var(--font-size-primary, 1));
+        font-weight: 700;
+        line-height: 1.2;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+    }
+
+    p {
+        margin: 0;
+        font-size: 0.8rem;
+        line-height: 1.65;
+        opacity: 0.62;
+        color: var(--text-secondary);
+    }
+}
+
+.WelcomeModal_Badge {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    padding: 0.2rem 0.5rem;
+    max-width: max-content;
+    max-height: max-content;
+    border-radius: 99rem;
+    border: var(--border-style);
+    background: color-mix(in srgb, var(--background-button-primary) 15%, transparent);
+    color: var(--color-tag);
+}
+
+.WelcomeModal_Cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    width: 100%;
+    margin-top: 0.3rem;
+}
+
+.WelcomeModal_Card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 0.7rem;
+    border: var(--border-style);
+    background: linear-gradient(135deg, #ffffff08, #00000022);
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    cursor: pointer;
+    text-align: left;
+    transition: var(--transition);
+    overflow: hidden;
+
+    &:hover {
+        transform: translateY(-2px);
+        border-color: color-mix(in srgb, var(--background-button-primary) 55%, transparent);
+        background: linear-gradient(135deg, #ffffff12, #0000002a);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    &.is-main {
+        border-color: color-mix(in srgb, var(--background-button-primary) 55%, transparent);
+        background: color-mix(in srgb, var(--background-button-primary) 14%, transparent);
+    }
+}
+
+.WelcomeModal_CardIcon {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--background-button-primary) 20%, transparent);
+    color: var(--color-tag);
+
+    svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+}
+
+.WelcomeModal_CardTxt {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+
+    b {
+        font-size: 0.8rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    small {
+        font-size: 0.62rem;
+        opacity: 0.55;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.WelcomeModal_CardBadge {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 0.15rem 0.45rem;
+    border-radius: 99rem;
+    border: var(--border-style);
+    color: var(--color-tag);
+}
+
+.WelcomeModal_Features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    width: 100%;
+    margin-top: 0.15rem;
+
+    span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.62rem;
+        opacity: 0.6;
+        padding: 0.28rem 0.6rem;
+        border-radius: 99rem;
+        border: var(--border-style);
+        color: var(--text-secondary);
+
+        svg {
+            width: 0.85rem;
+            height: 0.85rem;
+        }
+    }
+}
+
+.WelcomeModal_Customize {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-width: 30rem;
+    width: 100%;
+}
+
+.WelcomeModal_Account {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-width: 30rem;
+    width: 100%;
+}
+
+.WelcomeModal_Back {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.5rem;
+    border: var(--border-style);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+
+    svg {
+        width: 0.9rem;
+        height: 0.9rem;
+    }
+
+    &:hover {
+        color: var(--text-primary);
+        background: #1113;
+    }
+}
+
+.WelcomeModal_FormHead {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    h3 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(1.1rem * var(--font-size-primary, 1));
+        font-weight: 600;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+    }
+
+    p {
+        margin: 0;
+        font-size: 0.68rem;
+        opacity: 0.5;
+        color: var(--text-secondary);
+    }
+}
+
+.WelcomeModal_Palettes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.45rem;
+}
+
+.WelcomeModal_Palette {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.55rem 0.4rem;
+    border-radius: 0.6rem;
+    border: var(--border-style);
+    background: transparent;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    cursor: pointer;
+    transition: var(--transition);
+
+    small {
+        font-size: 0.6rem;
+        opacity: 0.75;
+    }
+
+    &:hover {
+        background: #1112;
+    }
+
+    &.active {
+        border-color: color-mix(in srgb, var(--background-button-primary) 60%, transparent);
+        background: color-mix(in srgb, var(--background-button-primary) 16%, transparent);
+    }
+}
+
+.WelcomeModal_PaletteDot {
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    box-shadow: 0 0 0.7rem rgba(0, 0, 0, 0.4);
+}
+
+.WelcomeModal_PaletteCheck {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.35rem;
+    width: 0.9rem;
+    height: 0.9rem;
+    color: var(--color-success);
+}
+
+.WelcomeModal_Toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.WelcomeModal_ToggleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.6rem;
+    border: var(--border-style);
+    transition: var(--transition);
+
+    &:hover {
+        background: #1112;
+    }
+}
+
+.WelcomeModal_ToggleTxt {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+
+    b {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+    }
+
+    small {
+        font-size: 0.58rem;
+        opacity: 0.5;
+        color: var(--text-secondary);
+    }
+}
+
+.WelcomeModal_Toggle {
+    position: relative;
+    width: 2.3rem;
+    height: 1.25rem;
+    border-radius: 99rem;
+    border: var(--border-style);
+    background: #2228;
+    cursor: pointer;
+    transition: var(--transition);
+    flex-shrink: 0;
+
+    span {
+        position: absolute;
+        top: 50%;
+        left: 0.15rem;
+        transform: translateY(-50%);
+        width: 0.85rem;
+        height: 0.85rem;
+        border-radius: 50%;
+        background: #888;
+        transition: var(--transition);
+    }
+
+    &.on {
+        background: color-mix(in srgb, var(--background-button-primary) 65%, transparent);
+        border-color: color-mix(in srgb, var(--background-button-primary) 70%, white 20%);
+
+        span {
+            left: calc(100% - 1rem);
+            background: #fff;
+        }
+    }
+}
+
+.WelcomeModal_Modes {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.WelcomeModal_Mode {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.55rem 0.65rem;
+    border-radius: 0.55rem;
+    border: var(--border-style);
+    background: transparent;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: left;
+
+    svg {
+        width: 1.15rem;
+        height: 1.15rem;
+        flex-shrink: 0;
+        opacity: 0.6;
+    }
+
+    span {
+        display: flex;
+        flex-direction: column;
+        gap: 0.05rem;
+        min-width: 0;
+
+        b {
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        small {
+            font-size: 0.6rem;
+            opacity: 0.5;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    &:hover {
+        background: #1111;
+    }
+
+    &.active {
+        border-color: color-mix(in srgb, var(--background-button-primary) 55%, transparent);
+        background: color-mix(in srgb, var(--background-button-primary) 22%, transparent);
+
+        svg {
+            opacity: 1;
+        }
+    }
+}
+
+.WelcomeModal_Field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+
+    span {
+        font-size: 0.68rem;
+        font-weight: 500;
+        opacity: 0.65;
+        color: var(--text-primary);
+    }
+}
+
+.WelcomeModal_Input {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.55rem;
+    border: var(--border-style);
+    background: #ffffff0a;
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-family: var(--font-secundary), Arial, sans-serif;
+    outline: none;
+    transition: var(--transition);
+
+    &::placeholder {
+        opacity: 0.4;
+    }
+
+    &:focus {
+        border-color: color-mix(in srgb, var(--background-button-primary) 55%, transparent);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--background-button-primary) 15%, transparent);
+    }
+}
+
+.WelcomeModal_Msg {
+    margin: 0;
+    font-size: 0.7rem;
+    line-height: 1.4;
+    color: var(--color-success);
+
+    &.error {
+        color: var(--color-error);
+    }
+}
+
+.WelcomeModal_Btn {
+    padding: 0.55rem 1.4rem;
+    border-radius: 0.65rem;
+    font-family: var(--font-secundary), Arial, sans-serif;
+    font-size: calc(0.78rem * var(--font-size-secundary, 1));
+    font-weight: 600;
+    border: var(--border-style);
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: var(--transition);
+
+    svg {
+        width: 1.1rem;
+        height: 1.1rem;
+    }
+
+    &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        background: #1113;
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+.WelcomeModal_BtnPrimary {
+    border: 1px solid color-mix(in srgb, var(--background-button-primary) 75%, white 25%);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--background-button-primary) 92%, white 8%), color-mix(in srgb, var(--background-button-primary) 62%, black 10%));
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+
+    &:hover:not(:disabled) {
+        filter: brightness(1.15);
+        background: linear-gradient(135deg, color-mix(in srgb, var(--background-button-primary) 92%, white 8%), color-mix(in srgb, var(--background-button-primary) 62%, black 10%));
+    }
+}
+
+.WelcomeModal_BtnGhost {
+    border-color: #5559;
+    color: var(--text-secondary);
+}
+
+.WelcomeModal_Spinner {
+    width: 1.15rem;
+    height: 1.15rem;
+    image-rendering: pixelated;
+}
+
+.WelcomeModal_Footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
+}
+
+.WelcomeModal-enter-active,
+.WelcomeModal-leave-active {
+    transition: var(--transition-slow);
+}
+
+.WelcomeModal-enter-from,
+.WelcomeModal-leave-to {
+    opacity: 0;
+}
+
+.WelcomeSlide-enter-active {
+    transition: opacity 450ms ease, transform 450ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.WelcomeSlide-leave-active {
+    transition: opacity 250ms ease, transform 250ms ease;
+}
+
+.WelcomeSlide-enter-from {
+    opacity: 0;
+    transform: translateX(80px);
+}
+
+.WelcomeSlide-leave-to {
+    opacity: 0;
+    transform: translateX(-80px);
+}
+
+.WelcomeBg-enter-active {
+    transition: opacity 500ms ease, transform 600ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.WelcomeBg-leave-active {
+    transition: opacity 350ms ease, transform 400ms ease;
+}
+
+.WelcomeBg-enter-from {
+    opacity: 0;
+    transform: translateX(-90px) scale(1.05);
+}
+
+.WelcomeBg-leave-to {
+    opacity: 0;
+    transform: translateX(90px) scale(1.02);
+}
+
+.WelcomeSwitch-enter-active,
+.WelcomeSwitch-leave-active {
+    transition: var(--transition);
+}
+
+.WelcomeSwitch-enter-from,
+.WelcomeSwitch-leave-to {
+    opacity: 0;
+}
+
+.WelcomePreview-enter-active,
+.WelcomePreview-leave-active {
+    transition: opacity 350ms ease, transform 400ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.WelcomePreview-enter-from,
+.WelcomePreview-leave-to {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+}
+
+.WelcomeDecor-enter-active,
+.WelcomeDecor-leave-active {
+    transition: opacity 400ms ease, transform 500ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.WelcomeDecor-enter-from,
+.WelcomeDecor-leave-to {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+}
+
+.WelcomeModal_DirNotice {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.55rem 0.65rem;
+    border-radius: 0.55rem;
+    border: 1px solid color-mix(in srgb, var(--color-tag, #a974ff) 45%, transparent);
+    background: color-mix(in srgb, var(--color-tag, #a974ff) 10%, transparent);
+
+    svg {
+        width: 1.15rem;
+        height: 1.15rem;
+        flex-shrink: 0;
+        color: var(--color-tag, #a974ff);
+    }
+
+    > span {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.05rem;
+        min-width: 0;
+
+        b {
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        small {
+            font-size: 0.6rem;
+            opacity: 0.55;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+}
+
+.WelcomeModal_Select {
+    width: 100%;
+    background: var(--background-button-primary);
+    border: var(--border-style);
+    border-radius: 0.45rem;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    font-family: var(--font-secundary), Arial, sans-serif;
+    font-size: calc(0.75rem * var(--font-size-secundary, 1));
+    padding: 0.5rem 0.55rem;
+    cursor: pointer;
+    transition: var(--transition);
+
+    &:hover {
+        background-color: color-mix(in srgb, var(--background-button-primary) 40%, gray 20%);
+    }
+
+    &:focus {
+        outline: none;
+    }
+
+    option {
+        background: var(--control-option-bg);
+        color: var(--text-primary);
+    }
+}
+
+.WelcomeModal_DirPickRow {
+    display: flex;
+    gap: 0.5rem;
+
+    .WelcomeModal_Input {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+.WelcomeModal_DirHint {
+    margin: 0;
+    font-size: 0.62rem;
+    opacity: 0.5;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

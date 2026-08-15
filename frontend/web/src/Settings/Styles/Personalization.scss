@@ -1,0 +1,82 @@
+@use '../../Common/Styles/Components' as *;;
+
+.PsColorHead {
+    padding-top: .8rem;
+}
+
+.PsExamples {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .6rem;
+    padding: 0 2rem 1.4rem;
+
+    .PsExItem {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        padding: .45rem .8rem;
+        border-radius: .5rem;
+        border: 1px solid color-mix(in srgb, var(--background-button-primary) 60%, transparent);
+        background: linear-gradient(90deg, color-mix(in srgb, var(--background-button-primary) 12%, transparent), color-mix(in srgb, var(--background-button-primary) 4%, transparent));
+        color: color-mix(in srgb, var(--background-button-primary) 60%, white 40%);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(.7rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+    }
+
+    .PsExCheck {
+        font-size: .72rem;
+        font-weight: 700;
+    }
+
+    .PsExBadge {
+        padding: .18rem .55rem;
+        border-radius: .35rem;
+        background: color-mix(in srgb, var(--color-tag) 18%, transparent);
+        color: var(--color-tag);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(.62rem * var(--font-size-secundary, 1));
+        font-weight: 700;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+    }
+
+    .PsExText {
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(.72rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+
+        &.is-good { color: var(--color-success); }
+        &.is-warn { color: var(--color-warning); }
+        &.is-bad { color: var(--color-error); }
+    }
+
+    .PsExBtn {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .42rem .85rem;
+        border-radius: .45rem;
+        border: 1px solid color-mix(in srgb, var(--color-error) 20%, transparent);
+        background: color-mix(in srgb, var(--color-error) 8%, transparent);
+        color: var(--color-error);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(.7rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+        cursor: default;
+    }
+}
+
+.PsPreviewRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    padding: 1.05rem 2rem 1.4rem;
+
+    .SsBtn {
+        min-width: max-content;
+    }
+}

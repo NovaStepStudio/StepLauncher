@@ -1,0 +1,31 @@
+.SsTip {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    font-size: 0.68rem;
+    opacity: 0.45;
+    line-height: 1.45;
+    padding: 0.1rem 2rem 1rem;
+
+    svg {
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+        opacity: 0.6;
+    }
+
+    strong {
+        opacity: 0.8;
+    }
+}
+
+.SsTipDanger {
+    color: color-mix(in srgb, var(--color-error) 55%, white 45%);
+
+    svg {
+        color: var(--color-error);
+    }
+}
+
+.SsArg {
+    padding: 0.25rem 2rem 1.1rem;
+}

@@ -1,0 +1,640 @@
+.PvRoot {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 25%, #17171b 0%, #0a0a0c 70%);
+}
+
+.PvBar {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 1rem;
+    border-bottom: var(--border-style);
+    background: color-mix(in srgb, var(--background-modal-primary) 82%, #0008);
+    backdrop-filter: var(--filter-blur);
+    z-index: 10;
+
+    .PvBar_Title {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        min-width: 0;
+
+        svg {
+            width: 1.1rem;
+            height: 1.1rem;
+            color: var(--color-tag);
+            flex-shrink: 0;
+        }
+
+        h2 {
+            margin: 0;
+            font-family: var(--font-primary), Arial, sans-serif;
+            font-size: calc(0.82rem * var(--font-size-primary, 1));
+            font-weight: 600;
+            color: var(--text-primary);
+            text-shadow: var(--text-shadow-primary, none);
+            white-space: nowrap;
+        }
+
+        span {
+            font-family: var(--font-secundary), Arial, sans-serif;
+            font-size: calc(0.62rem * var(--font-size-secundary, 1));
+            color: var(--text-secondary);
+            opacity: 0.6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    .PvBar_Close {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 1.9rem;
+        height: 1.9rem;
+        border: none;
+        border-radius: 0.35rem;
+        background: transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: var(--transition);
+        flex-shrink: 0;
+
+        svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        &:hover {
+            background: #1111;
+            color: var(--text-primary);
+        }
+    }
+}
+
+.PvBar_Tools {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
+}
+
+.PvBar_Tool {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border: none;
+    border-radius: 0.35rem;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+    flex-shrink: 0;
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    &:hover {
+        background: #1111;
+        color: var(--text-primary);
+    }
+
+    &.on {
+        background: color-mix(in srgb, var(--color-tag) 14%, transparent);
+        color: var(--color-tag);
+    }
+}
+
+.PvBody {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    overflow: hidden;
+}
+
+// ---------- Transición de la barra lateral de fondos ----------
+
+.PvSide-enter-active,
+.PvSide-leave-active {
+    transition: var(--transition);
+}
+
+.PvSide-enter-from,
+.PvSide-leave-to {
+    opacity: 0;
+    transform: translateX(-0.9rem);
+}
+
+// ---------- Barra lateral de fondos ----------
+
+.PvSide {
+    width: 11.5rem;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.7rem;
+    border-radius: 0.7rem;
+    border: var(--border-style);
+    background: color-mix(in srgb, var(--background-modal-primary) 88%, #000);
+    backdrop-filter: var(--filter-blur);
+    overflow-y: auto;
+
+    .PvSide_Title {
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.62rem * var(--font-size-primary, 1));
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+        opacity: 0.65;
+        padding: 0.1rem 0.3rem 0.3rem;
+    }
+
+    .PvSide_TitleSplit {
+        margin-top: 0.55rem;
+        padding-top: 0.55rem;
+        border-top: var(--border-style);
+    }
+
+    .PvSide_Item {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.45rem 0.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid transparent;
+        background: transparent;
+        cursor: pointer;
+        text-align: left;
+        transition: var(--transition);
+
+        .PvSide_Dot {
+            width: 1.7rem;
+            height: 1.7rem;
+            flex-shrink: 0;
+            border-radius: 0.4rem;
+            border: var(--border-style);
+            background: linear-gradient(135deg, #1c1c20, #0c0c0e);
+            background-size: cover;
+            background-position: center;
+            box-shadow: inset 0 0 0.4rem #0006;
+        }
+
+        .PvSide_Txt {
+            display: flex;
+            flex-direction: column;
+            gap: 0.05rem;
+            min-width: 0;
+
+            b {
+                font-family: var(--font-secundary), Arial, sans-serif;
+                font-size: calc(0.68rem * var(--font-size-secundary, 1));
+                font-weight: 600;
+                color: var(--text-primary);
+                text-shadow: var(--text-shadow-primary, none);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            small {
+                font-family: var(--font-secundary), Arial, sans-serif;
+                font-size: calc(0.52rem * var(--font-size-secundary, 1));
+                color: var(--text-secondary);
+                opacity: 0.55;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+        }
+
+        .PvSide_Check {
+            margin-left: auto;
+            width: 0.95rem;
+            height: 0.95rem;
+            color: var(--color-success);
+            flex-shrink: 0;
+        }
+
+        &:hover {
+            background: #1111;
+        }
+
+        &.on {
+            border: var(--border-style);
+            background: color-mix(in srgb, var(--background-button-primary) 18%, transparent);
+
+            .PvSide_Dot {
+                box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-tag) 55%, transparent), inset 0 0 0.4rem #0006;
+            }
+
+            b {
+                color: var(--color-tag);
+            }
+        }
+    }
+
+    .PvSide_Hint {
+        margin-top: auto;
+        padding: 0.3rem;
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(0.55rem * var(--font-size-secundary, 1));
+        color: var(--text-secondary);
+        opacity: 0.5;
+        line-height: 1.45;
+    }
+}
+
+// ---------- Escenario (mockup + ejemplos) ----------
+
+.PvStage {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    overflow: hidden;
+}
+
+.PvMain {
+    position: relative;
+    width: auto;
+    height: min(68vh, 34rem);
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 0.8rem;
+    overflow: hidden;
+    border: 1px solid #ffffff14;
+    box-shadow: 0 1.6rem 3.4rem #000d;
+    background: #000;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    &.full {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        aspect-ratio: auto;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+    }
+
+    .BackgroundLayer {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+
+        img {
+            image-rendering: auto;
+            animation: PvBgFade 0.5s ease;
+        }
+    }
+
+    .MainContent {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+    }
+}
+
+@keyframes PvBgFade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+// ---------- Modal de paleta y tipografía (solo previsualización) ----------
+
+.PvPalette {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    width: max-content;
+    height: max-content;
+    margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .PvPalette_Card {
+        width: min(32rem, 94%);
+        max-height: 92%;
+        display: flex;
+        flex-direction: column;
+        border-radius: 0.7rem;
+        border: var(--border-modal-style);
+        background: color-mix(in srgb, var(--background-modal-primary) 78%, transparent);
+        backdrop-filter: blur(7px);
+        -webkit-backdrop-filter: blur(7px);
+        box-shadow: 0 1.5rem 3.2rem #000d;
+        overflow: hidden;
+    }
+
+    .PvPalette_Head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+        padding: 0.7rem 0.9rem;
+        border-bottom: var(--border-modal-style);
+        flex-shrink: 0;
+
+        .PvPalette_Title {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            min-width: 0;
+            font-family: var(--font-primary), Arial, sans-serif;
+            font-size: calc(0.74rem * var(--font-size-primary, 1));
+            font-weight: 600;
+            color: var(--text-primary);
+            text-shadow: var(--text-shadow-primary, none);
+            white-space: nowrap;
+
+            svg {
+                width: 1.05rem;
+                height: 1.05rem;
+                color: var(--color-tag);
+                flex-shrink: 0;
+            }
+        }
+
+        .PvPalette_Close {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 1.8rem;
+            height: 1.8rem;
+            border: none;
+            border-radius: 0.35rem;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            flex-shrink: 0;
+
+            svg {
+                width: 0.95rem;
+                height: 0.95rem;
+            }
+
+            &:hover {
+                background: #1111;
+                color: var(--text-primary);
+            }
+        }
+    }
+
+    .PvPalette_Body {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr;
+        gap: 0.9rem;
+        padding: 0.8rem 0.9rem 0.95rem;
+        overflow-y: auto;
+        min-height: 0;
+    }
+
+    .PvPalette_Col {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        min-width: 0;
+    }
+
+    .PvPalette_ColTitle {
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.6rem * var(--font-size-primary, 1));
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+        opacity: 0.65;
+        padding: 0.1rem 0.2rem 0.2rem;
+    }
+
+    .PvPalette_Swatch {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+
+        .PvPalette_Dot {
+            width: 1.1rem;
+            height: 1.1rem;
+            flex-shrink: 0;
+            border-radius: 0.32rem;
+            border: var(--border-style);
+            box-shadow: inset 0 0 0.35rem #0005;
+        }
+
+        .PvPalette_Name {
+            flex: 1;
+            min-width: 0;
+            font-family: var(--font-secundary), Arial, sans-serif;
+            font-size: calc(0.6rem * var(--font-size-secundary, 1));
+            color: var(--text-primary);
+            text-shadow: var(--text-shadow-primary, none);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        code {
+            font-family: var(--font-secundary), monospace;
+            font-size: calc(0.52rem * var(--font-size-secundary, 1));
+            color: var(--text-secondary);
+            opacity: 0.7;
+            white-space: nowrap;
+        }
+    }
+
+    .PvPalette_TextRow {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .PvPalette_Font {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        padding: 0.55rem 0.6rem;
+        border-radius: 0.55rem;
+        border: var(--border-style);
+        background: color-mix(in srgb, var(--background-modal-primary) 40%, #ffffff08);
+
+        .PvPalette_FontLabel {
+            font-family: var(--font-secundary), Arial, sans-serif;
+            font-size: calc(0.52rem * var(--font-size-secundary, 1));
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        .PvPalette_Sample {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+            &.primary {
+                font-family: var(--font-primary), Arial, sans-serif;
+                font-size: calc(0.86rem * var(--font-size-primary, 1));
+                color: var(--text-primary);
+                text-shadow: var(--text-shadow-primary, none);
+            }
+
+            &.secondary {
+                font-family: var(--font-secundary), Arial, sans-serif;
+                font-size: calc(0.72rem * var(--font-size-secundary, 1));
+                color: var(--text-secondary);
+                text-shadow: var(--text-shadow-secundary, none);
+            }
+        }
+
+        .PvPalette_FontMeta {
+            font-family: var(--font-secundary), Arial, sans-serif;
+            font-size: calc(0.52rem * var(--font-size-secundary, 1));
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        .PvPalette_ShadowSample {
+            font-family: var(--font-secundary), Arial, sans-serif;
+            font-size: calc(0.68rem * var(--font-size-secundary, 1));
+            font-weight: 600;
+            color: var(--text-primary);
+            text-shadow: var(--text-shadow-primary, none);
+        }
+    }
+}
+
+.PvExamples {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.55rem;
+    max-width: min(52rem, 100%);
+    padding: 0.8rem 1rem;
+    border-radius: 0.7rem;
+    border: var(--border-style);
+    background: color-mix(in srgb, var(--background-modal-primary) 88%, #000);
+    backdrop-filter: var(--filter-blur);
+    flex-shrink: 0;
+
+    .PvEx_Badge {
+        padding: 0.2rem 0.55rem;
+        border-radius: 99rem;
+        border: var(--border-style);
+        background: color-mix(in srgb, var(--background-button-primary) 14%, transparent);
+        color: var(--color-tag);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(0.52rem * var(--font-size-secundary, 1));
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+
+    .PvEx_Progress {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 11rem;
+
+        .PvEx_ProgressTrack {
+            flex: 1;
+            height: 0.4rem;
+            border-radius: 99rem;
+            background: #ffffff14;
+            overflow: hidden;
+
+            .PvEx_ProgressFill {
+                display: block;
+                width: 72%;
+                height: 100%;
+                border-radius: 99rem;
+                background: linear-gradient(90deg, color-mix(in srgb, var(--progress-color) 70%, #000), var(--progress-color));
+            }
+        }
+
+        .PvEx_Pct {
+            font-family: var(--font-secundary), Arial, sans-serif;
+            font-size: calc(0.58rem * var(--font-size-secundary, 1));
+            font-weight: 600;
+            color: var(--progress-color);
+        }
+    }
+
+    .PvEx_Msg {
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(0.62rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+
+        &.good {
+            color: var(--color-success);
+        }
+
+        &.warn {
+            color: var(--color-warning);
+        }
+
+        &.bad {
+            color: var(--color-error);
+        }
+    }
+
+    .PvEx_Btn {
+        padding: 0.4rem 0.9rem;
+        border-radius: 0.5rem;
+        border: var(--border-style);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(0.64rem * var(--font-size-secundary, 1));
+        font-weight: 600;
+        cursor: default;
+
+        &.ghost {
+            background: transparent;
+            border-color: #5559;
+            color: var(--text-secondary);
+        }
+
+        &.primary {
+            border: 1px solid color-mix(in srgb, var(--background-button-primary) 75%, white 25%);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--background-button-primary) 92%, white 8%), color-mix(in srgb, var(--background-button-primary) 62%, black 10%));
+            color: var(--text-primary);
+            text-shadow: var(--text-shadow-primary, none);
+        }
+
+        &.danger {
+            border: 1px solid color-mix(in srgb, var(--color-error) 20%, transparent);
+            background: color-mix(in srgb, var(--color-error) 8%, transparent);
+            color: var(--color-error);
+        }
+    }
+}

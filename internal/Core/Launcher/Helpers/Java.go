@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -19,8 +20,14 @@ func ResolveJava(component, runtimeDir string, useOfficialJava bool, javaExec st
 }
 
 func resolveOfficialJava(component, runtimeDir string) (string, error) {
+	// Las versiones antiguas (pre-1.17) no declaran javaVersion.component en su
+	// version.json; el launcher oficial usa entonces jre-legacy (Java 8), que
+	// es el único compatible con los modloaders de esas versiones.
 	if component == "" {
-		return "", fmt.Errorf("version has no javaVersion.component")
+		component = "jre-legacy"
+	}
+	if runtimeDir == "" {
+		return "", fmt.Errorf("no runtime dir configured")
 	}
 
 	osKey := utils.OsKey()
@@ -114,4 +121,34 @@ func DetectJavaMajorVersion(javaPath string) int {
 		return major
 	}
 	return 8
+}
+
+// ResolveMinecraftJava devuelve el Java oficial que el launcher ya descargó
+// para una versión base de Minecraft (runtime/<component>/<osKey>/bin/java),
+// leyendo el javaVersion.component del version.json instalado. Es el Java
+// exacto que Mojang eligió para esa versión, por lo que también es el adecuado
+// para ejecutar el instalador del modloader correspondiente. Devuelve error si
+// la versión no está instalada, no declara componente o el runtime no existe en
+// disco (p. ej. la versión nunca se ha lanzado).
+func ResolveMinecraftJava(runtimeDir, instancePath, mcVersion string) (string, error) {
+	verPath := filepath.Join(instancePath, "versions", mcVersion, mcVersion+".json")
+	data, err := os.ReadFile(verPath)
+	if err != nil {
+		return "", fmt.Errorf("no version json for %s: %w", mcVersion, err)
+	}
+	var ver struct {
+		JavaVersion struct {
+			Component string `json:"component"`
+		} `json:"javaVersion"`
+	}
+	if err := json.Unmarshal(data, &ver); err != nil {
+		return "", fmt.Errorf("parse version json for %s: %w", mcVersion, err)
+	}
+	if ver.JavaVersion.Component == "" {
+		return "", fmt.Errorf("version %s has no javaVersion.component", mcVersion)
+	}
+	if runtimeDir == "" {
+		return "", fmt.Errorf("runtime dir not configured")
+	}
+	return ResolveJava(ver.JavaVersion.Component, runtimeDir, true, "")
 }

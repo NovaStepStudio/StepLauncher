@@ -1,0 +1,11 @@
+@use '../../Common/Styles/Components' as *;;
+
+.Ss_AcctMsg {
+    margin: 0 1.5rem 0.75rem;
+    font-size: 0.72rem;
+    color: var(--background-button-primary);
+
+    &.error {
+        color: var(--color-error);
+    }
+}

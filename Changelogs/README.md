@@ -337,6 +337,9 @@ Cuando un agente investiga un bug complejo, el flujo obligatorio es:
 
 ## Reglas
 
+> [!NOTE]
+> Para obtener instrucciones y flujos de trabajo detallados diseñados para agentes de IA sobre cómo manipular este sistema, consulta [.opencode/instructions/CHANGELOG_SYSTEM.md](file:///c:/Users/Stepnicka012/Desktop/Workflow/Go-Projects/StepLauncher/.opencode/instructions/CHANGELOG_SYSTEM.md).
+
 - **SIEMPRE consulta esta carpeta antes de diagnosticar o modificar el proyecto**: lo que hiciste pudo haber pasado antes, y la solución ya está documentada.
 - **SIEMPRE crea la entrada correspondiente en la carpeta de la versión en curso** al terminar de corregir un error o implementar un cambio relevante. No se da una tarea por terminada sin su registro en `Changelogs/`.
 - **Una tarea, un solo MD**: si una petición o sesión de trabajo implica varios cambios o errores relacionados, se documentan juntos en una única entrada (con subsecciones); no se fragmenta la documentación en varias entradas (ver "Una tarea, un solo MD").

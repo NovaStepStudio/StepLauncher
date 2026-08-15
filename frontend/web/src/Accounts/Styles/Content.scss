@@ -1,0 +1,431 @@
+@use '../../Common/Styles/Components' as *;
+.Acct {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    height: 100%;
+}
+
+.Acct_Body {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 1rem;
+}
+
+.Acct_Info {
+    margin: 1.1rem 2rem 0;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    opacity: 0.55;
+
+    strong {
+        opacity: 0.85;
+    }
+}
+
+.Acct_List {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin: 1.1rem 2rem 1rem;
+}
+
+.Acct_Item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 0.65rem;
+    padding: 0.6rem 0.85rem;
+    cursor: pointer;
+    transition: var(--transition);
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.07);
+        border-color: rgba(255, 255, 255, 0.16);
+        transform: translateY(-1px);
+    }
+
+    &.active {
+        border-color: color-mix(in srgb, var(--background-button-primary) 35%, gray 50%);
+        background:color-mix(in srgb, var(--background-button-primary) 85%, gray 10%);
+    }
+
+    &.dim {
+        opacity: 0.55;
+
+        &:hover {
+            opacity: 0.8;
+        }
+    }
+}
+
+.Acct_Avatar {
+    width: 2.3rem;
+    height: 2.3rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        image-rendering: pixelated;
+    }
+
+    span {
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #fff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
+}
+
+.Acct_Main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.Acct_ItemTop {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.Acct_Username {
+    font-size: 0.84rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.Acct_Badge {
+    font-size: 0.6rem;
+    padding: 0.12rem 0.4rem;
+    border-radius: 0.3rem;
+    background: color-mix(in srgb, var(--background-button-primary) 15%, transparent);
+    color: color-mix(in srgb, var(--background-button-primary) 55%, white 45%);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.Acct_Session {
+    font-size: 0.6rem;
+    padding: 0.12rem 0.4rem;
+    border-radius: 0.3rem;
+    white-space: nowrap;
+
+    &.ok {
+        background: color-mix(in srgb, var(--color-success) 15%, transparent);
+        color: var(--color-success);
+    }
+
+    &.bad {
+        background: color-mix(in srgb, var(--color-error) 15%, transparent);
+        color: color-mix(in srgb, var(--color-error) 85%, white 15%);
+    }
+}
+
+.Acct_Sub {
+    font-size: 0.68rem;
+    opacity: 0.45;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.Acct_Tools {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.Acct_Tool {
+    background: none;
+    border: 1px solid var(--control-border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 1.9rem;
+    width: 1.9rem;
+    transition: var(--transition);
+
+    &:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--background-button-primary) 18%, transparent);
+        border-color: color-mix(in srgb, var(--background-button-primary) 40%, transparent);
+        color: color-mix(in srgb, var(--background-button-primary) 55%, white 45%);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: default;
+    }
+}
+
+.Acct_ToolDanger {
+    &:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--color-error) 16%, transparent);
+        border-color: color-mix(in srgb, var(--color-error) 40%, transparent);
+        color: color-mix(in srgb, var(--color-error) 50%, white 50%);
+    }
+}
+
+.Acct_Empty {
+    margin: 1rem 2rem;
+    text-align: center;
+    opacity: 0.55;
+    font-size: 0.78rem;
+    padding: 1.25rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+
+    svg {
+        opacity: 0.5;
+    }
+}
+
+.Acct_Selected {
+    margin: 0.25rem 2rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.68rem;
+    opacity: 0.55;
+
+    svg {
+        flex-shrink: 0;
+        opacity: 0.6;
+    }
+
+    strong {
+        opacity: 0.85;
+    }
+}
+
+.Acct_Sidebar {
+    width: 20rem;
+    flex-shrink: 0;
+    background: var(--background-sidebar);
+    border-left: var(--border-modal-style);
+    padding: 1.1rem 0.85rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    overflow-y: auto;
+
+    .SsBtn.Acct_SideBtn {
+        width: 100%;
+        justify-content: flex-start;
+        align-items: center;
+        text-align: left;
+        white-space: normal;
+        padding: 0.6rem 0.75rem;
+        background: var(--background-button-primary);
+        border: var(--border-style);
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+
+        svg {
+            width: 0.95rem;
+            height: 0.95rem;
+            flex-shrink: 0;
+            opacity: 0.8;
+        }
+
+        &:hover:not(:disabled) {
+            background: color-mix(in srgb, var(--background-button-primary) 55%, gray 25%);
+            border-color: color-mix(in srgb, var(--background-modal-primary, #111) 50%, gray 40%);
+        }
+
+        &:disabled {
+            opacity: 0.4;
+        }
+    }
+}
+
+.Acct_SideHead {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0 0.15rem 0.35rem;
+}
+
+.Acct_SideLabel {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    opacity: 0.4;
+}
+
+.Acct_SideDesc {
+    margin: 0;
+    font-size: 0.66rem;
+    line-height: 1.45;
+    opacity: 0.5;
+}
+
+.Acct_SideBtnTxt {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+    min-width: 0;
+}
+
+.Acct_SideBtnTitle {
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.Acct_SideBtnSub {
+    font-size: 0.6rem;
+    opacity: 0.55;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.Acct_SideDivider {
+    width: 100%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 0.15rem 0;
+}
+
+.Acct_Msg {
+    margin: 0.5rem 2rem 1.1rem;
+    font-size: 0.75rem;
+    color: color-mix(in srgb, var(--background-button-primary) 55%, white 45%);
+
+    &.error {
+        color: var(--color-error);
+    }
+}
+
+.AccountForm_Overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: var(--filter-blur);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 115;
+}
+
+.AccountForm_Dialog {
+    width: 24rem;
+    max-width: 92vw;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    border-radius: 0.85rem;
+    box-shadow: var(--shadow-settings-normal) #000a;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.AccountForm_Head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.1rem 1.35rem 0.85rem;
+    border-bottom: var(--border-modal-style);
+    background: #0005;
+
+    h3 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.95rem * var(--font-size-primary, 1));
+        font-weight: 600;
+    }
+}
+
+.AccountForm_Close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 2rem;
+    width: 2rem;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    svg {
+        width: 1.1rem;
+        height: 1.1rem;
+    }
+
+    &:hover {
+        background: #1111;
+        color: var(--text-primary);
+    }
+}
+
+.AccountForm_Body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1.1rem 1.35rem 0.25rem;
+}
+
+.AccountForm_Note {
+    margin: 0;
+    font-size: 0.66rem;
+    line-height: 1.45;
+    opacity: 0.42;
+}
+
+.AccountForm_Footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.85rem 1.35rem 1.1rem;
+}
+
+.AccountForm-enter-active,
+.AccountForm-leave-active {
+    transition: var(--transition);
+
+    .AccountForm_Dialog {
+        transition: var(--transition-slow);
+    }
+}
+
+.AccountForm-enter-from,
+.AccountForm-leave-to {
+    opacity: 0;
+
+    .AccountForm_Dialog {
+        transform: translateY(8px) scale(0.97);
+        opacity: 0;
+    }
+}

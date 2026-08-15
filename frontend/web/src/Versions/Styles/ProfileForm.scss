@@ -1,0 +1,248 @@
+@use '../../Common/Styles/Components' as *;
+
+.ProfileForm_Overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: var(--filter-blur);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 115;
+}
+
+.ProfileForm_Dialog {
+    width: 26rem;
+    max-width: 92vw;
+    max-height: 88vh;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    border-radius: 0.85rem;
+    box-shadow: var(--shadow-settings-normal) #000a;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ProfileForm_Head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.1rem 1.35rem 0.85rem;
+    border-bottom: var(--border-modal-style);
+    background: #0005;
+}
+
+.ProfileForm_Titles {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+
+    h3 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.95rem * var(--font-size-primary, 1));
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.ProfileForm_Badge {
+    font-size: 0.6rem;
+    padding: 0.12rem 0.4rem;
+    border-radius: 0.3rem;
+    background: color-mix(in srgb, var(--background-button-primary) 15%, transparent);
+    color: color-mix(in srgb, var(--background-button-primary) 55%, white 45%);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ProfileForm_Close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 2rem;
+    width: 2rem;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    svg {
+        width: 1.1rem;
+        height: 1.1rem;
+    }
+
+    &:hover {
+        background: #1111;
+        color: var(--text-primary);
+    }
+}
+
+.ProfileForm_Body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    padding: 1.1rem 1.35rem 0.25rem;
+    overflow-y: auto;
+}
+
+.ProfileForm_Desc {
+    margin: 0;
+    font-size: 0.7rem;
+    line-height: 1.45;
+    opacity: 0.5;
+}
+
+.ProfileForm_Row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+}
+
+.ProfileForm_Field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    > span {
+        font-size: 0.7rem;
+        opacity: 0.55;
+    }
+
+    .SsIn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+.ProfileForm_Cb {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+
+    input {
+        accent-color: var(--background-button-primary);
+        width: 0.95rem;
+        height: 0.95rem;
+        cursor: pointer;
+    }
+
+    > span {
+        opacity: 0.6;
+    }
+}
+
+.ProfileForm_Icon {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ProfileForm_FieldName {
+    font-size: 0.7rem;
+    opacity: 0.55;
+}
+
+.ProfileForm_IconPreview {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.ProfileForm_Avatar {
+    width: 3rem;
+    height: 3rem;
+    flex-shrink: 0;
+    border-radius: 0.6rem;
+    border: var(--border-style);
+    background: color-mix(in srgb, var(--background-button-primary) 60%, transparent);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        image-rendering: pixelated;
+    }
+}
+
+.ProfileForm_IconActions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+
+    .SsBtn {
+        padding: 0.4rem 0.7rem;
+    }
+}
+
+.ProfileForm_IconFile {
+    display: none;
+}
+
+.ProfileForm_Hint {
+    font-size: 0.66rem;
+    line-height: 1.45;
+    opacity: 0.42;
+}
+
+.ProfileForm_Note {
+    margin: 0;
+    font-size: 0.66rem;
+    line-height: 1.45;
+    opacity: 0.42;
+}
+
+.ProfileForm_Msg {
+    margin: 0;
+    font-size: 0.72rem;
+    color: color-mix(in srgb, var(--background-button-primary) 55%, white 45%);
+
+    &.error {
+        color: var(--color-error);
+    }
+}
+
+.ProfileForm_Footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.85rem 1.35rem 1.1rem;
+}
+
+.ProfileForm-enter-active,
+.ProfileForm-leave-active {
+    transition: var(--transition);
+
+    .ProfileForm_Dialog {
+        transition: var(--transition-slow);
+    }
+}
+
+.ProfileForm-enter-from,
+.ProfileForm-leave-to {
+    opacity: 0;
+
+    .ProfileForm_Dialog {
+        transform: translateY(8px) scale(0.97);
+        opacity: 0;
+    }
+}

@@ -1,0 +1,25 @@
+.SsIn {
+    background: var(--background-button-primary);
+    border: var(--border-style);
+    border-radius: 0.45rem;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    font-family: var(--font-secundary), Arial, sans-serif;
+    font-size: calc(0.75rem * var(--font-size-secundary, 1));
+    padding: 0.45rem 0.55rem;
+    flex: 1;
+    min-width: 0;
+
+    &:focus {
+        outline: none;
+    }
+
+    &::placeholder {
+        opacity: 0.25;
+    }
+}
+
+.SsInW {
+    width: 100%;
+    box-sizing: border-box;
+}

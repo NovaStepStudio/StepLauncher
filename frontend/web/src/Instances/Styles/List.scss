@@ -1,0 +1,857 @@
+@use '../../Common/Styles/Components' as *;
+
+.InstView {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+// ---------- Barra superior ----------
+
+.InstView_Bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem 0.85rem;
+    flex-shrink: 0;
+}
+
+.InstView_BarInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+
+    h2 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.95rem * var(--font-size-primary, 1));
+        font-weight: 800;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+    }
+
+    p {
+        margin: 0;
+        font-size: calc(0.68rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+        opacity: 0.5;
+    }
+}
+
+.InstView_BarActions {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-shrink: 0;
+}
+
+.InstView_Search {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    transition: var(--transition);
+
+    svg {
+        width: 0.9rem;
+        height: 0.9rem;
+        flex-shrink: 0;
+        opacity: 0.7;
+    }
+
+    input {
+        flex: 1;
+        min-width: 10.5rem;
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(0.76rem * var(--font-size-secundary, 1));
+        user-select: text;
+
+        &::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.55;
+        }
+    }
+
+    &:focus-within {
+        border-color: color-mix(in srgb, var(--progress-color) 45%, transparent);
+        background: color-mix(in srgb, var(--control-bg) 60%, var(--control-bg-soft) 40%);
+        box-shadow: var(--shadow-settings-normal) color-mix(in srgb, var(--progress-color) 12%, transparent);
+    }
+}
+
+.InstView_NewBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+    }
+}
+
+.InstView_NewBtn.SsBtnPrimary {
+    background: var(--background-button-primary);
+    border-color: color-mix(in srgb, var(--background-button-primary) 60%, var(--text-primary) 8%);
+    color: var(--text-primary);
+    font-weight: 700;
+    box-shadow: var(--shadow-settings-normal) color-mix(in srgb, var(--background-button-primary) 30%, transparent);
+
+    &:hover {
+        filter: brightness(1.12);
+        box-shadow: var(--shadow-settings-normal) color-mix(in srgb, var(--background-button-primary) 40%, transparent);
+    }
+}
+
+// ---------- Filtros ----------
+
+.InstView_Filters {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0 1rem;
+
+    .InstView_FilterChips {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+    }
+
+    .InstView_FilterChip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.34rem 0.75rem;
+        border-radius: 999px;
+        border: 1px solid color-mix(in srgb, var(--text-primary) 12%, transparent);
+        background: var(--control-bg-soft);
+        color: var(--text-secondary);
+        text-shadow: var(--text-shadow-secundary, none);
+        font-size: calc(0.72rem * var(--font-size-secundary, 1));
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+
+        svg {
+            width: 0.9rem;
+            height: 0.9rem;
+        }
+
+        em {
+            font-style: normal;
+            opacity: 0.55;
+            font-size: calc(0.68rem * var(--font-size-secundary, 1));
+        }
+
+        &:hover {
+            border-color: color-mix(in srgb, var(--background-button-primary) 45%, transparent);
+            color: var(--text-primary);
+        }
+
+        &.on {
+            background: color-mix(in srgb, var(--progress-color, var(--color-success)) 18%, transparent);
+            border-color: color-mix(in srgb, var(--progress-color, var(--color-success)) 55%, transparent);
+            color: var(--progress-color, var(--color-success));
+            box-shadow: var(--shadow-settings-normal) color-mix(in srgb, var(--progress-color, var(--color-success)) 18%, transparent);
+        }
+    }
+
+    .InstView_GroupSel.SsSel {
+        flex-shrink: 0;
+        font-size: calc(0.72rem * var(--font-size-secundary, 1));
+        padding: 0.34rem 2rem 0.34rem 0.75rem;
+    }
+}
+
+// ---------- Estados vacíos ----------
+
+.InstView_Empty {
+    margin: auto;
+    text-align: center;
+    font-size: calc(0.78rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.55;
+    line-height: 1.6;
+    max-width: 26rem;
+    padding: 0 1rem;
+}
+
+.InstView_EmptyCard {
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    max-width: 25rem;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.InstView_EmptyIcon {
+    width: 3.8rem;
+    height: 3.8rem;
+    border-radius: 1.1rem;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--color-tag) 18%, transparent), color-mix(in srgb, var(--progress-color) 8%, transparent));
+    border: 1px solid color-mix(in srgb, var(--color-tag) 32%, transparent);
+    color: color-mix(in srgb, var(--color-tag) 45%, var(--text-primary));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.3);
+    margin-bottom: 0.25rem;
+
+    svg {
+        width: 1.8rem;
+        height: 1.8rem;
+    }
+}
+
+.InstView_EmptyTitle {
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: calc(1rem * var(--font-size-primary, 1));
+    font-weight: 700;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    opacity: 0.92;
+}
+
+.InstView_EmptyText {
+    margin: 0;
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.55;
+    line-height: 1.6;
+}
+
+.InstView_EmptyBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.55rem;
+}
+
+.InstView_EmptyBtn.SsBtnPrimary {
+    background: var(--background-button-primary);
+    border-color: color-mix(in srgb, var(--background-button-primary) 60%, var(--text-primary) 8%);
+    color: var(--text-primary);
+    font-weight: 700;
+    box-shadow: var(--shadow-settings-normal) color-mix(in srgb, var(--background-button-primary) 30%, transparent);
+
+    &:hover {
+        filter: brightness(1.12);
+    }
+
+    svg {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+}
+
+// ---------- Grilla ----------
+
+.InstView_Grid {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    padding: 0.4rem 1.5rem 1.4rem;
+    align-content: start;
+    text-shadow: var(--text-shadow-secundary, none);
+}
+
+// ---------- Tarjeta ----------
+
+.InstCard {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0.95rem;
+    border: var(--border-style);
+    background: color-mix(in srgb, var(--control-bg-soft) 45%, var(--background-modal-primary));
+    overflow: hidden;
+    cursor: pointer;
+    transition: var(--transition-spring);
+
+    &:hover {
+        transform: translateY(-3px);
+        border-color: color-mix(in srgb, var(--progress-color) 45%, transparent);
+        box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.38), 0 0 0 1px color-mix(in srgb, var(--progress-color) 12%, transparent);
+    }
+
+    &.fav {
+        border-color: color-mix(in srgb, var(--color-tag) 55%, transparent);
+        &:hover {
+            border-color: color-mix(in srgb, var(--color-tag) 70%, transparent);
+            box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.38), 0 0 0 1px color-mix(in srgb, var(--color-tag) 14%, transparent);
+        }
+    }
+
+    &.pin {
+        border-color: color-mix(in srgb, var(--color-warning) 55%, transparent);
+        &:hover {
+            border-color: color-mix(in srgb, var(--color-warning) 70%, transparent);
+            box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.38), 0 0 0 1px color-mix(in srgb, var(--color-warning) 14%, transparent);
+        }
+    }
+}
+
+.InstCard_Banner {
+    position: relative;
+    height: 9.5rem;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--background-modal-primary) 45%, var(--control-bg-dark));
+
+    &.hasImg {
+        background: color-mix(in srgb, var(--background-modal-primary) 55%, var(--control-bg-dark));
+    }
+
+    > img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.9;
+transition: var(--transition-panel);
+        will-change: transform;
+    }
+
+    &:hover > img {
+        transform: scale(1.07);
+        opacity: 1;
+    }
+}
+
+.InstCard_BannerGrad {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--background-modal-primary) 55%, transparent);
+    pointer-events: none;
+}
+
+// Barra fina de descarga sobre el banner de la tarjeta: el banner actúa como
+// visualizador temporal mientras la instancia está descargando/verificando
+// (aunque el modal de instalación esté cerrado).
+.InstCard_BannerDl {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0.32rem;
+    background: color-mix(in srgb, var(--control-bg-dark) 70%, transparent);
+    overflow: hidden;
+    pointer-events: none;
+
+    .InstCard_BannerDlFill {
+        display: block;
+        height: 100%;
+        background: var(--progress-color, var(--color-success));
+        box-shadow: 0 0 0.4rem var(--progress-color, var(--color-success));
+        transition: width 0.25s ease;
+    }
+}
+
+// Etiqueta de instalación del modloader sobre el banner: muestra la fase en
+// curso (resolviendo/descargando/instalando) con una barra fina cuando el
+// backend reporta progreso concreto.
+.InstCard_Ldr {
+    position: absolute;
+    left: 0.55rem;
+    right: 0.55rem;
+    bottom: 0.45rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, var(--control-bg-dark) 78%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border-style) 45%, transparent);
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+
+    .InstCard_LdrPulse {
+        width: 0.45rem;
+        height: 0.45rem;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: var(--color-tag, var(--progress-color));
+        box-shadow: 0 0 0.4rem var(--color-tag, var(--progress-color));
+        animation: InstView_Pulse 1.2s ease-in-out infinite;
+    }
+
+    .InstCard_LdrText {
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-primary);
+        font-family: var(--font-primary), Arial, sans-serif;
+        text-shadow: var(--text-shadow-primary, none);
+        font-size: calc(0.68rem * var(--font-size-primary, 1));
+        font-weight: 600;
+    }
+
+    .InstCard_LdrBar {
+        width: 3.2rem;
+        height: 0.24rem;
+        flex-shrink: 0;
+        border-radius: 0.15rem;
+        background: color-mix(in srgb, var(--text-primary) 16%, transparent);
+        overflow: hidden;
+
+        span {
+            display: block;
+            height: 100%;
+            border-radius: 0.15rem;
+            background: var(--color-tag, var(--progress-color));
+            transition: width 0.25s ease;
+        }
+    }
+}
+
+@keyframes InstView_Pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
+
+.InstCard_BannerTop {
+    position: absolute;
+    top: 0.55rem;
+    left: 0.55rem;
+    right: 0.55rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    pointer-events: none;
+}
+
+.InstCard_BannerBtns {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    pointer-events: auto;
+}
+
+.InstCard_Group {
+    display: inline-flex;
+    align-items: center;
+    max-width: 62%;
+    font-size: calc(0.58rem * var(--font-size-secundary, 1));
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-secundary, none);
+    background: var(--control-bg-dark);
+    border: 1px solid color-mix(in srgb, var(--text-primary) 16%, transparent);
+    border-radius: 0.45rem;
+    padding: 0.24rem 0.55rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    backdrop-filter: var(--filter-blur);
+}
+
+.InstCard_Star,
+.InstCard_Pin {
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 0.5rem;
+    background: var(--control-bg-dark);
+    border: 1px solid color-mix(in srgb, var(--text-primary) 14%, transparent);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    backdrop-filter: var(--filter-blur);
+    transition: var(--transition);
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    &:hover {
+        transform: scale(1.06);
+    }
+}
+
+.InstCard_Star {
+    &:hover {
+        color: var(--color-warning);
+        background: color-mix(in srgb, var(--control-bg-dark) 60%, var(--control-bg-soft));
+    }
+
+    &.on {
+        color: var(--color-warning);
+        background: var(--control-bg-dark);
+    }
+}
+
+.InstCard_Pin {
+    &:hover {
+        color: var(--color-tag);
+        background: color-mix(in srgb, var(--control-bg-dark) 60%, var(--control-bg-soft));
+    }
+
+    &.on {
+        color: var(--color-tag);
+        background: var(--control-bg-dark);
+    }
+}
+
+.InstCard_Body {
+    padding: 0.85rem 0.95rem 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    flex: 1;
+}
+
+.InstCard_Line {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.InstCard_Icon {
+    width: 2.9rem;
+    height: 2.9rem;
+    border-radius: 0.75rem;
+    border: 2px solid color-mix(in srgb, var(--border-style) 55%, var(--text-primary) 20%);
+    background: color-mix(in srgb, var(--background-modal-primary) 60%, var(--control-bg-dark));
+    object-fit: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+
+    img {
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        object-fit: cover;
+    }
+
+    svg {
+        width: 1.3rem;
+        height: 1.3rem;
+        opacity: 0.5;
+    }
+}
+
+.InstCard_Titles {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.InstCard_Title {
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: calc(0.92rem * var(--font-size-primary, 1));
+    font-weight: 700;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.InstCard_Sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.55;
+    white-space: nowrap;
+    overflow: hidden;
+
+    svg {
+        width: 0.78rem;
+        height: 0.78rem;
+        flex-shrink: 0;
+    }
+}
+
+.InstCard_Meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.InstCard_Chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    font-weight: 500;
+    opacity: 0.7;
+    background: var(--control-bg);
+    border: 1px solid var(--border-style);
+    border-radius: 0.45rem;
+    padding: 0.22rem 0.5rem;
+
+    svg {
+        width: 0.78rem;
+        height: 0.78rem;
+        opacity: 0.8;
+    }
+
+    &:first-child {
+        color: color-mix(in srgb, var(--progress-color) 75%, var(--text-primary) 15%);
+        border-color: color-mix(in srgb, var(--progress-color) 28%, transparent);
+        background: color-mix(in srgb, var(--progress-color) 8%, transparent);
+    }
+}
+
+.InstCard_LoaderChip {
+    img {
+        width: 0.86rem;
+        height: 0.86rem;
+        border-radius: 0.2rem;
+        object-fit: cover;
+    }
+}
+
+.InstCard_Actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: auto;
+}
+
+.InstCard_Play {
+    flex: 1;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--background-play-button);
+    border: none;
+    border-radius: 0.55rem;
+    color: var(--text-primary);
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: calc(0.78rem * var(--font-size-primary, 1));
+    font-weight: 700;
+    padding: 0.5rem 0.7rem;
+    cursor: pointer;
+    text-shadow: var(--text-shadow-primary, none);
+    box-shadow: var(--shadow-settings-normal) color-mix(in srgb, var(--background-play-button) 24%, transparent);
+    transition: var(--transition);
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    &:hover:not(.disabled) {
+        filter: brightness(1.1);
+        box-shadow: var(--shadow-settings-normal) color-mix(in srgb, var(--background-play-button) 34%, transparent);
+    }
+
+    &:active:not(.disabled) {
+        transform: scale(0.98);
+    }
+
+    &.disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+}
+
+.InstCard_MenuWrap {
+    position: relative;
+    display: flex;
+    flex-shrink: 0;
+}
+
+.InstCard_DlBtn {
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 0.55rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 2.2rem;
+    height: 2.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    &:hover:not(:disabled) {
+        color: var(--text-primary);
+        border-color: var(--color-accent);
+        filter: brightness(1.1);
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+}
+
+.InstCard_MenuDots {
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 0.55rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 2.2rem;
+    height: 2.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: var(--transition);
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    &:hover {
+        color: var(--text-primary);
+        filter: brightness(1.1);
+        border-color: color-mix(in srgb, var(--progress-color) 38%, transparent);
+    }
+}
+
+.InstCard_Dl {
+    border: 1px solid color-mix(in srgb, var(--progress-color) 40%, transparent);
+    border-radius: 0.55rem;
+    padding: 0.5rem 0.65rem;
+    background: color-mix(in srgb, var(--progress-color) 7%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.InstCard_DlBar {
+    height: 0.38rem;
+    border-radius: 0.3rem;
+    background: color-mix(in srgb, var(--background-modal-primary) 40%, var(--control-bg-dark));
+    overflow: hidden;
+}
+
+.InstCard_DlFill {
+    display: block;
+    height: 100%;
+    border-radius: 0.3rem;
+    background: var(--progress-color);
+transition: var(--transition-width);
+}
+
+.InstCard_DlMeta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: calc(0.62rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.7;
+
+    button {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        padding: 0.15rem;
+        border-radius: 0.3rem;
+
+        &:hover {
+            color: var(--color-error);
+        }
+
+        svg {
+            width: 0.9rem;
+            height: 0.9rem;
+        }
+    }
+}
+
+.InstCard_MenuDrop {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    right: 0;
+    z-index: 30;
+    min-width: 11.5rem;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    backdrop-filter: var(--filter-blur);
+    border-radius: 0.6rem;
+    padding: 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.4);
+
+    button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-secundary, none);
+        font-size: calc(0.74rem * var(--font-size-secundary, 1));
+        padding: 0.45rem 0.6rem;
+        border-radius: 0.4rem;
+        cursor: pointer;
+        text-align: left;
+transition: var(--transition);
+
+        svg {
+            width: 0.95rem;
+            height: 0.95rem;
+            opacity: 0.7;
+        }
+
+        &:hover {
+            background: var(--control-bg);
+        }
+
+        &.danger {
+            color: var(--color-error);
+
+            &:hover {
+                background: color-mix(in srgb, var(--color-error) 12%, transparent);
+            }
+        }
+    }
+}

@@ -1,0 +1,52 @@
+.SsBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.45rem;
+    border: var(--border-style);
+    background: var(--control-bg);
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    font-size: calc(0.75rem * var(--font-size-secundary, 1));
+    font-family: var(--font-secundary), Arial, sans-serif;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+    }
+}
+
+.SsBtnPrimary {
+    background: color-mix(in srgb, var(--background-button-primary) 12%, transparent);
+    border-color: color-mix(in srgb, var(--background-button-primary) 25%, transparent);
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+
+    &:hover {
+        background: color-mix(in srgb, var(--background-button-primary) 20%, transparent);
+        border-color: color-mix(in srgb, var(--background-button-primary) 40%, transparent);
+    }
+}
+
+.SsBtnDanger {
+    background: color-mix(in srgb, var(--color-error) 8%, transparent);
+    border-color: color-mix(in srgb, var(--color-error) 20%, transparent);
+    color: var(--color-error);
+
+    &:hover {
+        background: color-mix(in srgb, var(--color-error) 15%, transparent);
+        border-color: color-mix(in srgb, var(--color-error) 35%, transparent);
+    }
+}

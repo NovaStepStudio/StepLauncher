@@ -23,9 +23,13 @@ func (m *InstanceManager) VerifyInstance(name string) ([]VerifyResult, error) {
 	}
 	instVerDir := filepath.Join(instPath, "versions")
 
+	cacheDir := m.cacheDir
+	if cacheDir == "" {
+		cacheDir = filepath.Join(m.sharedDir, "cache")
+	}
 	dlCfg := downloader.Config{
 		WorkDir:    m.sharedDir,
-		CacheDir:   filepath.Join(m.sharedDir, "cache"),
+		CacheDir:   cacheDir,
 		HTTPClient: downloader.DefaultHTTPClient(),
 	}
 

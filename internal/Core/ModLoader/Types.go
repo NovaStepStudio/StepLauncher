@@ -45,10 +45,6 @@ type InstallState struct {
 	Loader *InstalledLoader `json:"loader"`
 }
 
-func LoaderStatePath(instancePath string) string {
-	return instancePath + "/loader-state.json"
-}
-
 func (v LoaderVersion) String() string {
 	return v.LoaderVersion
 }

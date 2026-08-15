@@ -1,7 +1,7 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
   "name": "StepLauncher",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "outputfilename": "StepLauncher",
   "frontend:install": "bun install",
   "frontend:build": "bun run build",
@@ -9,7 +9,7 @@
   "frontend:dev:serverUrl": "auto",
   "info": {
     "productName": "StepLauncher",
-    "productVersion": "2.3.0",
+    "productVersion": "2.3.1",
     "companyName": "NovaStepStudio",
     "comments": "El mejor launcher No Prmeium para Minecraft: Java Edition"
   },

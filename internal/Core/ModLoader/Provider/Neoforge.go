@@ -1,20 +1,14 @@
 package provider
 
 import (
-	"context"
 	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"sort"
 	"strings"
 
 	"StepLauncher/internal/Core/Cache"
-	"StepLauncher/internal/Core/Downloader"
-	"StepLauncher/internal/Core/Downloader/Utils"
 	"StepLauncher/internal/Core/ModLoader"
-	"StepLauncher/internal/Core/ModLoader/Installer"
 )
 
 type NeoForgeProvider struct {
@@ -22,7 +16,7 @@ type NeoForgeProvider struct {
 	versionResolver NeoForgeVersionResolver
 }
 
-func NewNeoForgeProvider(cacheDir string, client *http.Client, cacheMgr *cache.Manager) *NeoForgeProvider {
+func NewNeoForgeProvider(cacheDir string, client *http.Client, cacheMgr *cache.Manager, javaResolver func(mcVersion, instancePath string) (string, error)) *NeoForgeProvider {
 	return &NeoForgeProvider{
 		AbstractForgeProvider: &AbstractForgeProvider{
 			NameVal:      "neoforge",
@@ -33,6 +27,7 @@ func NewNeoForgeProvider(cacheDir string, client *http.Client, cacheMgr *cache.M
 			CacheDir:     cacheDir,
 			CacheManager: cacheMgr,
 			httpClient:   client,
+			JavaResolver: javaResolver,
 		},
 	}
 }
@@ -66,10 +61,6 @@ func (p *NeoForgeProvider) GetVersions(mcVersion string) ([]modloader.LoaderVers
 
 	filtered := p.versionResolver.FilterVersionsForMinecraft(allVersions, mcVersion)
 
-	sort.Slice(filtered, func(i, j int) bool {
-		return filtered[i] > filtered[j]
-	})
-
 	result := make([]modloader.LoaderVersion, 0, len(filtered))
 	for _, v := range filtered {
 		mcv := p.versionResolver.NeoForgeVersionToMcVersion(v)
@@ -86,48 +77,7 @@ func (p *NeoForgeProvider) GetVersions(mcVersion string) ([]modloader.LoaderVers
 }
 
 func (p *NeoForgeProvider) RunInstaller(sessionId string, plan *modloader.DownloadPlan, mcVersion, loaderVersion, instancePath, librariesPath, minecraftJar string, broadcast func([]byte)) error {
-	versionID := p.VersionJsonID(mcVersion, loaderVersion)
-
-	if broadcast != nil {
-		broadcast(modloader.InstallingEvent(sessionId, p.NameVal, "Extracting installer..."))
-	}
-
-	profileLibs, err := installer.ExecuteInstaller(plan.InstallerDest, versionID, instancePath, librariesPath)
-	if err != nil {
-		return fmt.Errorf("execute installer: %w", err)
-	}
-
-	if len(profileLibs) > 0 && broadcast != nil {
-		broadcast(modloader.InstallingEvent(sessionId, p.NameVal, fmt.Sprintf("Downloading %d profile libraries...", len(profileLibs))))
-	}
-
-	ctx := context.Background()
-	for i, lib := range profileLibs {
-		if utils.FileExists(lib.Dest) {
-			if lib.SHA1 != "" {
-				if ok, _ := utils.VerifySHA1(lib.Dest, lib.SHA1); ok {
-					continue
-				}
-				os.Remove(lib.Dest)
-			} else {
-				continue
-			}
-		}
-		if broadcast != nil {
-			broadcast(modloader.InstallingEvent(sessionId, p.NameVal, fmt.Sprintf("Library %d/%d: %s", i+1, len(profileLibs), lib.Name)))
-		}
-		task := downloader.DownloadTask{
-			URL:  lib.URL,
-			Dest: lib.Dest,
-			SHA1: lib.SHA1,
-			Size: lib.Size,
-		}
-		if err := downloader.DownloadFile(ctx, task, p.httpClient, 3, nil, 60000, 3); err != nil {
-			return fmt.Errorf("download profile lib %s: %w", lib.Name, err)
-		}
-	}
-
-	return nil
+	return p.AbstractForgeProvider.RunInstaller(sessionId, plan, mcVersion, loaderVersion, instancePath, librariesPath, minecraftJar, broadcast)
 }
 
 var _ modloader.ModLoaderProvider = (*NeoForgeProvider)(nil)

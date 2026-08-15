@@ -27,6 +27,8 @@ export function CancelDownload(arg1:string):Promise<void>;
 
 export function CancelInstanceDownload(arg1:string):Promise<void>;
 
+export function CancelIntegrityCheck():Promise<void>;
+
 export function CheckForUpdates():Promise<void>;
 
 export function ClearAllCache():Promise<number>;
@@ -77,11 +79,17 @@ export function GetConfig():Promise<Config.Config>;
 
 export function GetCrashHistory():Promise<Array<history.CrashEntry>>;
 
+export function GetDirectorySettings():Promise<engine.DirectoryInfo>;
+
 export function GetDownload(arg1:string):Promise<engine.DownloadInfo>;
 
 export function GetDownloadStatus(arg1:string):Promise<downloader.DownloadProgress>;
 
+export function GetFirstLaunch():Promise<boolean>;
+
 export function GetGame(arg1:string):Promise<engine.GameResp>;
+
+export function GetGameLaunchInfo(arg1:string):Promise<string>;
 
 export function GetHistory():Promise<Array<history.Entry>>;
 
@@ -89,11 +97,17 @@ export function GetHistoryByVersion(arg1:string):Promise<Array<history.Entry>>;
 
 export function GetHistoryStats():Promise<main.HistoryStatsResult>;
 
+export function GetInstalledInstanceModLoader(arg1:string):Promise<modloader.InstalledLoader>;
+
 export function GetInstalledModLoader(arg1:string):Promise<modloader.InstalledLoader>;
 
 export function GetInstance(arg1:string):Promise<main.GetInstanceResult>;
 
 export function GetInstanceDownloadStatus(arg1:string):Promise<main.InstanceDownloadStatusResult>;
+
+export function GetInstanceStats(arg1:string):Promise<history.InstanceStats>;
+
+export function GetIntegritySector():Promise<string>;
 
 export function GetLauncherAssets():Promise<assets.Assets>;
 
@@ -115,6 +129,8 @@ export function GetSelectedProfile():Promise<string>;
 
 export function GetSelectedVersion():Promise<string>;
 
+export function GetSeparateGameDir():Promise<boolean>;
+
 export function GetUIScale():Promise<number>;
 
 export function GetVersions(arg1:string):Promise<Array<engine.VersionInfo>>;
@@ -123,7 +139,13 @@ export function ImportBackground(arg1:string,arg2:string):Promise<string>;
 
 export function ImportFont(arg1:string):Promise<string>;
 
+export function ImportInstanceAsset(arg1:string,arg2:string,arg3:string):Promise<string>;
+
+export function InstallInstanceModLoader(arg1:string,arg2:string,arg3:string,arg4:string):Promise<engine.ModLoaderInstallResult>;
+
 export function InstallModLoader(arg1:string,arg2:string,arg3:string,arg4:string):Promise<engine.ModLoaderInstallResult>;
+
+export function IntegrityStatus():Promise<engine.IntegrityProgress>;
 
 export function LaunchInstance(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string):Promise<instance.InstanceLaunchResult>;
 
@@ -138,6 +160,8 @@ export function ListDownloads():Promise<Array<engine.DownloadInfo>>;
 export function ListFontFiles():Promise<Array<string>>;
 
 export function ListGames():Promise<Array<engine.GameResp>>;
+
+export function ListInstanceScreenshots(arg1:string):Promise<Array<Handlers.ScreenshotInfo>>;
 
 export function ListInstanceVersions(arg1:string):Promise<Array<string>>;
 
@@ -163,11 +187,19 @@ export function NewsLoadRelease(arg1:string):Promise<void>;
 
 export function NewsRefreshIndex():Promise<void>;
 
+export function OpenInstanceFolder(arg1:string):Promise<void>;
+
+export function OpenPath(arg1:string):Promise<void>;
+
 export function PauseDownload(arg1:string):Promise<void>;
 
 export function PickBackgroundFile(arg1:string):Promise<string>;
 
+export function PickDirectory():Promise<string>;
+
 export function PickFontFile():Promise<string>;
+
+export function PickInstanceAssetFile():Promise<string>;
 
 export function ReadLocalFile(arg1:string):Promise<Array<number>>;
 
@@ -183,6 +215,8 @@ export function RefreshCache(arg1:string,arg2:string):Promise<void>;
 
 export function RefreshManifests():Promise<number>;
 
+export function RemoveInstanceModLoaderState(arg1:string):Promise<void>;
+
 export function RemoveInstanceVersion(arg1:string,arg2:string):Promise<void>;
 
 export function RemoveModLoaderState(arg1:string):Promise<void>;
@@ -192,6 +226,8 @@ export function ResetConfig():Promise<void>;
 export function ResolveAccountCredentials(arg1:string):Promise<accounts.AccountCredentials>;
 
 export function ResolveModLoaderVersion(arg1:string,arg2:string,arg3:string):Promise<string>;
+
+export function RestartApp():Promise<void>;
 
 export function ResumeDownload(arg1:string):Promise<void>;
 
@@ -205,9 +241,15 @@ export function SetCheckForUpdatesOnStart(arg1:boolean):Promise<void>;
 
 export function SetConcurrentDownloads(arg1:number):Promise<void>;
 
+export function SetDirectoryMode(arg1:string,arg2:string):Promise<void>;
+
+export function SetFirstLaunchDone():Promise<void>;
+
 export function SetHideLauncher(arg1:boolean):Promise<void>;
 
 export function SetIdle(arg1:Config.IdleConfig):Promise<void>;
+
+export function SetIntegritySector(arg1:string):Promise<void>;
 
 export function SetLaunchAfterInstall(arg1:boolean):Promise<void>;
 
@@ -225,6 +267,8 @@ export function SetSelectedProfile(arg1:string):Promise<void>;
 
 export function SetSelectedVersion(arg1:string):Promise<void>;
 
+export function SetSeparateGameDir(arg1:boolean):Promise<void>;
+
 export function SetUIScale(arg1:number):Promise<void>;
 
 export function SetVerifyIntegrity(arg1:boolean):Promise<void>;
@@ -232,6 +276,8 @@ export function SetVerifyIntegrity(arg1:boolean):Promise<void>;
 export function StartDownload(arg1:string,arg2:downloader.DownloadFilter,arg3:number,arg4:number,arg5:boolean,arg6:number,arg7:number):Promise<engine.DownloadInfo>;
 
 export function StartFullDownload(arg1:string):Promise<engine.DownloadInfo>;
+
+export function StartIntegrityCheck(arg1:string):Promise<void>;
 
 export function StopAllGames():Promise<void>;
 

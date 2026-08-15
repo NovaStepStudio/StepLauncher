@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"StepLauncher/internal/Config"
@@ -54,15 +55,82 @@ func (a *App) shutdown(ctx context.Context) {
 }
 
 func defaultConfigDir() string {
-	if appData := os.Getenv("APPDATA"); appData != "" {
-		return filepath.Join(appData, ".StepLauncher")
+	return engineconfig.LoadBootstrap().ResolveWorkDir()
+}
+
+type DirectorySettings = engine.DirectoryInfo
+
+func (a *App) GetDirectorySettings() DirectorySettings {
+	if a.engine == nil {
+		return DirectorySettings{}
 	}
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".StepLauncher")
+	return a.engine.DirectoryInfo()
+}
+
+func (a *App) SetDirectoryMode(mode string, customPath string) error {
+	if a.engine == nil {
+		return errors.New("engine no disponible")
+	}
+	return a.engine.SetDirectory(engineconfig.DirMode(mode), customPath)
+}
+
+func (a *App) PickDirectory() (string, error) {
+	if a.ctx == nil {
+		return "", errors.New("contexto no disponible")
+	}
+	dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Seleccionar carpeta de trabajo del launcher",
+	})
+	if err != nil {
+		return "", err
+	}
+	return dir, nil
+}
+
+func (a *App) RestartApp() error {
+	if a.ctx == nil {
+		return errors.New("contexto no disponible")
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command(exe)
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	runtime.Quit(a.ctx)
+	return nil
+}
+
+func (a *App) GetSeparateGameDir() bool {
+	if a.handler == nil {
+		return true
+	}
+	return a.handler.GetSeparateGameDir()
+}
+
+func (a *App) SetSeparateGameDir(v bool) {
+	if a.handler != nil {
+		a.handler.SetSeparateGameDir(v)
+	}
 }
 
 func (a *App) GetConfig() Config.Config {
 	return a.handler.GetConfig()
+}
+
+func (a *App) GetFirstLaunch() bool {
+	if a.handler == nil {
+		return false
+	}
+	return a.handler.GetFirstLaunch()
+}
+
+func (a *App) SetFirstLaunchDone() {
+	if a.handler != nil {
+		a.handler.SetFirstLaunchDone()
+	}
 }
 
 func (a *App) GetMinecraftConfig() Config.MinecraftConfig {
@@ -99,6 +167,39 @@ func (a *App) SetConcurrentDownloads(n int) {
 
 func (a *App) SetVerifyIntegrity(v bool) {
 	a.handler.SetVerifyIntegrity(v)
+}
+
+func (a *App) StartIntegrityCheck(scope string) error {
+	if a.handler == nil {
+		return errors.New("handler no disponible")
+	}
+	return a.handler.StartIntegrityCheck(scope)
+}
+
+func (a *App) CancelIntegrityCheck() {
+	if a.handler != nil {
+		a.handler.CancelIntegrityCheck()
+	}
+}
+
+func (a *App) IntegrityStatus() engine.IntegrityProgress {
+	if a.handler == nil {
+		return engine.IntegrityProgress{State: engine.IntegrityStateIdle}
+	}
+	return a.handler.IntegrityStatus()
+}
+
+func (a *App) SetIntegritySector(s string) {
+	if a.handler != nil {
+		a.handler.SetIntegritySector(s)
+	}
+}
+
+func (a *App) GetIntegritySector() string {
+	if a.handler == nil {
+		return "todo"
+	}
+	return a.handler.GetIntegritySector()
 }
 
 func (a *App) GetRichPresenceConfig() Config.RichPresenceConfig {
@@ -200,6 +301,27 @@ func (a *App) ListScreenshots() ([]ScreenshotInfo, error) {
 		return nil, errors.New("handler no disponible")
 	}
 	return a.handler.ListScreenshots()
+}
+
+func (a *App) ListInstanceScreenshots(instanceName string) ([]ScreenshotInfo, error) {
+	if a.handler == nil {
+		return nil, errors.New("handler no disponible")
+	}
+	return a.handler.ListInstanceScreenshots(instanceName)
+}
+
+func (a *App) PickInstanceAssetFile() (string, error) {
+	if a.handler == nil {
+		return "", errors.New("handler no disponible")
+	}
+	return a.handler.PickInstanceAssetFile()
+}
+
+func (a *App) ImportInstanceAsset(name, kind, src string) (string, error) {
+	if a.handler == nil {
+		return "", errors.New("handler no disponible")
+	}
+	return a.handler.ImportInstanceAsset(name, kind, src)
 }
 
 func (a *App) ImportBackground(src, kind string) (string, error) {
@@ -472,6 +594,13 @@ func (a *App) GetHistoryStats() HistoryStatsResult {
 	return HistoryStatsResult{Stats: stats, Total: total}
 }
 
+func (a *App) GetInstanceStats(name string) engine.InstanceStats {
+	if a.engine == nil {
+		return engine.InstanceStats{}
+	}
+	return a.engine.GetInstanceStats(name)
+}
+
 func (a *App) CreateInstance(req engine.CreateInstanceReq) (*CreateInstanceResult, error) {
 	if a.engine == nil {
 		return nil, errors.New("engine no disponible")
@@ -590,6 +719,13 @@ func (a *App) CancelInstanceDownload(dlID string) error {
 	return a.engine.CancelInstanceDownload(dlID)
 }
 
+func (a *App) OpenInstanceFolder(name string) error {
+	if a.engine == nil {
+		return errors.New("engine no disponible")
+	}
+	return a.engine.OpenInstanceFolder(name)
+}
+
 func (a *App) LaunchMinecraft(cfg engine.LaunchConfig) (*engine.GameResp, error) {
 	if a.engine == nil {
 		return nil, errors.New("engine no disponible")
@@ -609,6 +745,20 @@ func (a *App) GetGame(id string) *engine.GameResp {
 		return nil
 	}
 	return a.engine.GetGame(id)
+}
+
+func (a *App) GetGameLaunchInfo(id string) string {
+	if a.engine == nil {
+		return ""
+	}
+	return a.engine.GetGameLaunchInfo(id)
+}
+
+func (a *App) OpenPath(path string) error {
+	if a.engine == nil {
+		return errors.New("engine no disponible")
+	}
+	return a.engine.OpenPath(path)
 }
 
 func (a *App) StopGame(id string) error {
@@ -664,6 +814,27 @@ func (a *App) RemoveModLoaderState(instancePath string) error {
 		return errors.New("engine no disponible")
 	}
 	return a.engine.RemoveModLoaderState(instancePath)
+}
+
+func (a *App) InstallInstanceModLoader(name, loader, loaderVersion, mcVersion string) (*engine.ModLoaderInstallResult, error) {
+	if a.engine == nil {
+		return nil, errors.New("engine no disponible")
+	}
+	return a.engine.InstallInstanceModLoader(name, loader, loaderVersion, mcVersion)
+}
+
+func (a *App) GetInstalledInstanceModLoader(name string) (*engine.InstalledLoader, error) {
+	if a.engine == nil {
+		return nil, errors.New("engine no disponible")
+	}
+	return a.engine.GetInstalledInstanceModLoader(name)
+}
+
+func (a *App) RemoveInstanceModLoaderState(name string) error {
+	if a.engine == nil {
+		return errors.New("engine no disponible")
+	}
+	return a.engine.RemoveInstanceModLoaderState(name)
 }
 
 func (a *App) BuildModLoaderExecution(instancePath, versionsDir, librariesPath string) (*engine.ExecutionPlan, error) {

@@ -187,11 +187,73 @@ func (m *InstanceManager) addVersionToMetadata(name, version string) error {
 		}
 	}
 	meta.Versions = append(meta.Versions, version)
+	if err := m.writeMetadata(name, meta); err != nil {
+		return err
+	}
+	cfg, err := m.readConfig(name)
+	if err != nil {
+		return err
+	}
+	if cfg.Version != version {
+		cfg.Version = version
+		if err := m.writeConfig(name, cfg); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// syncVersionsFromDisk relee el directorio versions/ de la instancia y
+// registra en el metadata todas las versiones presentes que todavía no
+// constan. Se invoca al terminar una instalación COMPLETA (descarga de la
+// versión base + instalación del modloader), cuando la carpeta ya no está en
+// plena escritura: el instalador oficial de Forge/NeoForge crea su propio
+// directorio de versión (p. ej. "26.2-forge-65.1.0") que la descarga inicial
+// no conoce y que sin este escaneo nunca quedaría registrado en el JSON.
+// Se registra TODO lo que haya dentro de versions/: la carpeta es la fuente
+// de verdad y no se condiciona a que exista <version>.json (algunos
+// instaladores dejan el directorio sin su json durante un instante, o con
+// nombres que no coinciden exactamente con el contenido del manifest).
+func (m *InstanceManager) syncVersionsFromDisk(name string) error {
+	instPath, err := m.instancePath(name)
+	if err != nil {
+		return err
+	}
+	versionsDir := filepath.Join(instPath, "versions")
+	entries, err := os.ReadDir(versionsDir)
+	if err != nil {
+		return fmt.Errorf("read versions dir: %w", err)
+	}
+
+	meta, err := m.readMetadata(name)
+	if err != nil {
+		return err
+	}
+	seen := make(map[string]bool, len(meta.Versions))
+	for _, v := range meta.Versions {
+		seen[v] = true
+	}
+	changed := false
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		ver := e.Name()
+		if seen[ver] {
+			continue
+		}
+		seen[ver] = true
+		meta.Versions = append(meta.Versions, ver)
+		changed = true
+	}
+	if !changed {
+		return nil
+	}
 	return m.writeMetadata(name, meta)
 }
 
 func buildDownloadFilter(version string, req AddVersionReq) downloader.DownloadFilter {
-	filter := downloader.DownloadFilter{Version: version, Client: true}
+	filter := downloader.DownloadFilter{Version: version}
 	if req.Client != nil {
 		filter.Client = *req.Client
 	}

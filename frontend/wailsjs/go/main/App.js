@@ -26,6 +26,10 @@ export function CancelInstanceDownload(arg1) {
   return window['go']['main']['App']['CancelInstanceDownload'](arg1);
 }
 
+export function CancelIntegrityCheck() {
+  return window['go']['main']['App']['CancelIntegrityCheck']();
+}
+
 export function CheckForUpdates() {
   return window['go']['main']['App']['CheckForUpdates']();
 }
@@ -126,6 +130,10 @@ export function GetCrashHistory() {
   return window['go']['main']['App']['GetCrashHistory']();
 }
 
+export function GetDirectorySettings() {
+  return window['go']['main']['App']['GetDirectorySettings']();
+}
+
 export function GetDownload(arg1) {
   return window['go']['main']['App']['GetDownload'](arg1);
 }
@@ -134,8 +142,16 @@ export function GetDownloadStatus(arg1) {
   return window['go']['main']['App']['GetDownloadStatus'](arg1);
 }
 
+export function GetFirstLaunch() {
+  return window['go']['main']['App']['GetFirstLaunch']();
+}
+
 export function GetGame(arg1) {
   return window['go']['main']['App']['GetGame'](arg1);
+}
+
+export function GetGameLaunchInfo(arg1) {
+  return window['go']['main']['App']['GetGameLaunchInfo'](arg1);
 }
 
 export function GetHistory() {
@@ -150,6 +166,10 @@ export function GetHistoryStats() {
   return window['go']['main']['App']['GetHistoryStats']();
 }
 
+export function GetInstalledInstanceModLoader(arg1) {
+  return window['go']['main']['App']['GetInstalledInstanceModLoader'](arg1);
+}
+
 export function GetInstalledModLoader(arg1) {
   return window['go']['main']['App']['GetInstalledModLoader'](arg1);
 }
@@ -160,6 +180,14 @@ export function GetInstance(arg1) {
 
 export function GetInstanceDownloadStatus(arg1) {
   return window['go']['main']['App']['GetInstanceDownloadStatus'](arg1);
+}
+
+export function GetInstanceStats(arg1) {
+  return window['go']['main']['App']['GetInstanceStats'](arg1);
+}
+
+export function GetIntegritySector() {
+  return window['go']['main']['App']['GetIntegritySector']();
 }
 
 export function GetLauncherAssets() {
@@ -202,6 +230,10 @@ export function GetSelectedVersion() {
   return window['go']['main']['App']['GetSelectedVersion']();
 }
 
+export function GetSeparateGameDir() {
+  return window['go']['main']['App']['GetSeparateGameDir']();
+}
+
 export function GetUIScale() {
   return window['go']['main']['App']['GetUIScale']();
 }
@@ -218,8 +250,20 @@ export function ImportFont(arg1) {
   return window['go']['main']['App']['ImportFont'](arg1);
 }
 
+export function ImportInstanceAsset(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ImportInstanceAsset'](arg1, arg2, arg3);
+}
+
+export function InstallInstanceModLoader(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['InstallInstanceModLoader'](arg1, arg2, arg3, arg4);
+}
+
 export function InstallModLoader(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['InstallModLoader'](arg1, arg2, arg3, arg4);
+}
+
+export function IntegrityStatus() {
+  return window['go']['main']['App']['IntegrityStatus']();
 }
 
 export function LaunchInstance(arg1, arg2, arg3, arg4, arg5, arg6) {
@@ -248,6 +292,10 @@ export function ListFontFiles() {
 
 export function ListGames() {
   return window['go']['main']['App']['ListGames']();
+}
+
+export function ListInstanceScreenshots(arg1) {
+  return window['go']['main']['App']['ListInstanceScreenshots'](arg1);
 }
 
 export function ListInstanceVersions(arg1) {
@@ -298,6 +346,14 @@ export function NewsRefreshIndex() {
   return window['go']['main']['App']['NewsRefreshIndex']();
 }
 
+export function OpenInstanceFolder(arg1) {
+  return window['go']['main']['App']['OpenInstanceFolder'](arg1);
+}
+
+export function OpenPath(arg1) {
+  return window['go']['main']['App']['OpenPath'](arg1);
+}
+
 export function PauseDownload(arg1) {
   return window['go']['main']['App']['PauseDownload'](arg1);
 }
@@ -306,8 +362,16 @@ export function PickBackgroundFile(arg1) {
   return window['go']['main']['App']['PickBackgroundFile'](arg1);
 }
 
+export function PickDirectory() {
+  return window['go']['main']['App']['PickDirectory']();
+}
+
 export function PickFontFile() {
   return window['go']['main']['App']['PickFontFile']();
+}
+
+export function PickInstanceAssetFile() {
+  return window['go']['main']['App']['PickInstanceAssetFile']();
 }
 
 export function ReadLocalFile(arg1) {
@@ -338,6 +402,10 @@ export function RefreshManifests() {
   return window['go']['main']['App']['RefreshManifests']();
 }
 
+export function RemoveInstanceModLoaderState(arg1) {
+  return window['go']['main']['App']['RemoveInstanceModLoaderState'](arg1);
+}
+
 export function RemoveInstanceVersion(arg1, arg2) {
   return window['go']['main']['App']['RemoveInstanceVersion'](arg1, arg2);
 }
@@ -356,6 +424,10 @@ export function ResolveAccountCredentials(arg1) {
 
 export function ResolveModLoaderVersion(arg1, arg2, arg3) {
   return window['go']['main']['App']['ResolveModLoaderVersion'](arg1, arg2, arg3);
+}
+
+export function RestartApp() {
+  return window['go']['main']['App']['RestartApp']();
 }
 
 export function ResumeDownload(arg1) {
@@ -382,12 +454,24 @@ export function SetConcurrentDownloads(arg1) {
   return window['go']['main']['App']['SetConcurrentDownloads'](arg1);
 }
 
+export function SetDirectoryMode(arg1, arg2) {
+  return window['go']['main']['App']['SetDirectoryMode'](arg1, arg2);
+}
+
+export function SetFirstLaunchDone() {
+  return window['go']['main']['App']['SetFirstLaunchDone']();
+}
+
 export function SetHideLauncher(arg1) {
   return window['go']['main']['App']['SetHideLauncher'](arg1);
 }
 
 export function SetIdle(arg1) {
   return window['go']['main']['App']['SetIdle'](arg1);
+}
+
+export function SetIntegritySector(arg1) {
+  return window['go']['main']['App']['SetIntegritySector'](arg1);
 }
 
 export function SetLaunchAfterInstall(arg1) {
@@ -422,6 +506,10 @@ export function SetSelectedVersion(arg1) {
   return window['go']['main']['App']['SetSelectedVersion'](arg1);
 }
 
+export function SetSeparateGameDir(arg1) {
+  return window['go']['main']['App']['SetSeparateGameDir'](arg1);
+}
+
 export function SetUIScale(arg1) {
   return window['go']['main']['App']['SetUIScale'](arg1);
 }
@@ -436,6 +524,10 @@ export function StartDownload(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 
 export function StartFullDownload(arg1) {
   return window['go']['main']['App']['StartFullDownload'](arg1);
+}
+
+export function StartIntegrityCheck(arg1) {
+  return window['go']['main']['App']['StartIntegrityCheck'](arg1);
 }
 
 export function StopAllGames() {

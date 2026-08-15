@@ -211,3 +211,22 @@ func resolveClassifier(lib downloader.Library, osName string) string {
 	}
 	return strings.ReplaceAll(raw, "${arch}", archNum)
 }
+
+// ResolveNativeJarDownload devuelve destino/URL/sha1/tamaño del jar nativo de
+// la librería para el SO actual, sin comprobar que exista. Se usa para
+// descargar natives que falten al lanzar (p. ej. el override de LWJGL).
+func ResolveNativeJarDownload(lib downloader.Library, librariesDir, osName string) (dest, url string, sha1 string, size int64) {
+	classifier := resolveClassifier(lib, osName)
+	if classifier == "" || lib.Downloads == nil || lib.Downloads.Classifiers == nil {
+		return "", "", "", 0
+	}
+	art, ok := lib.Downloads.Classifiers[classifier]
+	if !ok || art.Path == "" {
+		return "", "", "", 0
+	}
+	u := art.URL
+	if u == "" {
+		u = downloader.LibraryRepositoryBase(lib) + "/" + art.Path
+	}
+	return filepath.Join(librariesDir, art.Path), u, art.SHA1, art.Size
+}

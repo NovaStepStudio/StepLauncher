@@ -4,7 +4,9 @@ import (
 	"strings"
 
 	"StepLauncher/internal/Core/Launcher"
+	gamelog "StepLauncher/internal/Core/Launcher/Log"
 	"StepLauncher/internal/Core/Launcher/Profile"
+	launcherUtils "StepLauncher/internal/Core/Launcher/Utils"
 )
 
 type LaunchConfig = launcher.LaunchConfig
@@ -62,8 +64,24 @@ func (e *Engine) LaunchMinecraft(cfg LaunchConfig) (*GameResp, error) {
 	if err != nil {
 		return nil, err
 	}
+	inst.LauncherLogPath = e.log.GetLogPath()
 	resp := gameToResp(inst)
 	return &resp, nil
+}
+
+// GetGameLaunchInfo devuelve el resumen de lanzamiento formateado (sin
+// separadores ASCII y con datos sensibles redactados) del juego indicado.
+func (e *Engine) GetGameLaunchInfo(id string) string {
+	g := e.launcher.Get(id)
+	if g == nil || g.PreInfo == nil {
+		return ""
+	}
+	return gamelog.FormatPreLaunchInfo(*g.PreInfo)
+}
+
+// OpenPath abre una ruta (archivo o carpeta) en el explorador del sistema.
+func (e *Engine) OpenPath(path string) error {
+	return launcherUtils.OpenInExplorer(path)
 }
 
 func (e *Engine) buildBaseLaunchConfig(cfg launcher.LaunchConfig) launcher.LaunchConfig {
@@ -75,11 +93,8 @@ func (e *Engine) buildBaseLaunchConfig(cfg launcher.LaunchConfig) launcher.Launc
 		maxRAM = 2048
 	}
 	adv.MaxRAM = maxRAM
-	minRAM := maxRAM / 2
-	if minRAM < 512 {
-		minRAM = 512
-	}
-	adv.MinRAM = minRAM
+	// La RAM mínima es SIEMPRE 512 MB (nunca la mitad del máximo).
+	adv.MinRAM = 512
 
 	switch ec.JavaMode {
 	case "official":

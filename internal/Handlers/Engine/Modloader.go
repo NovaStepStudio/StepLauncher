@@ -37,6 +37,15 @@ func (e *Engine) InstallModLoader(loader, loaderVersion, mcVersion, instancePath
 		_, err := e.modloader.Install(sessionID, loader, loaderVersion, mcVersion, targetDir)
 		if err != nil {
 			e.log.Error("Modloader install failed: %v", err)
+			return
+		}
+		// Flujo clásico (WorkDir): el estado del loader no se lee en ningún
+		// lado — la versión queda visible en versions/ y el lanzamiento la usa
+		// directamente — así que al terminar la instalación se elimina el
+		// loader-state.json para no dejar archivos sueltos en .StepLauncher.
+		e.log.Info("[Modloader] Instalacion finalizada: limpiando loader-state.json de %s %s", loader, loaderVersion)
+		if err := e.modloader.RemoveState(targetDir); err != nil {
+			e.log.Error("Modloader state cleanup failed: %v", err)
 		}
 	}()
 

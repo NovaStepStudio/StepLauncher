@@ -163,6 +163,16 @@ type MinecraftConfig struct {
 	CompatMode          bool   `json:"compatMode"`
 	DetailedLogs        bool   `json:"detailedLogs"`
 	ConcurrentDownloads int    `json:"concurrentDownloads"`
+	// SeparateGameDir: true = <workDir>/game, false = workDir como gameDir
+	// (nil equivale a true). En modo Minecraft se fuerza a false.
+	SeparateGameDir *bool `json:"separateGameDir,omitempty"`
+}
+
+func (mc MinecraftConfig) SeparateGameDirValue() bool {
+	if mc.SeparateGameDir == nil {
+		return true
+	}
+	return *mc.SeparateGameDir
 }
 
 func minecraftFromConfig(cfg engineconfig.Config) MinecraftConfig {
@@ -184,10 +194,11 @@ func minecraftFromConfig(cfg engineconfig.Config) MinecraftConfig {
 		Fullscreen:           cfg.Fullscreen,
 		JavaArgs:             cfg.JavaArgs,
 		GameArgs:             cfg.GameArgs,
-		OfflineMode:          cfg.OfflineMode,
-		CompatMode:           cfg.CompatMode,
-		DetailedLogs:         cfg.DetailedLogs,
-		ConcurrentDownloads:  cfg.ConcurrentDownloads,
+OfflineMode:         cfg.OfflineMode,
+		CompatMode:          cfg.CompatMode,
+		DetailedLogs:        cfg.DetailedLogs,
+		ConcurrentDownloads: cfg.ConcurrentDownloads,
+		SeparateGameDir:     cfg.SeparateGameDir,
 	}
 }
 
@@ -215,6 +226,7 @@ func configFromMinecraft(mc MinecraftConfig, base engineconfig.Config) enginecon
 	if mc.ConcurrentDownloads > 0 {
 		base.ConcurrentDownloads = mc.ConcurrentDownloads
 	}
+	base.SeparateGameDir = mc.SeparateGameDir
 	return base
 }
 
@@ -223,6 +235,21 @@ func (e *Engine) GetMinecraftConfig() MinecraftConfig {
 }
 
 func (e *Engine) UpdateMinecraftConfig(mc MinecraftConfig) {
+	// En modo Minecraft el gameDir SIEMPRE es el propio .minecraft.
+	if e.config.Bootstrap().Mode == engineconfig.ModeMinecraft {
+		falseVal := false
+		mc.SeparateGameDir = &falseVal
+	}
 	cfg := configFromMinecraft(mc, e.config.Get())
 	e.config.UpdateConfig(cfg)
+	e.applySeparateGameDir(mc.SeparateGameDirValue())
+}
+
+func (e *Engine) applySeparateGameDir(separate bool) {
+	if e.launcher != nil {
+		e.launcher.SetSeparateGameDir(separate)
+	}
+	if e.instances != nil {
+		e.instances.SetSeparateGameDir(separate)
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,7 +16,7 @@ import (
 const (
 	bufferSize       = 256 * 1024
 	progressInterval = 300 * time.Millisecond
-	retryBaseDelay   = 500 * time.Millisecond
+	retryBaseDelay   = 1000 * time.Millisecond
 
 	maxIdleConns    = 100
 	idleConnTimeout = 90 * time.Second
@@ -35,7 +36,7 @@ var (
 func DefaultHTTPClient() *http.Client {
 	return &http.Client{
 		Transport: DefaultTransport,
-		Timeout:   30 * time.Second,
+		Timeout:   90 * time.Second,
 	}
 }
 
@@ -75,10 +76,11 @@ func DownloadFile(ctx context.Context, task DownloadTask, client *http.Client, m
 
 		if i < maxRetries {
 			delay := retryBaseDelay * (1 << i)
+			jitter := time.Duration(rand.Int63n(int64(delay / 2)))
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
-			case <-time.After(delay):
+			case <-time.After(delay + jitter):
 			}
 		} else {
 			return fmt.Errorf("download failed after %d retries: %w", maxRetries, err)

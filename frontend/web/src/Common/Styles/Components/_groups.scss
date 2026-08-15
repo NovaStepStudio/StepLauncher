@@ -1,0 +1,129 @@
+.Ss {
+    display: flex;
+    flex-direction: column;
+}
+
+.SsGroupHead {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0.7rem 2rem;
+    background: #0005;
+    border-top: var(--border-style);
+    border-bottom: var(--border-style);
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: calc(0.72rem * var(--font-size-primary, 1));
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+
+    svg {
+        opacity: 0.45;
+        flex-shrink: 0;
+    }
+}
+
+.SsRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    padding: 1.05rem 2rem;
+}
+
+.SsColorRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    padding: 1.05rem 2rem;
+
+    .SsInfo {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+.SsInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.SsLabel {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    font-family: var(--font-primary);
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+}
+
+.SsDesc {
+    display: block;
+    font-size: 0.7rem;
+    opacity: 0.45;
+    margin-top: 0.25rem;
+    line-height: 1.4;
+    font-family: var(--font-secundary);
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
+}
+
+.SsCtrl {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+.SsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    min-width: 15rem;
+    max-width: 19rem;
+    flex-shrink: 0;
+    margin-right: 5rem;
+}
+
+.SsField {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    .SsLabel {
+        font-size: calc(0.72rem * var(--font-size-primary, 1));
+        opacity: 0.6;
+    }
+}
+
+.SsValue {
+    font-size: calc(0.8rem * var(--font-size-secundary, 1));
+    font-family: var(--font-secundary), Courier New, monospace;
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.65;
+    text-align: right;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.SsBgThumb {
+    width: 3rem;
+    height: 2rem;
+    border-radius: 0.35rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+    flex-shrink: 0;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}

@@ -1,0 +1,32 @@
+.SsSel {
+    background: var(--background-button-primary);
+    border: var(--border-style);
+    border-radius: 0.45rem;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    font-family: var(--font-secundary), Arial, sans-serif;
+    font-size: calc(0.75rem * var(--font-size-secundary, 1));
+    padding: 0.45rem 0.5rem;
+    min-width: 10rem;
+    max-width: 16rem;
+    cursor: pointer;
+    transition: var(--transition);
+
+    &:hover {
+        background-color: color-mix(in srgb, var(--background-button-primary) 40%, gray 20%);
+    }
+
+    &:focus {
+        outline: none;
+    }
+
+    option {
+        background: var(--control-option-bg);
+        color: var(--text-primary);
+    }
+}
+
+.SsSelJava {
+    min-width: 8rem;
+    max-width: 13rem;
+}

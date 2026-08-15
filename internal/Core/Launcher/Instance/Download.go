@@ -67,6 +67,7 @@ func (m *InstanceManager) AddVersion(name string, req AddVersionReq) (*downloade
 				m.log("ERROR: add version to metadata: %v", err)
 			} else {
 				m.log("Instance %s: version %s ready", name, req.Version)
+				m.fireVersionReady(name, req.Version)
 			}
 		} else {
 			errStr := "unknown"

@@ -7,9 +7,10 @@ import (
 )
 
 type Config struct {
-	WorkDir  string
-	CacheDir string
+	WorkDir            string
+	CacheDir           string
 	JavaRuntimeDir     string
+	IDPrefix           string
 	MaxRetries         int
 	MaxConcurrency     int
 	MaxRAM             int

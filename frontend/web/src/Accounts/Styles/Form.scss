@@ -1,0 +1,162 @@
+@use '../../Common/Styles/Components' as *;
+
+.AccountForm_Overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: var(--filter-blur);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 115;
+}
+
+.AccountForm_Dialog {
+    width: 24rem;
+    max-width: 92vw;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    border-radius: 0.85rem;
+    box-shadow: var(--shadow-settings-normal) #000a;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    text-shadow: var(--text-shadow-secundary, none);
+}
+
+.AccountForm_Head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.1rem 1.35rem 0.85rem;
+    border-bottom: var(--border-modal-style);
+    background: #0005;
+}
+
+.AccountForm_Titles {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+
+    h3 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.95rem * var(--font-size-primary, 1));
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.AccountForm_Badge {
+    font-size: 0.6rem;
+    padding: 0.12rem 0.4rem;
+    border-radius: 0.3rem;
+    background: color-mix(in srgb, var(--background-button-primary) 15%, transparent);
+    color: color-mix(in srgb, var(--background-button-primary) 55%, white 45%);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.AccountForm_Close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 2rem;
+    width: 2rem;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    svg {
+        width: 1.1rem;
+        height: 1.1rem;
+    }
+
+    &:hover {
+        background: #1111;
+        color: var(--text-primary);
+    }
+}
+
+.AccountForm_Body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1.1rem 1.35rem 0.25rem;
+}
+
+.AccountForm_Desc {
+    margin: 0;
+    font-size: 0.7rem;
+    line-height: 1.45;
+    opacity: 0.5;
+}
+
+.AccountForm_Field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    > span {
+        font-size: 0.7rem;
+        opacity: 0.55;
+    }
+
+    .SsIn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+.AccountForm_Note {
+    margin: 0;
+    font-size: 0.66rem;
+    line-height: 1.45;
+    opacity: 0.42;
+}
+
+.AccountForm_Msg {
+    margin: 0;
+    font-size: 0.72rem;
+    color: color-mix(in srgb, var(--background-button-primary) 55%, white 45%);
+
+    &.error {
+        color: var(--color-error);
+    }
+}
+
+.AccountForm_Footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.85rem 1.35rem 1.1rem;
+}
+
+.AccountForm-enter-active,
+.AccountForm-leave-active {
+transition: var(--transition);
+
+    .AccountForm_Dialog {
+transition: var(--transition-slow);
+    }
+}
+
+.AccountForm-enter-from,
+.AccountForm-leave-to {
+    opacity: 0;
+
+    .AccountForm_Dialog {
+        transform: translateY(8px) scale(0.97);
+        opacity: 0;
+    }
+}

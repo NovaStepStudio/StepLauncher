@@ -1,0 +1,50 @@
+.SsTg {
+    position: relative;
+    display: inline-block;
+    width: 2rem;
+    height: 1.1rem;
+    flex-shrink: 0;
+
+    input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        position: absolute;
+
+        &:checked + .SsTgS {
+            background: color-mix(in srgb, var(--background-button-primary) 50%, gray 15%);
+            border-color: color-mix(in srgb, var(--background-button-primary) 60%, white 20%);
+
+            &::before {
+                transform: translateX(0.96rem);
+            }
+        }
+
+        &:disabled + .SsTgS {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+    }
+}
+
+.SsTgS {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: var(--control-bg-soft);
+    border: 1px solid var(--control-border-strong);
+    border-radius: 2rem;
+    transition: var(--transition-fast);
+
+    &::before {
+        content: '';
+        position: absolute;
+        width: 0.76rem;
+        height: 0.76rem;
+        left: 0.14rem;
+        bottom: 0.1rem;
+        background: var(--control-toggle-thumb);
+        border-radius: 50%;
+        transition: var(--transition-fast);
+    }
+}

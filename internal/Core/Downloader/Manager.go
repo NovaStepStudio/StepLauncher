@@ -55,6 +55,7 @@ type Download struct {
 	done         int
 	existing     int
 	failed       int
+	pendingTotal int
 	mbDownloaded float64
 	mbTotal      float64
 	logLines     []string
@@ -82,10 +83,13 @@ type Download struct {
 
 func NewManager(cfg Config) *Manager {
 	if cfg.MaxRetries <= 0 {
-		cfg.MaxRetries = 3
+		cfg.MaxRetries = 5
 	}
 	if cfg.MaxConcurrency <= 0 {
-		cfg.MaxConcurrency = 24
+		cfg.MaxConcurrency = 8
+	}
+	if cfg.IDPrefix == "" {
+		cfg.IDPrefix = "dl-"
 	}
 	if cfg.CacheDir == "" {
 		cfg.CacheDir = filepath.Join(cfg.WorkDir, "cache")
@@ -119,7 +123,7 @@ func NewManager(cfg Config) *Manager {
 func (m *Manager) Start(version string, filter DownloadFilter, maxRetries int, maxConcurrency int, skipVerify bool, stallTimeout int, maxStallRetries int) *Download {
 	m.mu.Lock()
 	m.nextID++
-	id := fmt.Sprintf("dl-%d", m.nextID)
+	id := fmt.Sprintf("%s%d", m.cfg.IDPrefix, m.nextID)
 	m.mu.Unlock()
 
 	if maxRetries <= 0 {
@@ -428,7 +432,9 @@ func (m *Manager) runDownload(dl *Download) {
 	}
 	verPath := filepath.Join(verDir, dl.Version+".json")
 	os.MkdirAll(filepath.Dir(verPath), 0755)
-	if data, err := json.Marshal(&ver); err == nil {
+	if _, statErr := os.Stat(verPath); statErr == nil {
+		log("Version JSON already exists, skipping: %s", verPath)
+	} else if data, err := json.Marshal(&ver); err == nil {
 		os.WriteFile(verPath, data, 0644)
 	} else {
 		log("WARN: saving version json: %v", err)
@@ -440,20 +446,8 @@ func (m *Manager) runDownload(dl *Download) {
 		return
 	}
 
-	var totalBytes int64
-	for _, t := range allTasks {
-		if t.Size > 0 {
-			totalBytes += t.Size
-		}
-	}
-
 	dl.mu.Lock()
 	dl.tasks = allTasks
-	dl.mbTotal = float64(totalBytes) / 1024 / 1024
-	dl.Progress.MBTotal = dl.mbTotal
-	dl.Progress.FilesTotal = len(allTasks)
-	dl.Progress.FilesDownloaded = 0
-	dl.Progress.FilesExisting = 0
 	dl.Progress.SectionsCompleted = []string{}
 	dl.Progress.SectionsTotal = countSections(dl.Filter)
 	dl.fileStates = make(map[string]string, len(allTasks))
@@ -486,9 +480,28 @@ func (m *Manager) runDownload(dl *Download) {
 		return
 	}
 
+	// Escaneo previo: descarta los archivos ya presentes (con el tamaño
+	// correcto) y computa el total REAL de lo que falta por descargar.
+	pending := m.preScan(dl, allTasks)
+
+	dl.mu.Lock()
+	dl.pendingTotal = len(pending)
+	dl.Progress.FilesTotal = len(pending)
+	dl.mu.Unlock()
 	m.emitProgress(dl)
 
-	m.downloadAll(dl, allTasks)
+	if len(pending) > 0 {
+		m.downloadAll(dl, pending)
+	}
+
+	// Reintento final de los que fallaron en la primera pasada (con concurrencia
+	// reducida por el adaptativo) antes de pasar a la verificación por hash.
+	if dl.State == StateDownloading {
+		if failed := m.failedTasks(dl); len(failed) > 0 {
+			m.log(dl, "Final retry of %d failed files", len(failed))
+			m.downloadAll(dl, failed)
+		}
+	}
 
 	if !dl.skipVerify && dl.State == StateDownloading {
 		m.verifyAll(dl, allTasks)
@@ -534,17 +547,98 @@ func (m *Manager) runDownload(dl *Download) {
 	}
 }
 
-func (m *Manager) downloadAll(dl *Download, taskList []DownloadTask) {
-	numWorkers := dl.maxConcurrency * 3
-	if numWorkers > len(taskList) {
-		numWorkers = len(taskList)
+// preScan inspecciona los archivos antes de descargar: los que ya existen con
+// el tamaño esperado se marcan como "existing" (sin contar como pendientes),
+// los .tmp colgados de descargas interrumpidas se descartan y el resto queda
+// pendiente. Devuelve solo las tareas que realmente hay que descargar y ajusta
+// mbTotal a lo que falta, de modo que la UI no reporte el total bruto sino el
+// pendiente real.
+func (m *Manager) preScan(dl *Download, tasks []DownloadTask) []DownloadTask {
+	pending := make([]DownloadTask, 0, len(tasks))
+	var totalBytes int64
+
+	dl.mu.Lock()
+	for _, t := range tasks {
+		if _, err := os.Stat(t.Dest + ".tmp"); err == nil {
+			os.Remove(t.Dest + ".tmp")
+		}
+
+		existing := false
+		if st, err := os.Stat(t.Dest); err == nil {
+			existing = t.Size <= 0 || st.Size() == t.Size
+		}
+
+		if existing {
+			dl.existing++
+			dl.Progress.FilesExisting = dl.existing
+			dl.fileStates[t.Dest] = FileExisting
+			dl.fileBytes[t.Dest] = t.Size
+			if s := dl.sectionStats[t.Section]; s != nil {
+				s.DoneFiles++
+				if t.Size > 0 {
+					s.MBDownloaded += float64(t.Size) / 1024 / 1024
+				}
+			}
+			continue
+		}
+
+		pending = append(pending, t)
+		if t.Size > 0 {
+			totalBytes += t.Size
+		}
 	}
-	if numWorkers < 1 {
-		numWorkers = 1
+	dl.mbTotal = float64(totalBytes) / 1024 / 1024
+	dl.Progress.MBTotal = dl.mbTotal
+	dl.mu.Unlock()
+
+	m.log(dl, "Pre-scan: %d files already present, %d to download (%.1f MB)", len(tasks)-len(pending), len(pending), dl.mbTotal)
+	return pending
+}
+
+func (m *Manager) failedTasks(dl *Download) []DownloadTask {
+	dl.mu.Lock()
+	defer dl.mu.Unlock()
+	var failed []DownloadTask
+	for _, t := range dl.tasks {
+		if dl.fileStates[t.Dest] == FileError {
+			failed = append(failed, t)
+		}
+	}
+	return failed
+}
+
+func (m *Manager) downloadAll(dl *Download, taskList []DownloadTask) {
+	workers := dl.maxConcurrency
+	if workers > len(taskList) {
+		workers = len(taskList)
+	}
+	if workers < 1 {
+		workers = 1
 	}
 	const maxWorkers = 64
-	if numWorkers > maxWorkers {
-		numWorkers = maxWorkers
+	if workers > maxWorkers {
+		workers = maxWorkers
+	}
+
+	m.runWorkers(dl, taskList, workers)
+
+	// Adaptativo: si la mayoría de la tanda falló (típico de conexiones
+	// saturadas o inestables), se reintenta con la mitad de workers para no
+	// volver a colapsar el enlace y dar oportunidad a los archivos fallidos.
+	failed := m.failedTasks(dl)
+	if len(failed) > 0 && len(failed) >= len(taskList)/2 && workers > 2 {
+		half := workers / 2
+		if half < 1 {
+			half = 1
+		}
+		m.log(dl, "High failure rate (%d/%d): retrying with %d workers", len(failed), len(taskList), half)
+		m.runWorkers(dl, failed, half)
+	}
+}
+
+func (m *Manager) runWorkers(dl *Download, taskList []DownloadTask, numWorkers int) {
+	if numWorkers < 1 {
+		numWorkers = 1
 	}
 
 	jobs := make(chan DownloadTask, len(taskList))
@@ -597,7 +691,7 @@ func (m *Manager) processTask(dl *Download, task DownloadTask, nativeMu *sync.Mu
 			dl.mbDownloaded += float64(task.Size) / 1024 / 1024
 			dl.Progress.MBDownloaded = dl.mbDownloaded
 		}
-		dl.Progress.Percent = CalcPercent(dl.mbDownloaded, dl.mbTotal, dl.done, len(dl.tasks))
+		dl.Progress.Percent = CalcPercent(dl.mbDownloaded, dl.mbTotal, dl.done, dl.pendingTotal)
 		dl.Progress.CurrentProgress = 100
 		dl.fileStates[task.Dest] = FileExisting
 		dl.fileBytes[task.Dest] = task.Size
@@ -651,7 +745,7 @@ func (m *Manager) processTask(dl *Download, task DownloadTask, nativeMu *sync.Mu
 		dl.mbDownloaded += float64(task.Size) / 1024 / 1024
 		dl.Progress.MBDownloaded = dl.mbDownloaded
 	}
-	dl.Progress.Percent = CalcPercent(dl.mbDownloaded, dl.mbTotal, dl.done, len(dl.tasks))
+	dl.Progress.Percent = CalcPercent(dl.mbDownloaded, dl.mbTotal, dl.done, dl.pendingTotal)
 	dl.Progress.CurrentProgress = 100
 	dl.fileStates[task.Dest] = FileDone
 	if s := dl.sectionStats[task.Section]; s != nil {
@@ -668,11 +762,21 @@ func (m *Manager) verifyAll(dl *Download, tasks []DownloadTask) {
 	dl.mu.Lock()
 	dl.State = StateVerifying
 	dl.Progress.State = StateVerifying
+	dl.Progress.FilesTotal = len(tasks)
+	dl.Progress.FilesDownloaded = 0
 	dl.mu.Unlock()
 	BroadcastState(m.cfg.BroadcastFn, dl.ID, StateVerifying)
 	m.log(dl, "Verifying %d files...", len(tasks))
 
-	failed := VerifyBatch(tasks, dl.maxConcurrency)
+	failed := VerifyBatchWithProgress(tasks, dl.maxConcurrency, func(done, total int) {
+		dl.mu.Lock()
+		dl.Progress.FilesDownloaded = done
+		dl.mu.Unlock()
+		// Throttle: no inundar de eventos por cada archivo verificado.
+		if done%25 == 0 || done == total {
+			m.emitProgress(dl)
+		}
+	})
 
 	if len(failed) == 0 {
 		return
@@ -697,12 +801,27 @@ func (m *Manager) verifyAll(dl *Download, tasks []DownloadTask) {
 		dl.mu.Unlock()
 		BroadcastState(m.cfg.BroadcastFn, dl.ID, StateVerifying)
 
-		failed = VerifyBatch(failed, dl.maxConcurrency)
+		failed = VerifyBatchWithProgress(failed, dl.maxConcurrency, func(done, total int) {
+			dl.mu.Lock()
+			dl.Progress.FilesDownloaded = done
+			dl.mu.Unlock()
+			if done%25 == 0 || done == total {
+				m.emitProgress(dl)
+			}
+		})
 	}
 
 	if len(failed) > 0 {
 		m.setError(dl, fmt.Errorf("verification failed for %d files", len(failed)))
+		return
 	}
+
+	// Si la re-descarga reparó todos los archivos, los fallos previos ya no
+	// cuentan: sin esto, runDownload marcaría la descarga como error aunque
+	// todo estuviera verificado y re-descargado correctamente.
+	dl.mu.Lock()
+	dl.failed = 0
+	dl.mu.Unlock()
 }
 
 func (m *Manager) checkState(dl *Download) bool {

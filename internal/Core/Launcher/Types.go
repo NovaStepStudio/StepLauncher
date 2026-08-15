@@ -4,6 +4,8 @@ import (
 	"os/exec"
 	"sync"
 	"time"
+
+	gamelog "StepLauncher/internal/Core/Launcher/Log"
 )
 
 type GameStatus string
@@ -22,6 +24,7 @@ type GameInstance struct {
 	PID           int
 	Version       string
 	InstanceID    string
+	InstanceName  string
 	PlayerName    string
 	StartTime     time.Time
 	Status        GameStatus
@@ -29,8 +32,11 @@ type GameInstance struct {
 	LogPath         string
 	CrashLog        string
 	CrashLogContent string
+	GameOutput      string
 	CrashReason     string
 	CrashCategory   string
+	PreInfo         *gamelog.PreLaunchInfo
+	LauncherLogPath string
 	cmd           *exec.Cmd
 	done          chan struct{}
 	eventBuf      []GameEvent

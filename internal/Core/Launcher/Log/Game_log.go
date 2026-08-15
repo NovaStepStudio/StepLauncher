@@ -221,6 +221,71 @@ func (g *GameLogManager) rotate() error {
 	return nil
 }
 
+// FormatPreLaunchInfo devuelve el resumen de lanzamiento en texto plano,
+// sin separadores ASCII, con los valores sensibles redactados. Es el mismo
+// contenido que se escribe en el log del juego pero apto para mostrar en UI.
+func FormatPreLaunchInfo(info PreLaunchInfo) string {
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "  Version        : %s\n", info.Version)
+	fmt.Fprintf(&b, "  Main Class     : %s\n", info.MainClass)
+	fmt.Fprintf(&b, "  Game Dir       : %s\n", info.GameDir)
+	fmt.Fprintf(&b, "  Assets Dir     : %s\n", info.AssetsDir)
+	fmt.Fprintf(&b, "  Libraries Dir  : %s\n", info.LibrariesDir)
+	fmt.Fprintf(&b, "  Natives Dir    : %s\n", info.NativesDir)
+	fmt.Fprintf(&b, "  Asset Index    : %s\n", info.AssetIndexID)
+	fmt.Fprintf(&b, "  Virtual Assets : %s\n", orStr(info.AssetIndexVirtual, "unset"))
+	b.WriteString("\n")
+
+	fmt.Fprintf(&b, "  Java Exec  : %s\n", info.JavaExec)
+	fmt.Fprintf(&b, "  Min Memory : %d MB\n", info.MinRAM)
+	fmt.Fprintf(&b, "  Max Memory : %d MB\n", info.MaxRAM)
+	if info.GCPreset != "" {
+		fmt.Fprintf(&b, "  GC Preset  : %s\n", info.GCPreset)
+	}
+	if info.GPUPreference != "" {
+		fmt.Fprintf(&b, "  GPU Pref   : %s\n", info.GPUPreference)
+	}
+	fmt.Fprintf(&b, "  HW Accel   : %v\n", boolStr(!info.HWAccelDisabled))
+	b.WriteString("\n")
+
+	fmt.Fprintf(&b, "  Total entries: %d\n", len(info.ClasspathEntries))
+	for _, e := range info.ClasspathEntries {
+		mark := "OK"
+		if !e.Exists {
+			mark = "MISSING"
+		}
+		fmt.Fprintf(&b, "    [%s] %s\n", mark, e.Path)
+	}
+	if len(info.Natives) > 0 {
+		b.WriteString("\n")
+		fmt.Fprintf(&b, "  Native libraries: %d\n", len(info.Natives))
+		for _, n := range info.Natives {
+			fmt.Fprintf(&b, "    %s\n", n.Path)
+		}
+	}
+	b.WriteString("\n")
+
+	allArgs := append([]string{info.JavaExec}, info.JVMArgs...)
+	allArgs = append(allArgs, info.MainClass)
+	allArgs = append(allArgs, info.GameArgs...)
+	fmt.Fprintf(&b, "  Full launch command (%d args)\n", len(allArgs))
+	prevSensitive := false
+	for i, a := range allArgs {
+		if prevSensitive {
+			fmt.Fprintf(&b, "  [%3d] [REDACTED]\n", i)
+			prevSensitive = false
+			continue
+		}
+		if isSensitiveFlag(a) {
+			prevSensitive = true
+		}
+		fmt.Fprintf(&b, "  [%3d] %s\n", i, redactSensitive(a))
+	}
+
+	return b.String()
+}
+
 func (g *GameLogManager) WritePreLaunchInfo(info PreLaunchInfo) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
@@ -488,6 +553,90 @@ func redactSensitive(line string) string {
 		result = p.ReplaceAllString(result, "${1}[REDACTED]")
 	}
 	return result
+}
+
+// ReadGameOutput extrae la salida del juego (stdout/stderr) del log del juego:
+// toma el contenido posterior al marcador "GAME OUTPUT FOLLOWS", descarta las
+// líneas propias del launcher ([LAUNCHER]) y recorta el bloque final de cierre
+// del log. Es el texto que se muestra en el modal de crash como "Output".
+func ReadGameOutput(logPath string) string {
+	const maxBytes = 96 * 1024
+	const maxLines = 3000
+
+	data, err := os.ReadFile(logPath)
+	if err != nil {
+		return ""
+	}
+	text := string(data)
+
+	idx := strings.LastIndex(text, "GAME OUTPUT FOLLOWS")
+	if idx < 0 {
+		return ""
+	}
+	text = text[idx:]
+
+	lines := strings.Split(text, "\n")
+	var out []string
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if isLauncherLogLine(trimmed) {
+			continue
+		}
+		out = append(out, line)
+	}
+
+	out = trimTrailingLogFooter(out)
+
+	joined := strings.Join(out, "\n")
+	joined = strings.TrimSpace(joined)
+	if joined == "" {
+		return ""
+	}
+
+	if len(joined) > maxBytes {
+		joined = joined[len(joined)-maxBytes:]
+	}
+	parts := strings.Split(joined, "\n")
+	if len(parts) > maxLines {
+		parts = parts[len(parts)-maxLines:]
+		joined = strings.Join(parts, "\n")
+	}
+	return joined
+}
+
+// isLauncherLogLine indica si la línea pertenece al launcher ([LAUNCHER]).
+func isLauncherLogLine(line string) bool {
+	return strings.HasPrefix(line, "[") && strings.Contains(line, "] [LAUNCHER]")
+}
+
+// trimTrailingLogFooter recorta el bloque final del log (bordes, "GAME CRASH",
+// "GAME EXIT", "Log closed" y advertencias de líneas descartadas).
+func trimTrailingLogFooter(lines []string) []string {
+	end := len(lines)
+	for end > 0 {
+		line := strings.TrimSpace(lines[end-1])
+		if line == "" || isBorderLine(line) ||
+			strings.HasPrefix(line, "GAME CRASH:") || strings.HasPrefix(line, "GAME EXIT:") ||
+			strings.HasPrefix(line, "WARNING:") || strings.HasPrefix(line, "Log closed:") ||
+			strings.HasPrefix(line, "StepLauncher Game Log") {
+			end--
+			continue
+		}
+		break
+	}
+	return lines[:end]
+}
+
+func isBorderLine(line string) bool {
+	if len(line) < 20 {
+		return false
+	}
+	for _, c := range line {
+		if c != '=' && c != '-' {
+			return false
+		}
+	}
+	return true
 }
 
 func HasCleanShutdownMarker(logPath string) bool {

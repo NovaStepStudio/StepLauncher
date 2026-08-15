@@ -32,6 +32,10 @@ func (e *Engine) DeleteInstance(name string) error {
 	return e.instances.Delete(name)
 }
 
+func (e *Engine) OpenInstanceFolder(name string) error {
+	return e.instances.OpenFolder(name)
+}
+
 func (e *Engine) UpdateInstanceMetadata(name string, req UpdateMetadataReq) (*InstanceMetadata, error) {
 	return e.instances.UpdateMetadata(name, req)
 }
@@ -76,7 +80,14 @@ func (e *Engine) LaunchInstance(name string, username, uuid, accessToken, xuid, 
 	if err := e.fillAccountCredentials(&cfg, ""); err != nil {
 		return nil, err
 	}
-	return e.instances.LaunchInstance(name, cfg)
+	res, err := e.instances.LaunchInstance(name, cfg)
+	if err != nil {
+		return nil, err
+	}
+	if inst := e.launcher.Get(res.ID); inst != nil {
+		inst.LauncherLogPath = e.log.GetLogPath()
+	}
+	return res, nil
 }
 
 func (e *Engine) GetInstanceDownloadStatus(dlID string) (string, string, string, string) {
@@ -89,4 +100,20 @@ func (e *Engine) GetInstanceDownloadStatus(dlID string) (string, string, string,
 
 func (e *Engine) CancelInstanceDownload(dlID string) error {
 	return e.instances.CancelDownload(dlID)
+}
+
+func (e *Engine) InstallInstanceModLoader(name, loader, loaderVersion, mcVersion string) (*ModLoaderInstallResult, error) {
+	sessionID, err := e.instances.InstallModLoader(name, loader, loaderVersion, mcVersion)
+	if err != nil {
+		return nil, err
+	}
+	return &ModLoaderInstallResult{SessionID: sessionID, Status: "installing"}, nil
+}
+
+func (e *Engine) GetInstalledInstanceModLoader(name string) (*InstalledLoader, error) {
+	return e.instances.InstalledModLoader(name)
+}
+
+func (e *Engine) RemoveInstanceModLoaderState(name string) error {
+	return e.instances.RemoveModLoaderState(name)
 }

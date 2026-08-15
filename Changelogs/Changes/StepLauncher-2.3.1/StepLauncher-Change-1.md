@@ -2,7 +2,7 @@
 
 - **Fecha**: 2026-08-08
 - **Versión**: 2.3.1
-- **Release**: StepLauncher-2.3.1 (en desarrollo)
+- **Release**: StepLauncher-2.3.1 — en este release se menciona que fue añadido.
 
 ## Qué cambió
 

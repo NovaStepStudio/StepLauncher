@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"StepLauncher/internal/Core/Downloader"
 	"StepLauncher/internal/Core/Launcher"
@@ -22,6 +23,7 @@ type InstanceManager struct {
 	mu           sync.RWMutex
 	instancesDir string
 	sharedDir    string
+	cacheDir     string
 
 	downloads   map[string]*instanceDownload
 	nextDLID    uint64
@@ -33,18 +35,37 @@ type InstanceManager struct {
 	launcherName    string
 	launcherVersion string
 	logFn           func(string, ...interface{})
+
+	separateGameDir bool
+
+	onVersionReady func(name, version string)
 }
 
 func NewManager(instancesDir, sharedDir string) *InstanceManager {
 	return &InstanceManager{
-		instancesDir: instancesDir,
-		sharedDir:    sharedDir,
-		downloads:    make(map[string]*instanceDownload),
+		instancesDir:    instancesDir,
+		sharedDir:       sharedDir,
+		separateGameDir: true,
+		downloads:       make(map[string]*instanceDownload),
 	}
+}
+
+// SetSeparateGameDir controla si el gameDir de las instancias es
+// <instancia>/game (true) o la propia carpeta de la instancia (false).
+func (m *InstanceManager) SetSeparateGameDir(v bool) {
+	m.mu.Lock()
+	m.separateGameDir = v
+	m.mu.Unlock()
 }
 
 func (m *InstanceManager) SetSharedDownloadManager(dlMgr *downloader.Manager) {
 	m.sharedDlMgr = dlMgr
+}
+
+// SetCacheDir fija el directorio de cache global del launcher (p. ej. <WorkDir>/cache).
+// El cache nunca se comparte entre instancias ni se guarda en shared/.
+func (m *InstanceManager) SetCacheDir(dir string) {
+	m.cacheDir = dir
 }
 
 func (m *InstanceManager) SetLaunchManager(lm *launcher.LaunchManager) {
@@ -64,6 +85,86 @@ func (m *InstanceManager) SetLogger(fn func(string, ...interface{})) {
 	m.logFn = fn
 }
 
+// SetOnVersionReady registra un callback que se invoca al terminar exitosamente
+// la descarga de una version en una instancia (sin bloquear al llamador: va en goroutine).
+func (m *InstanceManager) SetOnVersionReady(fn func(name, version string)) {
+	m.onVersionReady = fn
+}
+
+func (m *InstanceManager) fireVersionReady(name, version string) {
+	if m.onVersionReady != nil {
+		m.onVersionReady(name, version)
+	}
+}
+
+// mergeInstanceLibraries traslada las librerías que el instalador del
+// modloader dejó en <instancia>/libraries a shared/libraries (donde el
+// lanzamiento las lee) y elimina la carpeta de la instancia, que quedaría
+// como peso muerto. Los archivos ya presentes en shared con el mismo tamaño
+// se omiten; si algún archivo no se puede mover, no se borra nada.
+func (m *InstanceManager) mergeInstanceLibraries(instPath string) {
+	src := filepath.Join(instPath, "libraries")
+	info, err := os.Stat(src)
+	if err != nil || !info.IsDir() {
+		return
+	}
+	dst := filepath.Join(m.sharedDir, "libraries")
+	moved, skipped, failed := 0, 0, 0
+
+	walkErr := filepath.Walk(src, func(path string, fi os.FileInfo, err error) error {
+		if err != nil || fi.IsDir() {
+			return nil
+		}
+		rel, relErr := filepath.Rel(src, path)
+		if relErr != nil {
+			failed++
+			return nil
+		}
+		target := filepath.Join(dst, rel)
+		if tInfo, tErr := os.Stat(target); tErr == nil && tInfo.Size() == fi.Size() {
+			skipped++
+			return nil
+		}
+		if mkErr := os.MkdirAll(filepath.Dir(target), 0755); mkErr != nil {
+			failed++
+			return nil
+		}
+		// El destino existe con distinto tamaño: se reemplaza con el de la
+		// instancia (la copia del instalador es la autoritativa).
+		if _, tErr := os.Stat(target); tErr == nil {
+			if rmErr := os.Remove(target); rmErr != nil {
+				failed++
+				return nil
+			}
+		}
+		if mvErr := os.Rename(path, target); mvErr != nil {
+			if cpErr := copyFile(path, target); cpErr != nil {
+				failed++
+				return nil
+			}
+			os.Remove(path)
+		}
+		moved++
+		return nil
+	})
+	if walkErr != nil {
+		m.log("WARN: merge instance libraries: %v", walkErr)
+		return
+	}
+
+	if failed > 0 {
+		m.log("WARN: merge instance libraries: %d movidos, %d omitidos, %d fallidos (carpeta conservada)", moved, skipped, failed)
+		return
+	}
+	if err := os.RemoveAll(src); err != nil {
+		m.log("WARN: no se pudo eliminar la carpeta libraries de la instancia: %v", err)
+		return
+	}
+	if moved > 0 {
+		m.log("Librerías de la instancia movidas a shared: %d movidas, %d ya existentes", moved, skipped)
+	}
+}
+
 func (m *InstanceManager) log(format string, args ...interface{}) {
 	if m.logFn != nil {
 		m.logFn("[InstanceManager] "+format, args...)
@@ -73,6 +174,12 @@ func (m *InstanceManager) log(format string, args ...interface{}) {
 func (m *InstanceManager) Create(req CreateInstanceReq) (*InstanceMetadata, string, error) {
 	if err := sanitizeInstanceName(req.Name); err != nil {
 		return nil, "", fmt.Errorf("invalid instance name: %w", err)
+	}
+	if utf8.RuneCountInString(req.Title) > 64 {
+		return nil, "", fmt.Errorf("el título no puede superar los 64 caracteres")
+	}
+	if utf8.RuneCountInString(req.Description) > 512 {
+		return nil, "", fmt.Errorf("la descripción no puede superar los 512 caracteres")
 	}
 
 	instPath, err := m.instancePath(req.Name)
@@ -96,17 +203,19 @@ func (m *InstanceManager) Create(req CreateInstanceReq) (*InstanceMetadata, stri
 		Description: req.Description,
 		Icon:        req.Icon,
 		Banner:      req.Banner,
-		Background:  req.Background,
-		AccentColor: req.AccentColor,
 		Group:       req.Group,
 		Tags:        req.Tags,
 		Favorite:    false,
+		Pinned:      false,
 		CreatedAt:   now,
 		Versions:    []string{},
 		ConfigPath:  configFile,
 	}
 	if req.Favorite != nil {
 		meta.Favorite = *req.Favorite
+	}
+	if req.Pinned != nil {
+		meta.Pinned = *req.Pinned
 	}
 	if meta.Title == "" {
 		meta.Title = req.Name
@@ -168,7 +277,7 @@ func (m *InstanceManager) List() []*InstanceInfo {
 		}
 		result = append(result, &InstanceInfo{
 			Name: meta.Name, Title: meta.Title, Versions: meta.Versions,
-			Favorite: meta.Favorite, Group: meta.Group,
+			Favorite: meta.Favorite, Pinned: meta.Pinned, Group: meta.Group,
 			LastPlayed: meta.LastPlayed, PlayTime: meta.PlayTime,
 		})
 	}
@@ -185,6 +294,21 @@ func (m *InstanceManager) Get(name string) (*InstanceMetadata, *InstanceLaunchCo
 		return nil, nil, fmt.Errorf("config not found for instance %s: %w", name, err)
 	}
 	return meta, cfg, nil
+}
+
+// OpenFolder abre la carpeta raíz de la instancia en el explorador de archivos.
+func (m *InstanceManager) OpenFolder(name string) error {
+	if err := sanitizeInstanceName(name); err != nil {
+		return err
+	}
+	instPath, err := m.instancePath(name)
+	if err != nil {
+		return err
+	}
+	if _, err := os.Stat(instPath); err != nil {
+		return fmt.Errorf("instancia no encontrada: %s", name)
+	}
+	return openInExplorer(instPath)
 }
 
 func (m *InstanceManager) Delete(name string) error {
@@ -210,6 +334,12 @@ func (m *InstanceManager) UpdateMetadata(name string, req UpdateMetadataReq) (*I
 	if err != nil {
 		return nil, err
 	}
+	if utf8.RuneCountInString(req.Title) > 64 {
+		return nil, fmt.Errorf("el título no puede superar los 64 caracteres")
+	}
+	if utf8.RuneCountInString(req.Description) > 512 {
+		return nil, fmt.Errorf("la descripción no puede superar los 512 caracteres")
+	}
 	if req.Title != "" {
 		meta.Title = req.Title
 	}
@@ -222,12 +352,6 @@ func (m *InstanceManager) UpdateMetadata(name string, req UpdateMetadataReq) (*I
 	if req.Banner != "" {
 		meta.Banner = req.Banner
 	}
-	if req.Background != "" {
-		meta.Background = req.Background
-	}
-	if req.AccentColor != "" {
-		meta.AccentColor = req.AccentColor
-	}
 	if req.Group != "" {
 		meta.Group = req.Group
 	}
@@ -236,6 +360,9 @@ func (m *InstanceManager) UpdateMetadata(name string, req UpdateMetadataReq) (*I
 	}
 	if req.Favorite != nil {
 		meta.Favorite = *req.Favorite
+	}
+	if req.Pinned != nil {
+		meta.Pinned = *req.Pinned
 	}
 	if err := m.writeMetadata(name, meta); err != nil {
 		return nil, err
@@ -274,10 +401,10 @@ func (m *InstanceManager) UpdateConfig(name string, cfg *InstanceLaunchConfig) (
 	if cfg.HardwareAcceleration != nil {
 		existing.HardwareAcceleration = cfg.HardwareAcceleration
 	}
-	if cfg.GCPreset != "" {
+	if cfg.GCPreset != nil {
 		existing.GCPreset = cfg.GCPreset
 	}
-	if cfg.GPUPreference != "" {
+	if cfg.GPUPreference != nil {
 		existing.GPUPreference = cfg.GPUPreference
 	}
 	if cfg.CustomResolution != nil {
@@ -336,8 +463,7 @@ func (m *InstanceManager) Clone(name, newName string, copyVersions bool) (*Insta
 	}
 	createReq := CreateInstanceReq{
 		Name: newName, Title: meta.Title + " (copy)", Description: meta.Description,
-		Icon: meta.Icon, Banner: meta.Banner, Background: meta.Background,
-		AccentColor: meta.AccentColor, Group: meta.Group, Tags: meta.Tags,
+		Icon: meta.Icon, Banner: meta.Banner, Group: meta.Group, Tags: meta.Tags,
 		LaunchConfig: cfg,
 	}
 	newMeta, _, err := m.Create(createReq)
@@ -444,6 +570,7 @@ func (m *InstanceManager) downloadForInstance(instName, version string) string {
 			m.log("ERROR: add version to metadata: %v", err)
 		} else {
 			m.log("Instance %s: version %s ready", instName, version)
+			m.fireVersionReady(instName, version)
 		}
 	}()
 

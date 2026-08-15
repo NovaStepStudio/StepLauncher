@@ -1,0 +1,559 @@
+@use '../../Common/Styles/Components' as *;
+
+.Vers {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    height: 100%;
+}
+
+.Vers_Body {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 1rem;
+}
+
+.Vers_Tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1.1rem 2rem 0;
+    flex-shrink: 0;
+}
+
+.Vers_Tab {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    padding: 0.45rem 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+
+    em {
+        font-style: normal;
+        font-size: 0.6rem;
+        padding: 0.1rem 0.3rem;
+        border-radius: 0.3rem;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    &:hover {
+        background: color-mix(in srgb, var(--background-button-primary) 50%, gray 10%);
+        color: var(--text-primary);
+    }
+
+    &.active {
+        border-color: color-mix(in srgb, var(--background-button-primary) 55%, gray 50%);
+        background-color: color-mix(in srgb, var(--background-button-primary) 80%, gray 15%);
+
+        em {
+            background: color-mix(in srgb, var(--background-button-primary) 50%, gray 25%);
+            color: color-mix(in srgb, var(--background-button-primary) 55%, white 45%);
+        }
+    }
+}
+
+.Vers_Info {
+    margin: 1rem 2rem 0;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    opacity: 0.55;
+
+    strong {
+        opacity: 0.85;
+    }
+}
+
+.Vers_Search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 1rem 2rem 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 0.55rem;
+
+    svg {
+        width: 0.9rem;
+        height: 0.9rem;
+        opacity: 0.5;
+        flex-shrink: 0;
+    }
+
+    input {
+        flex: 1;
+        min-width: 0;
+        background: none;
+        border: none;
+        outline: none;
+        color: var(--text-primary);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: 0.74rem;
+
+        &::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+    }
+}
+
+.Vers_SearchCount {
+    font-size: 0.62rem;
+    opacity: 0.5;
+    white-space: nowrap;
+}
+
+.Vers_List {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin: 0.25rem 2rem 1rem;
+}
+
+.Vers_GroupHead {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+
+    span {
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        opacity: 0.4;
+    }
+
+    em {
+        font-style: normal;
+        font-size: 0.6rem;
+        opacity: 0.35;
+    }
+}
+
+.Vers_Item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    text-align: left;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 0.55rem;
+    padding: 0.55rem 0.8rem;
+    cursor: pointer;
+    color: var(--text-primary);
+    font-family: var(--font-secundary), Arial, sans-serif;
+    transition: var(--transition);
+
+    &:hover {
+        border-color: color-mix(in srgb, var(--background-button-primary) 50%, gray 40%);
+        background: color-mix(in srgb, var(--background-button-primary) 50%, gray 20%);
+        transform: translateY(-1px);
+    }
+
+    &.active {
+        background: color-mix(in srgb, var(--background-button-primary) 50%, gray 15%);
+        border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    &.dim {
+        opacity: 0.55;
+
+        &:hover {
+            opacity: 0.8;
+        }
+    }
+}
+
+.Vers_ItemBadge {
+    font-size: 0.58rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.3rem;
+    background: color-mix(in srgb, var(--background-button-primary) 15%, transparent);
+    color: color-mix(in srgb, var(--background-button-primary) 55%, white 45%);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.Vers_TypeHue_IsRelease {
+    background: color-mix(in srgb, var(--color-success) 16%, transparent);
+    color: color-mix(in srgb, var(--color-success) 50%, white 50%);
+}
+
+.Vers_TypeHue_IsSnapshot {
+    background: color-mix(in srgb, var(--color-warning) 16%, transparent);
+    color: color-mix(in srgb, var(--color-warning) 50%, white 50%);
+}
+
+.Vers_TypeHue_IsBeta {
+    background: color-mix(in srgb, var(--color-warning) 16%, transparent);
+    color: var(--color-warning);
+}
+
+.Vers_TypeHue_IsAlpha {
+    background: color-mix(in srgb, var(--color-error) 16%, transparent);
+    color: color-mix(in srgb, var(--color-error) 50%, white 50%);
+}
+
+.Vers_TypeHue_IsOther {
+    background: rgba(255, 255, 255, 0.1);
+    color: #c9c9d6;
+}
+
+.Vers_ItemId {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.Vers_ItemCheck {
+    width: 0.95rem;
+    height: 0.95rem;
+    color: var(--color-success);
+    flex-shrink: 0;
+}
+
+.Vers_ProfileItem {
+    cursor: pointer;
+}
+
+.Vers_ProfileAvatar {
+    width: 2.2rem;
+    height: 2.2rem;
+    flex-shrink: 0;
+    border-radius: 0.5rem;
+    border: var(--border-style);
+    background: color-mix(in srgb, var(--background-button-primary) 50%, transparent);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        image-rendering: pixelated;
+    }
+}
+
+.Vers_ProfileMain {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+}
+
+.Vers_ProfileName {
+    font-size: 0.82rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.Vers_ProfileSub {
+    font-size: 0.66rem;
+    opacity: 0.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.Vers_Tools {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.Vers_Tool {
+    background: none;
+    border: 1px solid var(--control-border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 1.9rem;
+    width: 1.9rem;
+    transition: var(--transition);
+
+    &:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--background-button-primary) 20%, transparent);
+        border-color: color-mix(in srgb, var(--background-button-primary) 45%, transparent);
+        color: color-mix(in srgb, var(--background-button-primary) 55%, white 45%);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: default;
+    }
+}
+
+.Vers_ToolDanger {
+    &:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--color-error) 16%, transparent);
+        border-color: color-mix(in srgb, var(--color-error) 40%, transparent);
+        color: color-mix(in srgb, var(--color-error) 50%, white 50%);
+    }
+}
+
+.Vers_Empty {
+    margin: 1rem 2rem;
+    text-align: center;
+    opacity: 0.55;
+    font-size: 0.78rem;
+    padding: 1.25rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+
+    svg {
+        opacity: 0.5;
+    }
+
+    p {
+        margin: 0;
+    }
+}
+
+.Vers_Selected {
+    margin: 0.25rem 2rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.68rem;
+    opacity: 0.55;
+
+    svg {
+        flex-shrink: 0;
+        opacity: 0.6;
+    }
+
+    strong {
+        opacity: 0.85;
+    }
+}
+
+.Vers_Msg {
+    margin: 0.5rem 2rem 1.1rem;
+    font-size: 0.75rem;
+    color: color-mix(in srgb, var(--background-button-primary) 55%, white 45%);
+
+    &.error {
+        color: var(--color-error);
+    }
+}
+
+.Vers_Sidebar {
+    width: 20rem;
+    flex-shrink: 0;
+    background: var(--background-sidebar);
+    border-left: var(--border-modal-style);
+    padding: 1.1rem 0.85rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    overflow-y: auto;
+
+    .SsBtn.Vers_SideBtn {
+        width: 100%;
+        justify-content: flex-start;
+        align-items: center;
+        text-align: left;
+        white-space: normal;
+        padding: 0.6rem 0.75rem;
+        background-color: var(--background-button-primary);
+        border: 1px solid color-mix(in srgb, var(--background-button-primary) 28%, transparent);
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+
+        &:hover:not(:disabled) {
+            background-color: color-mix(in srgb, var(--background-button-primary) 50%, gray 15%);
+            border-color: color-mix(in srgb, var(--background-button-primary) 50%, transparent);
+        }
+
+        &:disabled {
+            opacity: 0.4;
+        }
+    }
+}
+
+.Vers_SideIcon {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
+    opacity: 0.8;
+}
+
+.Vers_SideHead {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0 0.15rem 0.35rem;
+}
+
+.Vers_SideLabel {
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    opacity: 0.4;
+}
+
+.Vers_SideDesc {
+    margin: 0;
+    font-size: 0.66rem;
+    line-height: 1.45;
+    opacity: 0.5;
+}
+
+.Vers_SideBtnTxt {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+    min-width: 0;
+}
+
+.Vers_SideBtnTitle {
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.Vers_SideBtnSub {
+    font-size: 0.6rem;
+    opacity: 0.55;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ProfileForm_Overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: var(--filter-blur);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 115;
+}
+
+.ProfileForm_Dialog {
+    width: 24rem;
+    max-width: 92vw;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    border-radius: 0.85rem;
+    box-shadow: var(--shadow-settings-normal) #000a;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ProfileForm_Head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.1rem 1.35rem 0.85rem;
+    border-bottom: var(--border-modal-style);
+    background: #0005;
+
+    h3 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.95rem * var(--font-size-primary, 1));
+        font-weight: 600;
+    }
+}
+
+.ProfileForm_Close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 2rem;
+    width: 2rem;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    svg {
+        width: 1.1rem;
+        height: 1.1rem;
+    }
+
+    &:hover {
+        background: #1111;
+        color: var(--text-primary);
+    }
+}
+
+.ProfileForm_Body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1.1rem 1.35rem 0.25rem;
+}
+
+.ProfileForm_Note {
+    margin: 0;
+    font-size: 0.66rem;
+    line-height: 1.45;
+    opacity: 0.42;
+}
+
+.ProfileForm_Footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.85rem 1.35rem 1.1rem;
+}
+
+.ProfileForm-enter-active,
+.ProfileForm-leave-active {
+    transition: var(--transition);
+
+    .ProfileForm_Dialog {
+        transition: var(--transition-slow);
+    }
+}
+
+.ProfileForm-enter-from,
+.ProfileForm-leave-to {
+    opacity: 0;
+
+    .ProfileForm_Dialog {
+        transform: translateY(8px) scale(0.97);
+        opacity: 0;
+    }
+}

@@ -4,6 +4,7 @@ type LaunchConfig struct {
 	Version         string
 	Username        string
 	InstanceID      string
+	InstanceName    string
 	UUID            string
 	AccessToken     string
 	XUID            string

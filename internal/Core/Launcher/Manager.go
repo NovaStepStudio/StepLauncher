@@ -17,6 +17,7 @@ type ManagerConfig struct {
 	LogFn                func(string, ...interface{})
 	LauncherName         string
 	LauncherVersion      string
+	SeparateGameDir      bool
 	GameLogBroadcastFn   func(stream, line string)
 	GameEventBroadcastFn func([]byte)
 	GameEventReplayFn    func([]byte)
@@ -24,19 +25,21 @@ type ManagerConfig struct {
 }
 
 type LaunchManager struct {
-	mu         sync.RWMutex
-	games      map[string]*GameInstance
-	nextID     uint64
-	config     ManagerConfig
-	eventBuf   []GameEvent
-	eventBufMu sync.RWMutex
+	mu               sync.RWMutex
+	games            map[string]*GameInstance
+	nextID           uint64
+	config           ManagerConfig
+	separateGameDir  bool
+	eventBuf         []GameEvent
+	eventBufMu       sync.RWMutex
 }
 
 func NewManager(cfg ManagerConfig) *LaunchManager {
 	m := &LaunchManager{
-		games:    make(map[string]*GameInstance),
-		config:   cfg,
-		eventBuf: make([]GameEvent, 0, 100),
+		games:           make(map[string]*GameInstance),
+		config:          cfg,
+		separateGameDir: true,
+		eventBuf:        make([]GameEvent, 0, 100),
 	}
 
 	if cfg.GameEventBroadcastFn != nil {
@@ -101,7 +104,14 @@ func (m *LaunchManager) Launch(cfg LaunchConfig) (*GameInstance, error) {
 		adv.RuntimeDir = filepath.Join(m.config.WorkDir, "runtime")
 	}
 	if adv.GameDir == "" {
-		adv.GameDir = filepath.Join(m.config.WorkDir, "game")
+		m.mu.RLock()
+		sep := m.separateGameDir
+		m.mu.RUnlock()
+		if sep {
+			adv.GameDir = filepath.Join(m.config.WorkDir, "game")
+		} else {
+			adv.GameDir = m.config.WorkDir
+		}
 	}
 	if adv.AssetsDir == "" {
 		adv.AssetsDir = filepath.Join(m.config.WorkDir, "assets")
@@ -121,9 +131,8 @@ func (m *LaunchManager) Launch(cfg LaunchConfig) (*GameInstance, error) {
 	if adv.MaxRAM <= 0 {
 		adv.MaxRAM = 2048
 	}
-	if adv.MinRAM <= 0 {
-		adv.MinRAM = 512
-	}
+	// La RAM mínima es SIEMPRE 512 MB (nunca la mitad del máximo).
+	adv.MinRAM = helpers.MinRAM
 	if adv.UserType == "" {
 		adv.UserType = "mojang"
 	}
@@ -179,8 +188,15 @@ func (m *LaunchManager) Launch(cfg LaunchConfig) (*GameInstance, error) {
 	return instance, nil
 }
 
-func (m *LaunchManager) Stop(id string) error {
-	m.mu.RLock()
+// SetSeparateGameDir controla si el gameDir es <workDir>/game (true) o el
+// propio workDir (false).
+func (m *LaunchManager) SetSeparateGameDir(v bool) {
+	m.mu.Lock()
+	m.separateGameDir = v
+	m.mu.Unlock()
+}
+
+func (m *LaunchManager) Stop(id string) error {	m.mu.RLock()
 	instance, ok := m.games[id]
 	m.mu.RUnlock()
 	if !ok {
@@ -235,8 +251,8 @@ func (m *LaunchManager) Remove(id string) {
 func (m *LaunchManager) RecommendedRAM() (minRAM, maxRAM int, gcPreset string) {
 	maxRAM = helpers.RecommendedMaxRAM(4096)
 	minRAM = helpers.MinRAM
-	if minRAM > maxRAM/2 {
-		minRAM = maxRAM / 2
+	if maxRAM > 0 && minRAM > maxRAM {
+		minRAM = maxRAM
 	}
 	gcPreset = helpers.RecommendedGCPreset(maxRAM)
 	return

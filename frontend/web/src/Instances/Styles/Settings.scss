@@ -1,0 +1,229 @@
+@use '../../Common/Styles/Components' as *;
+
+.InstSet_Overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: var(--filter-blur);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 120;
+}
+
+.InstSet_Dialog {
+    width: min(520px, calc(100vw - 3rem));
+    max-height: calc(100vh - 4rem);
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    border-radius: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.InstSet_Head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.1rem 1.35rem 0.85rem;
+    border-bottom: var(--border-modal-style);
+    flex-shrink: 0;
+}
+
+.InstSet_Titles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    h3 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(1rem * var(--font-size-primary, 1));
+        font-weight: 600;
+        text-shadow: var(--text-shadow-primary, none);
+    }
+}
+
+.InstSet_Name {
+    font-size: calc(0.68rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.55;
+}
+
+.InstSet_Close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 2rem;
+    width: 2rem;
+    transition: var(--transition);
+
+    svg {
+        width: 1.1rem;
+        height: 1.1rem;
+    }
+
+    &:hover {
+        background: var(--control-bg);
+        color: var(--text-primary);
+    }
+}
+
+.InstSet_Body {
+    padding: 1.1rem 1.35rem 0.9rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.InstSet_Loading {
+    text-align: center;
+    opacity: 0.55;
+    font-size: calc(0.75rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    padding: 1.5rem 0;
+}
+
+.InstSet_Field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    > span {
+        font-size: calc(0.72rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+        opacity: 0.75;
+    }
+}
+
+.InstSet_Hint {
+    font-size: calc(0.62rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.5;
+}
+
+.InstSet_Row {
+    display: flex;
+    gap: 0.85rem;
+
+    .InstSet_Field {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+.InstSet_Check {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.85;
+    cursor: pointer;
+    line-height: 1.45;
+
+    input {
+        margin-top: 0.15rem;
+        accent-color: var(--progress-color);
+        cursor: pointer;
+    }
+}
+
+.InstSet_SwRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.6rem;
+    border: var(--border-style);
+    background: var(--control-bg);
+
+    .InstSet_SwText {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        font-size: calc(0.72rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+        opacity: 0.85;
+        line-height: 1.45;
+    }
+
+    .InstSet_SwSub {
+        font-size: calc(0.62rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+        opacity: 0.5;
+    }
+}
+
+.InstSet_Submit.SsBtnPrimary {
+    background: var(--background-button-primary);
+    border-color: color-mix(in srgb, var(--background-button-primary) 75%, white 18%);
+    color: var(--text-primary);
+    font-weight: 700;
+
+    &:hover {
+        background: color-mix(in srgb, var(--background-button-primary) 85%, white 15%);
+        border-color: color-mix(in srgb, var(--background-button-primary) 55%, white 35%);
+    }
+
+    &:disabled {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: var(--border-style);
+        color: var(--text-primary);
+    }
+}
+
+.InstSet_Msg {
+    margin: 0;
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    color: var(--color-success);
+
+    &.error {
+        color: var(--color-error);
+    }
+}
+
+.InstSet_Note {
+    margin: 0;
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.55;
+    line-height: 1.5;
+}
+
+.InstSet_Footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.85rem 1.35rem 1.1rem;
+    border-top: var(--border-modal-style);
+    flex-shrink: 0;
+}
+
+.InstModal-enter-active,
+.InstModal-leave-active {
+    transition: var(--transition);
+
+    .InstSet_Dialog {
+        transition: var(--transition);
+    }
+}
+
+.InstModal-enter-from,
+.InstModal-leave-to {
+    opacity: 0;
+
+    .InstSet_Dialog {
+        transform: translateY(8px) scale(0.97);
+        opacity: 0;
+    }
+}
