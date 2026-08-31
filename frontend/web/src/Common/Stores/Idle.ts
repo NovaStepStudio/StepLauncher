@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { SetIdle } from '@wailsjs/StepLauncher/internal/Services/Appearance/appearanceservice';
 
 export interface IdleOptions {
     autoCloseModals: boolean;
@@ -93,11 +94,11 @@ export async function saveIdleOptions(opts: Partial<IdleOptions>) {
     resetIdleTimer();
     restartCheck();
     try {
-        await (window as any).go?.main?.App?.SetIdle?.({
+        await SetIdle({
             autoCloseModals: idleOptions.value.autoCloseModals,
             idleMinutes: idleOptions.value.idleMinutes,
             configCheckEnabled: idleOptions.value.configCheckEnabled,
             configCheckMinutes: idleOptions.value.configCheckMinutes,
         });
-    } catch { }
+    } catch (_e) {}
 }

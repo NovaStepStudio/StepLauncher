@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { EventsOn } from '@wailsjs/runtime/runtime';
+import { Events } from '@wailsio/runtime';
 
 export interface ActiveDownload {
     id: string;
@@ -76,7 +76,7 @@ let eventsOff: (() => void)[] | null = null;
 function ensureDownloadEvents(): void {
     if (eventsOff) return;
     eventsOff = [
-        EventsOn('download_progress', (raw: any) => {
+        Events.On('download_progress', ({ data: raw }: any) => {
             const p = parsePayload(raw);
             const id = p?.id;
             const data = p?.data;
@@ -93,7 +93,7 @@ function ensureDownloadEvents(): void {
                 speedMbps: Number(data.speedMbps ?? 0),
             });
         }),
-        EventsOn('download_state', (raw: any) => {
+        Events.On('download_state', ({ data: raw }: any) => {
             const p = parsePayload(raw);
             const id = p?.id;
             if (!id) return;
@@ -108,7 +108,7 @@ function ensureDownloadEvents(): void {
                 }, delay);
             }
         }),
-        EventsOn('download_error', (raw: any) => {
+        Events.On('download_error', ({ data: raw }: any) => {
             const p = parsePayload(raw);
             const id = p?.id;
             if (!id) return;

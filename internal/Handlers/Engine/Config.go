@@ -72,3 +72,9 @@ func (e *Engine) SetVerifyIntegrity(v bool) {
 	cfg.VerifyIntegrity = v
 	e.config.UpdateConfig(cfg)
 }
+
+func (e *Engine) SetVerifyBeforeLaunch(v bool) {
+	cfg := e.config.Get()
+	cfg.VerifyBeforeLaunch = v
+	e.config.UpdateConfig(cfg)
+}

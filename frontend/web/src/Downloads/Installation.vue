@@ -16,19 +16,14 @@ import { useOverlayEscape } from '@/Common/Composables/useOverlayEscape';
 import { registerDownload, clearDownload as clearCentralDownload } from './Store';
 import { refreshAfterDownload, selectVersion, launchGame, installedVersions } from '@/Launcher/Store';
 import { downloads } from '@/Instances/Store';
-import { EventsOn } from '@wailsjs/runtime/runtime';
-import {
-    FetchVersionManifest,
-    StartFullDownload,
-    GetDownloadStatus,
-    PauseDownload,
-    ResumeDownload,
-    CancelDownload,
-    GetModLoaderVersions,
-    ListDownloads,
-    InstallModLoader,
-} from '@wailsjs/go/main/App';
-import type { downloader, modloader } from '@wailsjs/go/models';
+import { Events } from '@wailsio/runtime';
+import { FetchVersionManifest, StartFullDownload, GetDownloadStatus, PauseDownload, ResumeDownload, CancelDownload, ListDownloads } from '@wailsjs/StepLauncher/internal/Services/Download/downloadservice';
+import { GetModLoaderVersions, InstallModLoader } from '@wailsjs/StepLauncher/internal/Services/ModLoader/modloaderservice';
+import type { DownloadProgress } from '@wailsjs/StepLauncher/internal/Core/Downloader/models';
+import type { LoaderVersion } from '@wailsjs/StepLauncher/internal/Core/ModLoader/models';
+import { GetConfig } from '@wailsjs/StepLauncher/internal/Services/Config/configservice';
+import { isOffline, CONNECTIVITY_ONLINE_EVENT } from '@/Common/Stores/Connectivity';
+import OfflineBadge from '@/Common/Components/OfflineBadge.vue';
 
 import iconVanilla from '../../assets/icons/minecraft.png';
 import iconFabric from '../../assets/icons/fabric.png';
@@ -37,7 +32,6 @@ import iconNeoForge from '../../assets/icons/neoforge.png';
 import iconQuilt from '../../assets/icons/quilt.png';
 import iconLegacyFabric from '../../assets/icons/legacyfabric.png';
 
-type DownloadProgress = downloader.DownloadProgress;
 type DownloadInfo = {
     id: string;
     version: string;
@@ -45,7 +39,6 @@ type DownloadInfo = {
     error?: string;
 };
 type VersionEntry = { id: string; type: string; releaseTime: string };
-type LoaderVersion = modloader.LoaderVersion;
 
 const props = defineProps<{
     visible: boolean;
@@ -276,6 +269,11 @@ function isInstalled(id: string): boolean {
 
 async function loadManifest() {
     if (manifestLoaded.value) return;
+    if (isOffline.value) {
+        manifestError.value = 'Sin conexión a internet. Conéctate para ver las versiones disponibles.';
+        loadingManifest.value = false;
+        return;
+    }
     loadingManifest.value = true;
     manifestError.value = '';
     try {
@@ -497,6 +495,11 @@ function handleGameCompleted() {
 
 async function onInstall() {
     if (!selectedVersion.value) return;
+    if (isOffline.value) {
+        phase.value = 'error';
+        errorMessage.value = 'Sin conexión a internet. No se puede descargar sin conexión.';
+        return;
+    }
     resetRun();
     phase.value = 'installing';
     errorMessage.value = '';
@@ -511,7 +514,7 @@ async function onInstall() {
         try {
             const st = await GetDownloadStatus(dlId.value);
             applyProgress(st as DownloadProgress);
-        } catch { }
+        } catch (_e) {}
         if (selectedLoader.value !== 'vanilla') {
             pendingLoaderInstall.value = true;
         }
@@ -577,7 +580,7 @@ async function onCancel() {
     if (dlId.value) {
         try {
             await CancelDownload(dlId.value);
-        } catch { }
+        } catch (_e) {}
     }
     resetRun();
     phase.value = 'setup';
@@ -603,7 +606,7 @@ async function syncFromBackend() {
         // restablece el menú de instalación para no tener que pulsar
         // "Nueva instalación" a mano.
         const ACTIVE = ['pending', 'downloading', 'paused', 'verifying', 'redownloading'];
-        const dl = (await ListDownloads()) ?? [];
+        const dl = ((await ListDownloads()) ?? []) as DownloadInfo[];
         const instIds = new Set(Object.values(downloads.value).map((x) => x.dlId));
         const active = dl.find(
             (d: DownloadInfo) => ACTIVE.includes(d.state) && !instIds.has(d.id)
@@ -621,7 +624,7 @@ async function syncFromBackend() {
             resetRun();
             phase.value = 'setup';
         }
-    } catch { }
+    } catch (_e) {}
 }
 
 watch(
@@ -641,15 +644,15 @@ async function maybeAutoLaunch() {
     if (autoLaunchHandled.value) return;
     let cfg: any = null;
     try {
-        cfg = await (window as any).go?.main?.App?.GetConfig?.();
-    } catch { }
+        cfg = await GetConfig();
+    } catch (_e) {}
     if (!cfg?.launcher?.launchAfterInstall) return;
     autoLaunchHandled.value = true;
     const installed = selectedVersion.value;
     try {
         await refreshAfterDownload();
         if (installed) selectVersion(installed);
-    } catch { }
+    } catch (_e) {}
     emit('update:visible', false);
     window.setTimeout(() => {
         void launchGame();
@@ -764,22 +767,34 @@ function onModLoaderEvent(raw: unknown) {
     }
 }
 
+let onlineHandler: (() => void) | null = null;
+
 onMounted(() => {
     window.addEventListener(CLOSE_OVERLAYS_EVENT, onCloseOverlays);
+    onlineHandler = () => {
+        if (manifestError.value && !isOffline.value) {
+            manifestLoaded.value = false;
+            loadManifest();
+        }
+        if (selectedVersion.value) refreshCompat(selectedVersion.value);
+    };
+    window.addEventListener(CONNECTIVITY_ONLINE_EVENT, onlineHandler);
     eventOffs = [
-        EventsOn('download_progress', onDownloadProgress),
-        EventsOn('download_state', onDownloadState),
-        EventsOn('download_error', onDownloadError),
-        EventsOn('modloader_resolving', onModLoaderEvent),
-        EventsOn('modloader_downloading', onModLoaderEvent),
-        EventsOn('modloader_installing', onModLoaderEvent),
-        EventsOn('modloader_installed', onModLoaderEvent),
-        EventsOn('modloader_error', onModLoaderEvent),
+        Events.On('download_progress', ({ data: raw }: any) => onDownloadProgress(raw)),
+        Events.On('download_state', ({ data: raw }: any) => onDownloadState(raw)),
+        Events.On('download_error', ({ data: raw }: any) => onDownloadError(raw)),
+        Events.On('modloader_resolving', ({ data: raw }: any) => onModLoaderEvent(raw)),
+        Events.On('modloader_downloading', ({ data: raw }: any) => onModLoaderEvent(raw)),
+        Events.On('modloader_installing', ({ data: raw }: any) => onModLoaderEvent(raw)),
+        Events.On('modloader_installed', ({ data: raw }: any) => onModLoaderEvent(raw)),
+        Events.On('modloader_error', ({ data: raw }: any) => onModLoaderEvent(raw)),
     ];
 });
 
 onUnmounted(() => {
     window.removeEventListener(CLOSE_OVERLAYS_EVENT, onCloseOverlays);
+    if (onlineHandler) window.removeEventListener(CONNECTIVITY_ONLINE_EVENT, onlineHandler);
+    onlineHandler = null;
     eventOffs.forEach((off) => off());
     eventOffs = [];
     if (doneResetTimer !== null) {
@@ -1068,7 +1083,7 @@ onUnmounted(() => {
 
                                     <div v-if="(progress?.sections ?? []).length" class="InstallationModal_DetailBlock">
                                         <div class="InstallationModal_DetailTitle">
-                                            Progreso por elemento<em>{{ progress!.sectionsCompleted.length }}/{{ progress!.sections.length }}</em>
+                                            Progreso por elemento<em>{{ (progress!.sectionsCompleted ?? []).length }}/{{ (progress!.sections ?? []).length }}</em>
                                         </div>
                                         <div class="InstallationModal_DetailList">
                                             <div
@@ -1095,7 +1110,7 @@ onUnmounted(() => {
                                     <div v-if="(progress?.activeFiles ?? []).length" class="InstallationModal_DetailBlock">
                                         <div class="InstallationModal_DetailTitle">Descargando ahora</div>
                                         <div class="InstallationModal_DetailList">
-                                            <div v-for="f in progress!.activeFiles.slice(0, 4)" :key="f.name" class="InstallationModal_DetailFile">
+                                            <div v-for="f in (progress!.activeFiles ?? []).slice(0, 4)" :key="f.name" class="InstallationModal_DetailFile">
                                                 <div class="InstallationModal_DetailFileHead">
                                                     <span class="name">{{ f.name }}</span>
                                                     <em>{{ fmt(clampPct(f.percent), 0) }}%</em>
@@ -1207,14 +1222,19 @@ onUnmounted(() => {
                     <div class="InstallationModal_Footer">
                         <template v-if="phase === 'setup'">
                             <button class="SsBtn" @click="closeModal">Cancelar</button>
-                            <button
-                                class="SsBtn SsBtnPrimary"
-                                :disabled="!installReady"
-                                @click="onInstall"
-                            >
-                                <IconDownload stroke="2" />
-                                {{ selectedLoader === 'vanilla' ? 'Instalar' : `Instalar con ${selectedLoader}` }}
-                            </button>
+                            <span class="offline-wrap" style="position: relative; display: inline-flex;">
+                                <button
+                                    class="SsBtn SsBtnPrimary"
+                                    :class="{ offline: isOffline }"
+                                    :disabled="!installReady || isOffline"
+                                    :title="isOffline ? 'Sin conexión — Instalar requiere internet y no está disponible sin conexión.' : undefined"
+                                    @click="onInstall"
+                                >
+                                    <IconDownload stroke="2" />
+                                    {{ selectedLoader === 'vanilla' ? 'Instalar' : `Instalar con ${selectedLoader}` }}
+                                </button>
+                                <OfflineBadge v-if="isOffline" placement="inside" tooltip="top" message="Sin conexión — Instalar requiere internet y no está disponible sin conexión." />
+                            </span>
                         </template>
 
                         <template v-else-if="phase === 'installing'">

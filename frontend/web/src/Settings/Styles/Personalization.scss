@@ -80,3 +80,28 @@
         min-width: max-content;
     }
 }
+
+// ---- Control de volumen de la música de fondo -------------------------------
+
+.SsVol {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    min-width: 12rem;
+}
+
+.SsVolRange {
+    flex: 1;
+    height: 4px;
+    cursor: pointer;
+    accent-color: var(--progress-color);
+}
+
+.SsVolVal {
+    min-width: 2.6rem;
+    text-align: right;
+    font-family: var(--font-secundary), Arial, sans-serif;
+    font-size: calc(.7rem * var(--font-size-secundary, 1));
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}

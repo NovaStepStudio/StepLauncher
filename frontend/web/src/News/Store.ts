@@ -1,5 +1,6 @@
 import { ref, reactive, computed } from 'vue';
-import { EventsOn } from '@wailsjs/runtime/runtime';
+import { Events } from '@wailsio/runtime';
+import { NewsRefreshIndex, NewsLoadRelease, NewsLoadChangelog, NewsLoadMarkdown } from '@wailsjs/StepLauncher/internal/Services/System/systemservice';
 
 export interface NewsEntry {
     version: string;
@@ -87,17 +88,13 @@ function parseEvent(raw: unknown): any {
     return raw;
 }
 
-function goNews() {
-    return (window as any)?.go?.main?.App;
-}
-
 let bound = false;
 
 export function bindNewsEvents() {
     if (bound) return;
     bound = true;
     try {
-        EventsOn('news_index', (raw: unknown) => {
+        Events.On('news_index', ({ data: raw }: any) => {
             const p = parseEvent(raw) as NewsIndex;
             if (p) {
                 indexState.value = {
@@ -118,7 +115,7 @@ export function bindNewsEvents() {
             }
             indexLoading.value = false;
         });
-        EventsOn('news_release', (raw: unknown) => {
+        Events.On('news_release', ({ data: raw }: any) => {
             const p = parseEvent(raw) as ReleaseDetail & { ok?: boolean; error?: string; newsPath?: string };
             if (!p || !p.version) return;
             if (!p.ok) {
@@ -136,7 +133,7 @@ export function bindNewsEvents() {
             detailLoading.set(p.version, false);
             releaseErrors.delete(p.version);
         });
-        EventsOn('news_changelog', (raw: unknown) => {
+        Events.On('news_changelog', ({ data: raw }: any) => {
             const p = parseEvent(raw) as ChangelogResult & { ok?: boolean; error?: string };
             if (!p || !p.version) return;
             if (!p.ok) {
@@ -154,7 +151,7 @@ export function bindNewsEvents() {
                 docErrors.delete(entry.url);
             }
         });
-        EventsOn('news_markdown', (raw: unknown) => {
+        Events.On('news_markdown', ({ data: raw }: any) => {
             const p = parseEvent(raw) as { ok?: boolean; error?: string; url?: string; markdown?: string };
             if (!p || !p.url) return;
             if (!p.ok) {
@@ -168,14 +165,14 @@ export function bindNewsEvents() {
                 docs.set(p.url, p.markdown);
             }
         });
-    } catch { }
+    } catch (_e) {}
 }
 
 export async function refreshNews() {
     bindNewsEvents();
     indexLoading.value = true;
     try {
-        await goNews()?.NewsRefreshIndex?.();
+        await NewsRefreshIndex();
     } catch {
         indexLoading.value = false;
         indexState.value = { ...indexState.value, ok: false, error: 'No se pudo contactar el servidor de noticias.' };
@@ -190,7 +187,7 @@ export function preloadDetails() {
         if (details.has(v) || detailLoading.get(v) || releaseErrors.has(v)) continue;
         detailLoading.set(v, true);
         try {
-            goNews()?.NewsLoadRelease?.(v);
+            NewsLoadRelease(v);
         } catch {
             detailLoading.set(v, false);
             releaseErrors.set(v, 'No se pudo cargar la noticia.');
@@ -204,7 +201,7 @@ export function reloadDetail(version: string) {
     detailLoading.set(version, true);
     releaseErrors.delete(version);
     try {
-        goNews()?.NewsLoadRelease?.(version);
+        NewsLoadRelease(version);
     } catch {
         detailLoading.set(version, false);
         releaseErrors.set(version, 'No se pudo cargar la noticia.');
@@ -216,7 +213,7 @@ export function loadChangelog(version: string) {
     changelogLoading.set(version, true);
     changelogErrors.delete(version);
     try {
-        goNews()?.NewsLoadChangelog?.(version);
+        NewsLoadChangelog(version);
     } catch {
         changelogLoading.set(version, false);
         changelogErrors.set(version, 'No se pudo solicitar el changelog.');
@@ -228,7 +225,7 @@ export function loadMarkdown(url: string) {
     docLoading.set(url, true);
     docErrors.delete(url);
     try {
-        goNews()?.NewsLoadMarkdown?.(url);
+        NewsLoadMarkdown(url);
     } catch {
         docLoading.set(url, false);
         docErrors.set(url, 'No se pudo solicitar el documento.');

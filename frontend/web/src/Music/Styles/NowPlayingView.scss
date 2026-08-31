@@ -1,0 +1,621 @@
+@use '../../Common/Styles/Components' as *;
+
+// AhoraSuenaView — carátula enorme + cola lateral pulida
+
+.MusicSection.MusicNow {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--background-modal-primary);
+    padding: 0;
+}
+
+.MusicNow_Layout.is-pro {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    overflow: hidden;
+    @media (max-width: 820px) { flex-direction: column; overflow-y: auto; }
+}
+
+.MusicNow_Huge.is-pro {
+    flex: 1.35;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.2rem;
+    border-radius: 0.9rem;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--control-bg) 68%, transparent), var(--control-bg-dark));
+    border: 1px solid color-mix(in srgb, var(--text-primary) 6%, transparent);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: border-color 0.5s ease;
+}
+
+.MusicNow_HugeBgImg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(30px) saturate(1.25) brightness(0.88);
+    opacity: 0.32;
+    transform: scale(1.14);
+    pointer-events: none;
+}
+
+.MusicNow_HugeBg {
+    position: absolute;
+    inset: 0;
+    opacity: 0.95;
+    pointer-events: none;
+}
+
+.MusicNow_CoverWrap.is-row.is-pro {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1.1rem;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 100%;
+
+    .MusicNow_Cover.is-huge.is-pro {
+        width: auto;
+        height: auto;
+        min-width: 120px;
+        min-height: 120px;
+        max-width: 320px;
+        max-height: 320px;
+        flex-shrink: 0;
+        border: 1px solid color-mix(in srgb, white 10%, transparent);
+        box-shadow: 0 14px 36px rgba(0,0,0,0.24);
+        border-radius: 1rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: var(--text-secondary);
+        position: relative;
+        overflow: hidden;
+        // Imagen auto con max 100% — el borde se adapta al aspect de la carátula (horizontal/vertical), no forza cuadrado
+        img {
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 1rem;
+            display: block;
+        }
+        svg { width: 2rem; height: 2rem; opacity: 0.35; }
+        &.is-loading { background: color-mix(in srgb, var(--control-bg) 70%, transparent); }
+        // Disco siempre cuadrado/circular, tamaño fijo
+        &.is-disc {
+            width: 320px;
+            height: 320px;
+            aspect-ratio: 1;
+            max-width: 320px;
+            max-height: 320px;
+            img, img.is-disc-img {
+                width: 100%;
+                height: 100%;
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: cover;
+            }
+        }
+    }
+
+    .MusicNow_HugeInfo.is-side.is-pro {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        gap: 0.35rem;
+    }
+
+    @media (max-width: 700px) {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        .MusicNow_HugeInfo.is-side.is-pro { align-items: center; text-align: center; }
+        .MusicNow_Cover.is-huge.is-pro {
+            width: auto;
+            height: auto;
+            max-width: min(300px, 70vw);
+            max-height: min(300px, 70vw);
+            &.is-disc {
+                width: min(300px, 70vw);
+                height: min(300px, 70vw);
+                max-width: min(300px, 70vw);
+                max-height: min(300px, 70vw);
+            }
+        }
+    }
+}
+
+.MusicNow_Kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: calc(0.58rem * var(--font-size-secundary, 1));
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.55;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.MusicNow_Title.is-huge {
+    margin: 0;
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: calc(1.35rem * var(--font-size-primary, 1));
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.MusicNow_Artist.is-huge {
+    margin: 0;
+    font-size: calc(0.86rem * var(--font-size-secundary, 1));
+    opacity: 0.65;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.MusicNow_Album {
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    opacity: 0.45;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.MusicNow_Progress.is-pro {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    margin-top: 0.5rem;
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+
+    span { min-width: 2.4rem; text-align: center; flex-shrink: 0; }
+}
+
+.MusicNow_Bar {
+    flex: 1;
+    height: 0.32rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+
+    i {
+        position: absolute;
+        inset: 0 auto 0 0;
+        background: var(--progress-color);
+        border-radius: 999px;
+        transition: width 0.2s linear;
+    }
+}
+
+.MusicNow_Range {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    margin: 0;
+}
+
+.MusicNow_Controls.is-huge {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.6rem;
+}
+
+.MusicNow_Btn {
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 0.6rem;
+    border: var(--border-style);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: var(--transition);
+    &:hover { background: var(--control-bg-soft); color: var(--text-primary); }
+    &.is-play {
+        width: 2.7rem;
+        height: 2.7rem;
+        background: var(--background-button-primary);
+        color: var(--text-primary);
+        border-color: transparent;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+        &:hover { filter: brightness(1.08); }
+    }
+}
+
+.MusicNow_Side.is-pro {
+    width: 290px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    background: color-mix(in srgb, var(--control-bg) 52%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text-primary) 6%, transparent);
+    border-radius: 0.85rem;
+    padding: 0.8rem;
+    overflow: hidden;
+
+    h4 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: calc(0.76rem * var(--font-size-primary, 1));
+        font-weight: 700;
+        color: var(--text-primary);
+        flex-shrink: 0;
+        svg { opacity: 0.7; }
+        em { font-style: normal; }
+    }
+
+    @media (max-width: 820px) { width: 100%; max-height: 340px; }
+}
+
+.MusicNow_SideHint {
+    margin: 0;
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    opacity: 0.45;
+    flex-shrink: 0;
+}
+
+.MusicRows.small.is-side {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.25rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text-primary) 14%, transparent) transparent;
+    &::-webkit-scrollbar { width: 6px; height: 6px; }
+    &::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text-primary) 14%, transparent); border-radius: 999px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+}
+
+.MusicRow.small {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.45rem;
+    border-radius: 0.5rem;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: var(--transition);
+    cursor: pointer;
+    &:hover { background: color-mix(in srgb, var(--control-bg) 65%, transparent); }
+    &.is-active { background: color-mix(in srgb, var(--progress-color) 10%, transparent); border-color: color-mix(in srgb, var(--progress-color) 14%, transparent); }
+    &.dragging { opacity: 0.5; border-style: dashed; border-color: var(--progress-color); }
+}
+
+.MusicRow_Drag {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    flex-shrink: 0;
+    opacity: 0.45;
+    cursor: grab;
+    &:active { cursor: grabbing; }
+    &.small { width: 1rem; height: 1rem; }
+}
+.MusicRow_IconBtn {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.35rem;
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: var(--transition);
+    &:hover { background: var(--control-bg-soft); color: var(--text-primary); }
+    &.danger:hover { background: color-mix(in srgb, var(--color-error) 12%, transparent); border-color: color-mix(in srgb, var(--color-error) 20%, transparent); color: var(--color-error); }
+    &.small { width: 1.4rem; height: 1.4rem; }
+}
+.MusicRow_MenuWrap { position: relative; flex-shrink: 0; }
+.MusicRow_Menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    min-width: 170px;
+    background: var(--background-modal-primary);
+    border: var(--border-style);
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.22);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.45rem 0.6rem;
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-size: 0.70rem;
+        text-align: left;
+        cursor: pointer;
+        &:hover { background: var(--control-bg); }
+        &.danger { color: var(--color-error); &:hover { background: color-mix(in srgb, var(--color-error) 10%, transparent); } }
+    }
+}
+
+.MusicRow_Cover.small {
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 0.4rem;
+    background: var(--control-bg-dark);
+    border: var(--border-style);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    color: var(--text-secondary);
+    img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+}
+
+.MusicRow_Info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.08rem; }
+.MusicRow_Title { font-size: calc(0.72rem * var(--font-size-primary, 1)); font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.MusicRow_Sub { font-size: calc(0.62rem * var(--font-size-secundary, 1)); opacity: 0.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.MusicRow_Dur { font-size: calc(0.62rem * var(--font-size-secundary, 1)); opacity: 0.45; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+.MusicRow_Play {
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 0.38rem;
+    border: var(--border-style);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: var(--transition);
+    &:hover { background: var(--background-button-primary); color: var(--text-primary); border-color: transparent; transform: translateY(-1px); }
+    &:active { transform: translateY(0); }
+    &.small { width: 1.5rem; height: 1.5rem; border-radius: 0.35rem; }
+    &.on { background: var(--background-button-primary); color: var(--text-primary); border-color: transparent; }
+}
+
+.MusicMiniEmpty {
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    opacity: 0.45;
+    text-align: center;
+    padding: 0.8rem 0;
+    margin: 0;
+}
+
+.MusicNow_SideFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+    margin-top: 0.3rem;
+    border-top: 1px solid color-mix(in srgb, var(--text-primary) 6%, transparent);
+    flex-shrink: 0;
+}
+
+.MusicNow_SideInfo {
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    opacity: 0.5;
+    font-variant-numeric: tabular-nums;
+}
+
+.MusicNow_SidePages {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.MusicPgBtn.small {
+    min-width: 1.6rem;
+    height: 1.6rem;
+    padding: 0 0.3rem;
+    border-radius: 0.4rem;
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    font-size: calc(0.68rem * var(--font-size-secundary, 1));
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: var(--transition);
+    &:hover:not(:disabled) { background: var(--control-bg-soft); color: var(--text-primary); }
+    &.on { background: var(--background-button-primary); color: var(--text-primary); border-color: transparent; }
+    &:disabled { opacity: 0.35; cursor: not-allowed; }
+}
+
+// ——— Modo carátula predominante: solo carátula enorme + título + artista ———
+// Carátula: 20rem fijos con mínimo 3rem x 3rem, centrada
+.MusicNow_Huge.is-huge-mode {
+    flex: 1.35;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    padding: 1rem;
+    border-radius: 0.9rem;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--control-bg) 68%, transparent), var(--control-bg-dark));
+    border: 1px solid color-mix(in srgb, var(--text-primary) 6%, transparent);
+    position: relative;
+    overflow: hidden;
+}
+// Contenedor controla el tamaño (15..30 rem) — la carátula en sí es auto con max 100% para que el borde se adapte
+.MusicNow_HugeCoverOnly {
+    width: auto;
+    height: auto;
+    min-width: 3rem;
+    min-height: 3rem;
+    max-width: min(20rem, 85vw);
+    max-height: min(20rem, 55vh);
+    border-radius: 1rem;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--control-bg-dark);
+    border: 1px solid color-mix(in srgb, white 10%, transparent);
+    box-shadow: 0 16px 36px rgba(0,0,0,0.26);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    // Imagen auto limitada al contenedor — no sobresale, borde se adapta
+    img {
+        width: auto;
+        height: auto;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+    &.is-loading { background: color-mix(in srgb, var(--control-bg) 70%, transparent); }
+    @media (max-width: 820px) {
+        width: auto;
+        height: auto;
+        min-width: 3rem;
+        min-height: 3rem;
+        max-width: min(20rem, 80vw);
+        max-height: min(20rem, 80vw);
+    }
+    &.is-disc {
+        width: 20rem;
+        height: 20rem;
+        aspect-ratio: 1;
+        max-width: min(20rem, 85vw);
+        max-height: min(20rem, 85vw);
+        border-radius: 50%;
+        position: relative;
+        overflow: hidden;
+        img, img.is-disc-img {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            animation: discSpin 8s linear infinite;
+        }
+        &::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            margin: auto;
+            width: 1rem;
+            height: 1rem;
+            background: radial-gradient(circle, #000 0%, #000 0%);
+            border-radius: 50%;
+        }
+        @media (max-width: 820px) {
+            width: 20rem;
+            height: 20rem;
+            max-width: min(20rem, 80vw);
+            max-height: min(20rem, 80vw);
+        }
+    }
+}
+@keyframes discSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.MusicNow_HugeMetaOnly {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.25rem;
+    width: 100%;
+    max-width: 20rem;
+    // Tamaños exactos pedidos: título 1rem, artista 0.65rem
+    .MusicNow_Title.is-huge {
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1.1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+    .MusicNow_Artist.is-huge {
+        font-size: 0.65rem;
+        opacity: 0.85;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+}
+.MusicNow_Cover.is-disc {
+    border-radius: 50% !important;
+    overflow: hidden;
+    position: relative;
+    img.is-disc-img { border-radius: 50%; animation: discSpin 8s linear infinite; }
+}
+
+.MusicNow_Shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-primary) 7%, transparent) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: nowShimmer 1.15s linear infinite;
+}
+.MusicRow_Cover.is-loading { position: relative; overflow: hidden; background: color-mix(in srgb, var(--control-bg) 70%, transparent); }
+.MusicRow_Shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-primary) 7%, transparent) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: nowShimmer 1.15s linear infinite;
+}
+@keyframes nowShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}

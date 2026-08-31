@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { DetectJavaInstallations, TotalRAMGB, SetMaxRAM, MaxRAMGB, GetMinecraftConfig, UpdateMinecraftConfig, GetConfig, SetVerifyBeforeLaunch } from '@wailsjs/StepLauncher/internal/Services/Config/configservice';
+import { isOffline } from '@/Common/Stores/Connectivity';
 
 const hwEnabled = ref(true);
 const hwAccel = ref(true);
@@ -32,6 +34,8 @@ const offlineMode = ref(false);
 const compatMode = ref(false);
 const detailedLogs = ref(false);
 
+const verifyBeforeLaunch = ref(true);
+
 function parseDetected(list: string[]): JavaDetected[] {
     const out: JavaDetected[] = [];
     for (const entry of list) {
@@ -59,9 +63,9 @@ const javaSelectOptions = computed(() => {
 
 async function scanJava() {
     try {
-        const list = await (window as any).go?.main?.App?.DetectJavaInstallations?.();
+        const list = await DetectJavaInstallations?.();
         if (Array.isArray(list)) detectedJava.value = parseDetected(list);
-    } catch { }
+    } catch (_e) {}
 }
 
 function pickJava() {
@@ -72,12 +76,12 @@ function pickJava() {
 
 async function detectRAM() {
     try {
-        const total = await (window as any).go?.main?.App?.TotalRAMGB?.();
+        const total = await TotalRAMGB?.();
         if (total && typeof total === 'number') {
             totalRAM.value = total;
             return;
         }
-    } catch { }
+    } catch (_e) {}
 
     if ((navigator as any).deviceMemory) {
         totalRAM.value = Math.round((navigator as any).deviceMemory as number);
@@ -89,20 +93,20 @@ async function detectRAM() {
 
 async function saveRAM() {
     try {
-        await (window as any).go?.main?.App?.SetMaxRAM?.(maxRAM.value);
-    } catch { }
+        await SetMaxRAM?.(maxRAM.value);
+    } catch (_e) {}
 }
 
 onMounted(async () => {
     await detectRAM();
 
     try {
-        const cur = await (window as any).go?.main?.App?.MaxRAMGB?.();
+        const cur = await MaxRAMGB?.();
         if (cur && typeof cur === 'number') maxRAM.value = cur;
-    } catch { }
+    } catch (_e) {}
 
     try {
-        const c = await (window as any).go?.main?.App?.GetMinecraftConfig?.();
+        const c = await GetMinecraftConfig?.();
         if (c) {
             hwEnabled.value = c.hardwareEnabled ?? true;
             hwAccel.value = c.hardwareAcceleration ?? true;
@@ -119,7 +123,13 @@ onMounted(async () => {
             compatMode.value = c.compatMode ?? false;
             detailedLogs.value = c.detailedLogs ?? false;
         }
-    } catch { }
+    } catch (_e) {}
+    try {
+        const cfg = await GetConfig?.();
+        if (cfg?.launcher) {
+            verifyBeforeLaunch.value = cfg.launcher.verifyBeforeLaunch ?? true;
+        }
+    } catch (_e) {}
 
     await scanJava();
     if (javaCustomPath.value && detectedJava.value.some((j) => j.path === javaCustomPath.value)) {
@@ -129,7 +139,7 @@ onMounted(async () => {
 
 async function save() {
     try {
-        await (window as any).go?.main?.App?.UpdateMinecraftConfig?.({
+        await UpdateMinecraftConfig?.({
             hardwareEnabled: hwEnabled.value,
             hardwareAcceleration: hwAccel.value,
             gpuType: gpuType.value,
@@ -144,8 +154,14 @@ async function save() {
             offlineMode: offlineMode.value,
             compatMode: compatMode.value,
             detailedLogs: detailedLogs.value,
-        });
-    } catch { }
+        } as any);
+    } catch (_e) {}
+}
+
+async function saveVerifyBeforeLaunch() {
+    try {
+        await SetVerifyBeforeLaunch?.(verifyBeforeLaunch.value);
+    } catch (_e) {}
 }
 </script>
 
@@ -155,12 +171,12 @@ async function save() {
     <div class="SsGroup">
         <div class="SsGroupHead">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M20 15h2"/></svg>
-            <span>Hardware</span>
+            <span>Gráficos</span>
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Aplicar opciones</span>
-                <span class="SsDesc">Aplica las opciones de hardware al iniciar el juego.</span>
+                <span class="SsLabel">Usar opciones de gráfica</span>
+                <span class="SsDesc">Si lo apagas, el juego usa lo que trae por defecto.</span>
             </div>
             <div class="SsCtrl">
                 <label class="SsTg"><input type="checkbox" v-model="hwEnabled" @change="save"><span class="SsTgS"></span></label>
@@ -169,8 +185,8 @@ async function save() {
         <template v-if="hwEnabled">
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Aceleración de hardware</span>
-                    <span class="SsDesc">Usa la GPU para el renderizado dentro de Minecraft.</span>
+                    <span class="SsLabel">Aceleración</span>
+                    <span class="SsDesc">Usa tu gráfica para que vaya más fluido.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="hwAccel" @change="save"><span class="SsTgS"></span></label>
@@ -178,8 +194,8 @@ async function save() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Tipo de GPU</span>
-                    <span class="SsDesc">Tarjeta gráfica que se usará al iniciar el juego.</span>
+                    <span class="SsLabel">Qué gráfica usar</span>
+                    <span class="SsDesc">Automático elige la mejor para tu PC.</span>
                 </div>
                 <div class="SsCtrl">
                     <select class="SsSel" v-model="gpuType" @change="save">
@@ -192,8 +208,8 @@ async function save() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Preset de GPU</span>
-                    <span class="SsDesc">Perfil de rendimiento de la tarjeta gráfica.</span>
+                    <span class="SsLabel">Modo de la gráfica</span>
+                    <span class="SsDesc">Rendimiento va más rápido, Calidad se ve mejor.</span>
                 </div>
                 <div class="SsCtrl">
                     <select class="SsSel" v-model="gpuPreset" @change="save">
@@ -206,7 +222,7 @@ async function save() {
             </div>
             <div class="SsTip">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <span><strong>Aviso:</strong> dependiendo del Java, estas opciones pueden impedir que el juego inicie.</span>
+                <span>Si el juego no abre, prueba apagando esto.</span>
             </div>
         </template>
     </div>
@@ -218,8 +234,8 @@ async function save() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">RAM Máxima</span>
-                <span class="SsDesc">Memoria asignada a Minecraft. Tu equipo tiene {{ totalRAM }} GB.</span>
+                <span class="SsLabel">Memoria para Minecraft</span>
+                <span class="SsDesc">Cuánta memoria le das al juego. Tienes {{ totalRAM }} GB en total.</span>
             </div>
             <div class="SsCtrl">
                 <div class="SsStep">
@@ -231,7 +247,7 @@ async function save() {
         </div>
         <div class="SsTip">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span><strong>Recomendado:</strong> la mitad de tu RAM total disponible.</span>
+            <span>Tip: usa la mitad de tu memoria total.</span>
         </div>
     </div>
 
@@ -242,23 +258,23 @@ async function save() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Runtime</span>
-                <span class="SsDesc">Motor de Java utilizado para ejecutar Minecraft.</span>
+                <span class="SsLabel">Qué Java usar</span>
+                <span class="SsDesc">Déjalo en Automático si no sabes qué es esto.</span>
             </div>
             <div class="SsCtrl">
                 <select class="SsSel" v-model="javaMode" @change="save">
-                    <option value="auto">Detectar automáticamente</option>
-                    <option value="system">Utilizar Java del sistema</option>
-                    <option value="official">Java Oficial (Mojang)</option>
-                    <option value="custom">Java Personalizado</option>
+                    <option value="auto">Automático</option>
+                    <option value="system">Elegir de mi PC</option>
+                    <option value="official">El que trae Minecraft</option>
+                    <option value="custom">Ruta manual</option>
                 </select>
             </div>
         </div>
         <template v-if="javaMode === 'system'">
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Java del sistema</span>
-                    <span class="SsDesc">Toca Buscar para detectar los Java instalados y elige uno.</span>
+                    <span class="SsLabel">Elige uno</span>
+                    <span class="SsDesc">Busca los Java que tienes y elige.</span>
                 </div>
                 <div class="SsCtrl">
                     <select class="SsSel SsSelJava" v-model="selectedJava" @change="pickJava">
@@ -275,8 +291,8 @@ async function save() {
         <template v-else-if="javaMode === 'custom'">
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Ruta del ejecutable</span>
-                    <span class="SsDesc">Ubicación de javaw.exe / java en tu sistema.</span>
+                    <span class="SsLabel">Dónde está Java</span>
+                    <span class="SsDesc">Pega la ruta a javaw.exe</span>
                 </div>
                 <div class="SsCtrl">
                     <input class="SsIn" v-model="javaCustomPath" placeholder="C:\ruta\javaw.exe" @change="save">
@@ -292,8 +308,8 @@ async function save() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Resolución</span>
-                <span class="SsDesc">Tamaño de la ventana del juego al iniciar.</span>
+                <span class="SsLabel">Tamaño al abrir</span>
+                <span class="SsDesc">Ancho y alto de la ventana del juego.</span>
             </div>
             <div class="SsGrid">
                 <div class="SsField">
@@ -309,7 +325,7 @@ async function save() {
         <div class="SsRow">
             <div class="SsInfo">
                 <span class="SsLabel">Pantalla completa</span>
-                <span class="SsDesc">Abre Minecraft a pantalla completa al iniciar.</span>
+                <span class="SsDesc">Que el juego ocupe toda la pantalla al abrir.</span>
             </div>
             <div class="SsCtrl">
                 <label class="SsTg"><input type="checkbox" v-model="fullscreen" @change="save"><span class="SsTgS"></span></label>
@@ -320,37 +336,61 @@ async function save() {
     <div class="SsGroup">
         <div class="SsGroupHead">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-            <span>Argumentos</span>
+            <span>Avanzado</span>
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">JVM</span>
-                <span class="SsDesc">Argumentos extra para la máquina virtual de Java.</span>
+                <span class="SsLabel">Opciones para Java</span>
+                <span class="SsDesc">Solo toca esto si sabes lo que haces.</span>
             </div>
         </div>
         <div class="SsArg">
-            <input class="SsIn SsInW" v-model="javaArgs" placeholder="-XX:+UseG1GC -XX:MaxGCPauseMillis=50" @change="save">
+            <input class="SsIn SsInW" v-model="javaArgs" placeholder="Ej: -XX:+UseG1GC" @change="save">
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Game</span>
-                <span class="SsDesc">Argumentos extra que recibe el juego al iniciar.</span>
+                <span class="SsLabel">Opciones para el juego</span>
+                <span class="SsDesc">También solo para avanzados.</span>
             </div>
         </div>
         <div class="SsArg">
-            <input class="SsIn SsInW" v-model="gameArgs" placeholder="--width=854 --height=480" @change="save">
+            <input class="SsIn SsInW" v-model="gameArgs" placeholder="Ej: --width 854" @change="save">
+        </div>
+    </div>
+
+    <div class="SsGroup">
+        <div class="SsGroupHead">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Lanzamiento</span>
+        </div>
+        <div class="SsRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Verificar antes de lanzar Minecraft</span>
+                <span class="SsDesc">Si está activo, comprueba que todos los archivos del juego estén completos antes de iniciar. Desactívalo para lanzar más rápido si sabes que todo está descargado.</span>
+            </div>
+            <div class="SsCtrl">
+                <label class="SsTg"><input type="checkbox" v-model="verifyBeforeLaunch" :disabled="isOffline" @change="saveVerifyBeforeLaunch"><span class="SsTgS"></span></label>
+            </div>
+        </div>
+        <div v-if="isOffline" class="SsTip">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>Sin internet esta opción está forzada y no se puede desactivar. Volverá a funcionar al recuperar la conexión.</span>
+        </div>
+        <div v-else class="SsTip">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>Sin internet esta verificación se activará automáticamente para evitar que el juego falle por archivos incompletos.</span>
         </div>
     </div>
 
     <div class="SsGroup">
         <div class="SsGroupHead">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            <span>Avanzado</span>
+            <span>Más opciones</span>
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Modo offline</span>
-                <span class="SsDesc">Permite iniciar el juego sin conexión a internet.</span>
+                <span class="SsLabel">Jugar sin internet</span>
+                <span class="SsDesc">Te deja entrar aunque no tengas conexión.</span>
             </div>
             <div class="SsCtrl">
                 <label class="SsTg"><input type="checkbox" v-model="offlineMode" @change="save"><span class="SsTgS"></span></label>
@@ -358,8 +398,8 @@ async function save() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Forzar modo compatible</span>
-                <span class="SsDesc">Usa ajustes compatibles con hardware antiguo.</span>
+                <span class="SsLabel">Modo para PCs viejos</span>
+                <span class="SsDesc">Si tu PC tiene muchos años y el juego falla, prueba esto.</span>
             </div>
             <div class="SsCtrl">
                 <label class="SsTg"><input type="checkbox" v-model="compatMode" @change="save"><span class="SsTgS"></span></label>
@@ -367,8 +407,8 @@ async function save() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Logs detallados</span>
-                <span class="SsDesc">Genera registros con información extendida.</span>
+                <span class="SsLabel">Guardar más info si falla</span>
+                <span class="SsDesc">Útil si necesitas reportar un error.</span>
             </div>
             <div class="SsCtrl">
                 <label class="SsTg"><input type="checkbox" v-model="detailedLogs" @change="save"><span class="SsTgS"></span></label>

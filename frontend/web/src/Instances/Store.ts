@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue';
-import { EventsOn } from '@wailsjs/runtime/runtime';
+import { Events } from '@wailsio/runtime';
 import { hideOnLaunchIfEnabled } from '@/Launcher/Store';
 import {
     downloads as dlStore,
@@ -7,25 +7,15 @@ import {
     clearDownload as clearCentralDownload,
     activeDownloads as dlActiveDownloads,
 } from '@/Downloads/Store';
-import {
-    ListInstances,
-    GetInstance,
-    CreateInstance as CreateInstanceBinding,
-    UpdateInstanceMetadata,
-    DeleteInstance,
-    UpdateInstanceConfig,
-    AddInstanceVersion,
-    CancelInstanceDownload,
-    VerifyInstance,
-    LaunchInstance,
-    CloneInstance,
-    InstallInstanceModLoader,
-    GetInstalledInstanceModLoader,
-    RemoveInstanceModLoaderState,
-    GetInstanceStats as GetInstanceStatsBinding,
-    OpenInstanceFolder as OpenInstanceFolderBinding,
-} from '@wailsjs/go/main/App';
-import type { instance } from '@wailsjs/go/models';
+import { ListInstances, GetInstance, CreateInstance as CreateInstanceBinding, UpdateInstanceMetadata, DeleteInstance, UpdateInstanceConfig, AddInstanceVersion, CancelInstanceDownload, VerifyInstance, CloneInstance, OpenInstanceFolder as OpenInstanceFolderBinding, StartInstanceVerify as StartInstanceVerifyBinding, CancelInstanceVerify as CancelInstanceVerifyBinding, InstanceVerifyStatus as InstanceVerifyStatusBinding, CreateInstanceBackup as CreateInstanceBackupBinding } from '@wailsjs/StepLauncher/internal/Services/Instance/instanceservice';
+import { LaunchInstance, GetInstanceStats as GetInstanceStatsBinding } from '@wailsjs/StepLauncher/internal/Services/Game/gameservice';
+import { InstallInstanceModLoader, GetInstalledInstanceModLoader, RemoveInstanceModLoaderState } from '@wailsjs/StepLauncher/internal/Services/ModLoader/modloaderservice';
+import type {
+    AddVersionReq,
+    CreateInstanceReq as EngineCreateInstanceReq,
+    InstanceLaunchConfig as EngineInstanceLaunchConfig,
+    InstanceVerifyProgress,
+} from '@wailsjs/StepLauncher/internal/Core/Launcher/Instance/models';
 
 export interface InstanceInfo {
     name: string;
@@ -34,6 +24,7 @@ export interface InstanceInfo {
     favorite: boolean;
     pinned: boolean;
     group: string;
+    tags: string[];
     lastPlayed: string;
     playTime: number;
 }
@@ -69,6 +60,12 @@ export interface InstanceLaunchConfig {
     customResolution?: boolean;
     resWidth?: number;
     resHeight?: number;
+    javaArgs?: string[];
+    gameArgs?: string[];
+    detailedLogs?: boolean;
+    backupSchedule?: string;
+    backupInterval?: number;
+    lastBackupAt?: string;
 }
 
 export interface CreateInstanceReq {
@@ -227,8 +224,18 @@ export const loaderDls = ref<Record<string, InstanceLoaderDl>>({});
 export const launching = ref<Record<string, boolean>>({});
 export const loadingList = ref(false);
 
+// Estado de la verificación de integridad asíncrona por instancia (polling
+// de InstanceVerifyStatus). Mientras una instancia está en "verifying" NO se
+// puede utilizar: lanzar, descargar, editar o borrar quedan bloqueados.
+export const verifyStates = ref<Record<string, InstanceVerifyProgress>>({});
+
 const dlToInstance = new Map<string, string>();
 const loaderSessionToInstance = new Map<string, string>();
+
+// Modloader pendiente de instalar tras la descarga de la versión base. Vive en
+// el Store (no en el modal) para que la instalación arranque aunque el modal
+// se cierre durante la descarga: al completar la versión se consume aquí.
+const pendingLoaderByInst = new Map<string, { loader: string; loaderVersion: string; mcVersion: string }>();
 
 const ACTIVE_DL = ['pending', 'downloading', 'paused', 'verifying', 'redownloading'];
 const TERMINAL_DL = ['completed', 'cancelled', 'error'];
@@ -236,12 +243,13 @@ const TERMINAL_DL = ['completed', 'cancelled', 'error'];
 // El map por instancia (para tarjetas, banners y modales) se deriva de la lista
 // central de descargas: el registro de eventos download_* vive solo en
 // Downloads/Store.ts y aquí se proyecta por instancia. Al pasar a un estado
-// terminal se refresca la lista de instancias.
+// terminal se refresca la lista de instancias y su detalle, y si había un
+// modloader pendiente para esa instancia se arranca su instalación aquí.
 watch(
     dlStore,
     (all) => {
         const next: Record<string, InstanceDownloadState> = {};
-        let transitioned = false;
+        let transitionedInst: string | null = null;
         for (const [id, d] of Object.entries(all)) {
             const inst = dlToInstance.get(id);
             if (!inst) continue;
@@ -258,11 +266,15 @@ watch(
                 error: d.error,
             };
             if (prev && ACTIVE_DL.includes(prev.state) && TERMINAL_DL.includes(d.state)) {
-                transitioned = true;
+                transitionedInst = inst;
             }
         }
         downloads.value = next;
-        if (transitioned) void loadInstances();
+        if (transitionedInst) {
+            void loadInstances();
+            void loadDetails(transitionedInst);
+            runPendingLoader(transitionedInst, next[transitionedInst]?.state);
+        }
     },
     { deep: true }
 );
@@ -294,11 +306,11 @@ function ensureEvents() {
         // modal de instalación esté cerrado. El modal tiene su propia vista.
         // Las descargas download_* se gestionan en Downloads/Store.ts (lista
         // central) y se proyectan aquí por instancia con el watch de dlStore.
-        EventsOn('modloader_resolving', (raw: any) => updateModLoaderEvent(raw)),
-        EventsOn('modloader_downloading', (raw: any) => updateModLoaderEvent(raw)),
-        EventsOn('modloader_installing', (raw: any) => updateModLoaderEvent(raw)),
-        EventsOn('modloader_installed', (raw: any) => updateModLoaderEvent(raw)),
-        EventsOn('modloader_error', (raw: any) => updateModLoaderEvent(raw)),
+        Events.On('modloader_resolving', ({ data: raw }: any) => updateModLoaderEvent(raw)),
+        Events.On('modloader_downloading', ({ data: raw }: any) => updateModLoaderEvent(raw)),
+        Events.On('modloader_installing', ({ data: raw }: any) => updateModLoaderEvent(raw)),
+        Events.On('modloader_installed', ({ data: raw }: any) => updateModLoaderEvent(raw)),
+        Events.On('modloader_error', ({ data: raw }: any) => updateModLoaderEvent(raw)),
     ];
 }
 
@@ -341,6 +353,11 @@ function updateModLoaderEvent(raw: unknown): void {
         case 'modloader_installed':
             next.phase = 'done';
             void loadInstalledLoader(inst);
+            // El instalador puede crear su propia carpeta de versión (p. ej.
+            // Forge/NeoForge): se refresca el detalle y la lista para que las
+            // versiones aparezcan sin reiniciar ni recargar la web.
+            void loadDetails(inst);
+            void loadInstances();
             window.setTimeout(() => clearLoaderDl(inst), 8000);
             break;
         case 'modloader_error':
@@ -378,6 +395,50 @@ export function registerLoaderSession(
     };
 }
 
+// Registra un modloader pendiente de instalar cuando termine la descarga de la
+// versión base. Vive en el Store (no en el modal) para que la instalación
+// arranque aunque el modal se cierre durante la descarga.
+export function scheduleLoaderInstall(
+    name: string,
+    loader: string,
+    loaderVersion: string,
+    mcVersion: string
+): void {
+    ensureEvents();
+    pendingLoaderByInst.set(name, { loader, loaderVersion, mcVersion });
+}
+
+export function cancelPendingLoader(name: string): void {
+    pendingLoaderByInst.delete(name);
+}
+
+// Consume el modloader pendiente de una instancia cuando su descarga de la
+// versión base terminó con éxito: arranca la instalación y registra la sesión
+// para que los eventos modloader_* alimenten banner, tarjeta y modal.
+function runPendingLoader(instName: string, state?: string): void {
+    if (state !== 'completed') return;
+    const pending = pendingLoaderByInst.get(instName);
+    if (!pending) return;
+    pendingLoaderByInst.delete(instName);
+    void (async () => {
+        const res = await installInstanceModLoader(
+            instName,
+            pending.loader,
+            pending.loaderVersion,
+            pending.mcVersion
+        );
+        if (res.ok && res.sessionId) {
+            registerLoaderSession(
+                instName,
+                res.sessionId,
+                pending.loader,
+                pending.loaderVersion,
+                pending.mcVersion
+            );
+        }
+    })();
+}
+
 export function clearLoaderDl(instName: string): void {
     if (!loaderDls.value[instName]) return;
     const next = { ...loaderDls.value };
@@ -389,11 +450,18 @@ export function loaderDlOf(name: string): InstanceLoaderDl | null {
     return loaderDls.value[name] ?? null;
 }
 
+// ¿El sessionId de un evento modloader_* pertenece a la instalación de esta
+// instancia? Lo usan los modales para ignorar eventos de otras instancias.
+export function isLoaderSessionOf(name: string, sessionId: string): boolean {
+    return loaderSessionToInstance.get(sessionId) === name;
+}
+
 // La instancia está ocupada (no se puede jugar/descargar/editar) mientras
-// tiene una descarga activa, una instalación de modloader en curso o un
-// lanzamiento en marcha.
+// tiene una descarga activa, una instalación de modloader en curso, una
+// verificación de integridad en marcha o un lanzamiento en ejecución.
 export function isInstanceBusy(name: string): boolean {
     if (launching.value[name]) return true;
+    if (isInstanceVerifying(name)) return true;
     const ld = loaderDls.value[name];
     if (ld && (ld.phase === 'resolving' || ld.phase === 'downloading' || ld.phase === 'installing')) {
         return true;
@@ -456,8 +524,8 @@ export async function loadInstances(): Promise<void> {
     loadingList.value = true;
     try {
         const list = await ListInstances();
-        if (Array.isArray(list)) instances.value = list;
-    } catch { }
+        if (Array.isArray(list)) instances.value = list.filter((i) => i !== null) as unknown as InstanceInfo[];
+    } catch (_e) {}
     loadingList.value = false;
 }
 
@@ -522,7 +590,7 @@ export async function loadAllDetails(): Promise<void> {
 
 export async function createInstance(req: CreateInstanceReq): Promise<string> {
     try {
-        const res = await CreateInstanceBinding(req as instance.CreateInstanceReq);
+        const res = await CreateInstanceBinding(req as EngineCreateInstanceReq);
         await loadInstances();
         if (res?.metadata?.name) await loadDetails(res.metadata.name);
         if (res?.downloadId && res?.metadata?.name) {
@@ -563,7 +631,7 @@ export async function createInstance(req: CreateInstanceReq): Promise<string> {
 
 export async function updateMetadata(name: string, req: UpdateMetadataReq): Promise<string> {
     try {
-        await UpdateInstanceMetadata(name, req);
+        await UpdateInstanceMetadata(name, req as any);
         await loadInstances();
         await loadDetails(name);
         return '';
@@ -644,7 +712,7 @@ export async function cloneInstance(name: string, newName: string): Promise<stri
 
 export async function updateConfig(name: string, cfg: InstanceLaunchConfig): Promise<string> {
     try {
-        await UpdateInstanceConfig(name, cfg as instance.InstanceLaunchConfig);
+        await UpdateInstanceConfig(name, cfg as EngineInstanceLaunchConfig);
         await loadDetails(name);
         return '';
     } catch (e: any) {
@@ -654,7 +722,7 @@ export async function updateConfig(name: string, cfg: InstanceLaunchConfig): Pro
 
 export async function addVersion(name: string, version: string): Promise<string> {
     try {
-        const res = await AddInstanceVersion(name, { version });
+        const res = await AddInstanceVersion(name, { version } as AddVersionReq);
         if (res?.downloadId) {
             ensureEvents();
             dlToInstance.set(res.downloadId, name);
@@ -734,6 +802,54 @@ export function setLaunching(name: string, on: boolean): void {
     launching.value = { ...launching.value, [name]: on };
 }
 
+// Verificación de integridad ASÍNCRONA de una sola instancia: mientras el
+// estado sea "verifying" la instancia queda bloqueada en el backend (y en la
+// UI vía isInstanceBusy). Devuelve '' si arrancó, o el mensaje de error.
+export async function startInstanceVerify(name: string): Promise<string> {
+    try {
+        await StartInstanceVerifyBinding(name);
+        await refreshInstanceVerify(name);
+        return '';
+    } catch (e: any) {
+        return e?.message ?? 'No se pudo iniciar la verificación.';
+    }
+}
+
+export async function cancelInstanceVerify(name: string): Promise<void> {
+    try {
+        await CancelInstanceVerifyBinding(name);
+        await refreshInstanceVerify(name);
+    } catch (_e) {}
+}
+
+export async function refreshInstanceVerify(name: string): Promise<void> {
+    try {
+        const st = await InstanceVerifyStatusBinding(name);
+        verifyStates.value = { ...verifyStates.value, [name]: st };
+    } catch {
+        verifyStates.value = { ...verifyStates.value, [name]: { state: 'idle', phase: '', version: '', percent: 0, found: 0, issues: 0, error: '' } };
+    }
+}
+
+export function instanceVerifyOf(name: string): InstanceVerifyProgress | null {
+    return verifyStates.value[name] ?? null;
+}
+
+export function isInstanceVerifying(name: string): boolean {
+    return verifyStates.value[name]?.state === 'verifying';
+}
+
+// Crea el backup (zip) de la instancia en <instances>/backups/<name>.zip.
+// Devuelve '' si fue bien (backupPath con la ruta) o el mensaje de error.
+export async function createInstanceBackup(name: string): Promise<{ ok: boolean; path?: string; error?: string }> {
+    try {
+        const path = await CreateInstanceBackupBinding(name);
+        return { ok: true, path: path || undefined };
+    } catch (e: any) {
+        return { ok: false, error: e?.message ?? 'No se pudo crear el backup.' };
+    }
+}
+
 export async function installInstanceModLoader(
     name: string,
     loader: string,
@@ -778,9 +894,9 @@ let gameOffs: (() => void)[] | null = null;
 export function bindGameEvents() {
     if (gameOffs) return;
     gameOffs = [
-        EventsOn('game_exited', () => void refreshAfterGame()),
-        EventsOn('game_crashed', () => void refreshAfterGame()),
-        EventsOn('game_stopped', () => void refreshAfterGame()),
+        Events.On('game_exited', () => void refreshAfterGame()),
+        Events.On('game_crashed', () => void refreshAfterGame()),
+        Events.On('game_stopped', () => void refreshAfterGame()),
     ];
 }
 
@@ -788,6 +904,14 @@ export function unbindGameEvents() {
     gameOffs?.forEach((off) => off());
     gameOffs = null;
 }
+
+// El system tray (submenú "Últimas Instancias") lanza la instancia pulsada:
+// el backend emite este evento con el nombre de la instancia al hacer clic en
+// el menú del área de notificaciones.
+Events.On('tray_launch_instance', ({ data }: any) => {
+    const name = typeof data === 'string' ? data : (data?.name ?? '');
+    if (name) void launchInstance(name);
+});
 
 export function formatPlayTime(totalSeconds: number): string {
     if (!totalSeconds || totalSeconds <= 0) return 'Sin jugar';

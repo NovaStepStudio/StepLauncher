@@ -1,0 +1,280 @@
+@use '../../Common/Styles/Components' as *;
+
+// PlayerBar — barra inferior fija con progreso y controles
+
+.MusicBar {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.6rem 0.85rem;
+    border-top: var(--border-style);
+    background: #0005;
+    flex-shrink: 0;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.12);
+    position: relative;
+    z-index: 3;
+    overflow: hidden;
+    isolation: isolate;
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--player-cover-color, transparent);
+        opacity: 0.22;
+        z-index: -1;
+        pointer-events: none;
+    }
+}
+
+.MusicBar_Left {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    flex: 1;
+    max-width: 260px;
+}
+
+.MusicBar_Cover {
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 0.45rem;
+    background: var(--control-bg-dark);
+    border: var(--border-style);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    color: var(--text-secondary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    img { width: 100%; height: 100%; object-fit: cover; }
+    svg { width: 1rem; height: 1rem; opacity: 0.6; }
+}
+
+.MusicBar_Info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    b {
+        font-size: calc(0.74rem * var(--font-size-primary, 1));
+        font-weight: 600;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.1;
+    }
+    span {
+        font-size: calc(0.64rem * var(--font-size-secundary, 1));
+        opacity: 0.5;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.MusicBar_Center {
+    flex: 1.2;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    max-width: 540px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.MusicBar_Progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: calc(0.62rem * var(--font-size-secundary, 1));
+    opacity: 0.65;
+    font-variant-numeric: tabular-nums;
+    span { min-width: 2.3rem; text-align: center; flex-shrink: 0; }
+}
+
+.MusicBar_Track {
+    flex: 1;
+    height: 0.3rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+
+    i {
+        position: absolute;
+        inset: 0 auto 0 0;
+        background: var(--progress-color);
+        border-radius: 999px;
+        transition: width 0.2s linear;
+        box-shadow: 0 0 6px color-mix(in srgb, var(--progress-color) 40%, transparent);
+    }
+
+    &:hover i { filter: brightness(1.08); }
+}
+
+.MusicBar_RangeHidden {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.2rem;
+    width: 100%;
+    opacity: 0;
+    pointer-events: none;
+    height: 0;
+}
+
+.MusicBar_Controls.is-below {
+    display: flex;
+    justify-content: center;
+    gap: 0.3rem;
+}
+
+.MusicBar_Btn {
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 0.45rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: var(--transition);
+    &:hover { background: var(--control-bg); color: var(--text-primary); }
+    &.is-play {
+        width: 2.15rem;
+        height: 2.15rem;
+        background: var(--background-button-primary);
+        color: var(--text-primary);
+        border-color: transparent;
+        border-radius: 0.55rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+        &:hover { filter: brightness(1.08); transform: translateY(-1px); }
+        &:active { transform: translateY(0); }
+    }
+}
+
+.MusicBar_Right {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+    min-width: 140px;
+    justify-content: flex-end;
+}
+
+.MusicBar_Modes {
+    display: flex;
+    align-items: center;
+    gap: 0.22rem;
+    padding-right: 0.5rem;
+    border-right: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
+    margin-right: 0.15rem;
+}
+
+.MusicBar_Mode {
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 0.4rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    opacity: 0.62;
+    transition: var(--transition);
+    &:hover { background: var(--control-bg); opacity: 1; color: var(--text-primary); }
+    &.on {
+        background: color-mix(in srgb, var(--progress-color) 14%, transparent);
+        border-color: color-mix(in srgb, var(--progress-color) 22%, transparent);
+        color: var(--progress-color);
+        opacity: 1;
+        box-shadow: 0 1px 6px color-mix(in srgb, var(--progress-color) 14%, transparent);
+    }
+}
+
+.MusicBar_Divider {
+    width: 1px;
+    height: 1.2rem;
+    background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+    flex-shrink: 0;
+}
+
+.MusicBar_VolWrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.MusicBar_VolMenu {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.6rem;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+    backdrop-filter: blur(12px);
+    z-index: 20;
+    min-width: 180px;
+}
+
+.MusicBar_VolIcon {
+    width: 0.95rem;
+    height: 0.95rem;
+    opacity: 0.7;
+    flex-shrink: 0;
+    color: var(--text-secondary);
+}
+
+.MusicBar_VolRange {
+    flex: 1;
+    accent-color: var(--progress-color);
+    cursor: pointer;
+    height: 4px;
+}
+
+.MusicBar_VolVal {
+    font-size: calc(0.68rem * var(--font-size-secundary, 1));
+    font-variant-numeric: tabular-nums;
+    opacity: 0.7;
+    min-width: 2.2rem;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.MusicBar_Vol {
+    width: 72px;
+    accent-color: var(--progress-color);
+    cursor: pointer;
+    height: 4px;
+    flex-shrink: 0;
+}
+
+.MusicVol-enter-active, .MusicVol-leave-active { transition: all 0.16s ease; }
+.MusicVol-enter-from, .MusicVol-leave-to { opacity: 0; transform: translateY(6px) scale(0.98); }
+
+@media (max-width: 760px) {
+    .MusicBar {
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        padding: 0.55rem 0.7rem;
+    }
+    .MusicBar_Left { max-width: 55%; }
+    .MusicBar_Center { order: 3; flex-basis: 100%; max-width: none; }
+    .MusicBar_Right { margin-left: auto; }
+    .MusicBar_Vol { width: 60px; }
+}

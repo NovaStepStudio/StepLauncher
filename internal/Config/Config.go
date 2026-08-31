@@ -61,6 +61,7 @@ type LauncherConfig struct {
 	IntegritySector       string  `json:"integritySector"`
 	CheckForUpdatesOnStart bool   `json:"checkForUpdatesOnStart"`
 	LaunchAfterInstall    bool    `json:"launchAfterInstall"`
+	VerifyBeforeLaunch    *bool   `json:"verifyBeforeLaunch"`
 }
 
 func (l LauncherConfig) VerifyEnabled() bool {
@@ -70,7 +71,15 @@ func (l LauncherConfig) VerifyEnabled() bool {
 	return *l.VerifyIntegrity
 }
 
+func (l LauncherConfig) VerifyBeforeLaunchEnabled() bool {
+	if l.VerifyBeforeLaunch == nil {
+		return true
+	}
+	return *l.VerifyBeforeLaunch
+}
+
 func boolPtr(b bool) *bool { return &b }
+func floatPtr(v float64) *float64 { return &v }
 
 func validIntegritySector(s string) bool {
 	switch s {
@@ -94,6 +103,9 @@ type BackgroundConfig struct {
 	DynamicImages   []string `json:"dynamicImages"`
 	DynamicOrder    string   `json:"dynamicOrder"`
 	DynamicInterval int      `json:"dynamicInterval"`
+	ImageAuthor     string   `json:"imageAuthor,omitempty"`
+	ImageModName    string   `json:"imageModName,omitempty"`
+	ImageUrl        string   `json:"imageUrl,omitempty"`
 }
 
 type RichPresenceConfig struct {
@@ -122,9 +134,34 @@ type ThemeColors struct {
 	Warning       string `json:"warning"`
 }
 
+type MusicConfig struct {
+	Enabled      bool    `json:"enabled"`
+	Position     string  `json:"position"`
+	CoverStyle   string  `json:"coverStyle"`
+	DiscRotation bool    `json:"discRotation"`
+	Volume       float64 `json:"volume"`
+}
+
+type MusicPanelConfig struct {
+	MusicFolder        string   `json:"musicFolder"`
+	MusicFolders       []string `json:"musicFolders,omitempty"`
+	CoverStyle         string   `json:"coverStyle"` // square | disc | huge
+	ColorMode          string   `json:"colorMode"`  // vibrant | dominant | muted | least | random
+	PageSize           int      `json:"pageSize"`
+	ShowCovers         *bool    `json:"showCovers"`
+	AllowAbsolute      *bool    `json:"allowAbsolute"`
+	NowPlayingHuge     *bool    `json:"nowPlayingHuge,omitempty"`     // carátula enorme predomina
+	NowPlayingCover    string   `json:"nowPlayingCover,omitempty"`    // square | disc | huge (específico Ahora suena)
+	NowPlayingHugeSize *float64 `json:"nowPlayingHugeSize,omitempty"` // tamaño carátula predominante 15..30 rem
+	AutoScan           string   `json:"autoScan,omitempty"`           // off | hourly | daily | onLaunch
+	SMTCSource         string   `json:"smtcSource,omitempty"`         // background | library | auto
+	CoverOpacity       *float64 `json:"coverOpacity,omitempty"`       // 0 transparente .. 1 opaco (fondo del panel Música ::after)
+}
+
 type Personalization struct {
 	UIScale             int              `json:"uiScale"`
 	Background          BackgroundConfig `json:"background"`
+	BackgroundMusic     MusicConfig      `json:"backgroundMusic"`
 	FontPrimary         string           `json:"fontPrimary"`
 	FontSecondary       string           `json:"fontSecondary"`
 	FontPrimaryColor    string           `json:"fontPrimaryColor"`
@@ -140,12 +177,56 @@ type Personalization struct {
 	TextShadowIntensity float64          `json:"textShadowIntensity"`
 }
 
+func (m MusicPanelConfig) ShowCoversValue() bool {
+	if m.ShowCovers == nil {
+		return true
+	}
+	return *m.ShowCovers
+}
+
+func (m MusicPanelConfig) AllowAbsoluteValue() bool {
+	if m.AllowAbsolute == nil {
+		return true
+	}
+	return *m.AllowAbsolute
+}
+
+func (m MusicPanelConfig) CoverOpacityValue() float64 {
+	if m.CoverOpacity == nil {
+		return 1
+	}
+	v := *m.CoverOpacity
+	if v < 0 {
+		return 0
+	}
+	if v > 1 {
+		return 1
+	}
+	return v
+}
+
+func (m MusicPanelConfig) NowPlayingHugeSizeValue() float64 {
+	if m.NowPlayingHugeSize == nil {
+		return 20
+	}
+	v := *m.NowPlayingHugeSize
+	if v < 15 {
+		return 15
+	}
+	if v > 30 {
+		return 30
+	}
+	return v
+}
+
 const (
 	FileAssets       = "launcher_assets.json"
 	FileAccounts     = "launcher_accounts.json"
 	FileHistory      = "launcher_history.json"
 	FileProfiles     = "launcher_profiles.json"
 	FileCrashHistory = "launcher_history_crashes.json"
+	FilePlaylists    = "launcher_playlists.json"
+	FileMusicHistory = "launcher_music_history.json"
 )
 
 const (
@@ -154,6 +235,8 @@ const (
 	ExtraKeyHistory      = "history"
 	ExtraKeyProfiles     = "profiles"
 	ExtraKeyCrashHistory = "crashHistory"
+	ExtraKeyPlaylists    = "playlists"
+	ExtraKeyMusicHistory = "musicHistory"
 )
 
 type ExtraData struct {
@@ -162,6 +245,8 @@ type ExtraData struct {
 	History      string `json:"history"`
 	Profiles     string `json:"profiles"`
 	CrashHistory string `json:"crashHistory"`
+	Playlists    string `json:"playlists"`
+	MusicHistory string `json:"musicHistory"`
 }
 
 func (e *ExtraData) UnmarshalJSON(b []byte) error {
@@ -187,6 +272,10 @@ func (e *ExtraData) UnmarshalJSON(b []byte) error {
 			e.Profiles = n
 		case FileCrashHistory:
 			e.CrashHistory = n
+		case FilePlaylists:
+			e.Playlists = n
+		case FileMusicHistory:
+			e.MusicHistory = n
 		}
 	}
 	return nil
@@ -197,7 +286,8 @@ type Config struct {
 	Launcher        LauncherConfig  `json:"launcher"`
 	Personalization Personalization `json:"personalization"`
 	Idle            IdleConfig      `json:"idle"`
- RichPresence RichPresenceConfig `json:"richPresence"`
+	RichPresence RichPresenceConfig `json:"richPresence"`
+	MusicPanel   MusicPanelConfig   `json:"musicPanel"`
 	ExtraData    ExtraData          `json:"extraData"`
 	FirstLaunch    bool             `json:"firstLaunch"`
 }
@@ -223,6 +313,7 @@ func Default() Config {
 			VerifyIntegrity:       boolPtr(true),
 			IntegritySector:       "todo",
 			CheckForUpdatesOnStart: true,
+			VerifyBeforeLaunch:    boolPtr(true),
 		},		Idle: IdleConfig{
 			AutoCloseModals:    false,
 			IdleMinutes:        1,
@@ -232,12 +323,27 @@ func Default() Config {
 		RichPresence: RichPresenceConfig{
 			Enabled: boolPtr(true),
 		},
+		MusicPanel: MusicPanelConfig{
+			CoverStyle: "square",
+			ColorMode:  "vibrant",
+			PageSize:   20,
+			ShowCovers: boolPtr(true),
+			AllowAbsolute: boolPtr(true),
+			NowPlayingHuge: boolPtr(false),
+			NowPlayingCover: "square",
+			NowPlayingHugeSize: floatPtr(20),
+			AutoScan: "off",
+			SMTCSource: "auto",
+			CoverOpacity: floatPtr(1),
+		},
 		ExtraData: ExtraData{
 			Assets:       FileAssets,
 			Accounts:     FileAccounts,
 			History:      FileHistory,
 			Profiles:     FileProfiles,
 			CrashHistory: FileCrashHistory,
+			Playlists:    FilePlaylists,
+			MusicHistory: FileMusicHistory,
 		},
 		FirstLaunch: true,
 		Personalization: Personalization{
@@ -246,6 +352,13 @@ func Default() Config {
 				Type:            "none",
 				DynamicOrder:    "sequential",
 				DynamicInterval: 10,
+			},
+			BackgroundMusic: MusicConfig{
+				Enabled:      false,
+				Position:     "bottom-center",
+				CoverStyle:   "disc",
+				DiscRotation: true,
+				Volume:       0.8,
 			},
 			FontPrimary:        "Lexend",
 			FontSecondary:      "Inter",
@@ -412,6 +525,9 @@ func (m *Manager) sanitize() {
 	if c.Launcher.VerifyIntegrity == nil {
 		c.Launcher.VerifyIntegrity = boolPtr(true)
 	}
+	if c.Launcher.VerifyBeforeLaunch == nil {
+		c.Launcher.VerifyBeforeLaunch = boolPtr(true)
+	}
 	if !validIntegritySector(c.Launcher.IntegritySector) {
 		c.Launcher.IntegritySector = "todo"
 	}
@@ -444,6 +560,99 @@ func (m *Manager) sanitize() {
 	}
 	if bg.DynamicInterval > 300 {
 		bg.DynamicInterval = 300
+	}
+	music := &c.Personalization.BackgroundMusic
+	// Única posición soportada: abajo en el centro.
+	music.Position = "bottom-center"
+	if music.CoverStyle != "square" && music.CoverStyle != "background" {
+		music.CoverStyle = "disc"
+	}
+	if music.Volume < 0 || music.Volume > 1 {
+		music.Volume = 0.8
+	}
+	mp := &c.MusicPanel
+	if mp.CoverStyle != "disc" && mp.CoverStyle != "huge" {
+		mp.CoverStyle = "square"
+	}
+	if mp.NowPlayingCover != "" && mp.NowPlayingCover != "square" && mp.NowPlayingCover != "disc" && mp.NowPlayingCover != "huge" {
+		mp.NowPlayingCover = "square"
+	}
+	if mp.ColorMode != "dominant" && mp.ColorMode != "muted" && mp.ColorMode != "least" && mp.ColorMode != "random" {
+		mp.ColorMode = "vibrant"
+	}
+	if mp.PageSize < 10 || mp.PageSize > 100 {
+		mp.PageSize = 20
+	}
+	if mp.ShowCovers == nil {
+		mp.ShowCovers = boolPtr(true)
+	}
+	if mp.AllowAbsolute == nil {
+		mp.AllowAbsolute = boolPtr(true)
+	}
+	if mp.NowPlayingHuge == nil {
+		mp.NowPlayingHuge = boolPtr(false)
+	}
+	if mp.NowPlayingHugeSize == nil {
+		mp.NowPlayingHugeSize = floatPtr(20)
+	} else {
+		v := *mp.NowPlayingHugeSize
+		if v < 15 {
+			v = 15
+		}
+		if v > 30 {
+			v = 30
+		}
+		mp.NowPlayingHugeSize = &v
+	}
+	if mp.AutoScan != "hourly" && mp.AutoScan != "daily" && mp.AutoScan != "onLaunch" {
+		mp.AutoScan = "off"
+	}
+	if mp.SMTCSource != "background" && mp.SMTCSource != "library" {
+		mp.SMTCSource = "auto"
+	}
+	// Opacidad del fondo del panel Música (::after con --panel-cover-color)
+	if mp.CoverOpacity == nil {
+		mp.CoverOpacity = floatPtr(1)
+	} else {
+		v := *mp.CoverOpacity
+		if v < 0 {
+			v = 0
+		}
+		if v > 1 {
+			v = 1
+		}
+		mp.CoverOpacity = &v
+	}
+	// Migración y normalización multi-carpeta
+	// PROHIBIDO: nunca crear carpeta por defecto — solo migra MusicFolder existente si hay valor explícito
+	if len(mp.MusicFolders) == 0 && strings.TrimSpace(mp.MusicFolder) != "" {
+		mp.MusicFolders = []string{filepath.Clean(strings.TrimSpace(mp.MusicFolder))}
+	}
+	// Normalizar MusicFolders: limpiar, deduplicar, quitar vacíos — sin inyectar carpeta por defecto
+	seen := map[string]bool{}
+	var cleaned []string
+	for _, f := range mp.MusicFolders {
+		f = strings.TrimSpace(f)
+		if f == "" {
+			continue
+		}
+		c := filepath.Clean(f)
+		if c == "." {
+			continue
+		}
+		if seen[c] {
+			continue
+		}
+		seen[c] = true
+		cleaned = append(cleaned, c)
+	}
+	mp.MusicFolders = cleaned
+	// Mantener MusicFolder sincronizado con el primero para compatibilidad
+	// PROHIBIDO: si no hay carpetas, queda vacío — nunca asignar carpeta por defecto
+	if len(mp.MusicFolders) > 0 {
+		mp.MusicFolder = mp.MusicFolders[0]
+	} else {
+		mp.MusicFolder = ""
 	}
 	if c.Personalization.FontPrimary == "" {
 		c.Personalization.FontPrimary = "Lexend"
@@ -500,6 +709,8 @@ func (m *Manager) sanitize() {
 	normalizeExtraFile(&extra.History, FileHistory)
 	normalizeExtraFile(&extra.Profiles, FileProfiles)
 	normalizeExtraFile(&extra.CrashHistory, FileCrashHistory)
+	normalizeExtraFile(&extra.Playlists, FilePlaylists)
+	normalizeExtraFile(&extra.MusicHistory, FileMusicHistory)
 }
 
 func normalizeExtraFile(v *string, def string) {
@@ -692,6 +903,15 @@ func (m *Manager) SetVerifyIntegrity(v bool) error {
 	return m.Save()
 }
 
+func (m *Manager) SetVerifyBeforeLaunch(v bool) error {
+	val := v
+	m.mu.Lock()
+	m.cfg.Launcher.VerifyBeforeLaunch = &val
+	m.mu.Unlock()
+	m.logf("VerifyBeforeLaunch -> %v", val)
+	return m.Save()
+}
+
 func (m *Manager) SetIntegritySector(s string) error {
 	if !validIntegritySector(s) {
 		s = "todo"
@@ -752,6 +972,127 @@ func (m *Manager) UpdateIdle(idle IdleConfig) error {
 	return m.Save()
 }
 
+func (m *Manager) GetMusicPanel() MusicPanelConfig {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.cfg.MusicPanel
+}
+
+func (m *Manager) UpdateMusicPanel(p MusicPanelConfig) error {
+	m.mu.Lock()
+	m.cfg.MusicPanel = p
+	m.sanitize()
+	m.mu.Unlock()
+	m.logf("MusicPanel actualizado: folder=%s cover=%s color=%s pageSize=%d", p.MusicFolder, p.CoverStyle, p.ColorMode, p.PageSize)
+	return m.Save()
+}
+
+func (m *Manager) SetMusicFolder(folder string) error {
+	m.mu.Lock()
+	folder = strings.TrimSpace(folder)
+	if folder == "" {
+		m.cfg.MusicPanel.MusicFolders = []string{}
+		m.cfg.MusicPanel.MusicFolder = ""
+	} else {
+		// Compatibilidad: reemplazar con lista de una sola entrada
+		clean := filepath.Clean(folder)
+		m.cfg.MusicPanel.MusicFolders = []string{clean}
+		m.cfg.MusicPanel.MusicFolder = clean
+	}
+	m.sanitize()
+	m.mu.Unlock()
+	m.logf("MusicFolder -> %s", folder)
+	return m.Save()
+}
+
+func (m *Manager) GetMusicFolders() []string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make([]string, len(m.cfg.MusicPanel.MusicFolders))
+	copy(out, m.cfg.MusicPanel.MusicFolders)
+	return out
+}
+
+func (m *Manager) SetMusicFolders(folders []string) error {
+	m.mu.Lock()
+	// Normalizar
+	seen := map[string]bool{}
+	var cleaned []string
+	for _, f := range folders {
+		f = strings.TrimSpace(f)
+		if f == "" {
+			continue
+		}
+		c := filepath.Clean(f)
+		if c == "." {
+			continue
+		}
+		if seen[c] {
+			continue
+		}
+		seen[c] = true
+		cleaned = append(cleaned, c)
+	}
+	m.cfg.MusicPanel.MusicFolders = cleaned
+	if len(cleaned) > 0 {
+		m.cfg.MusicPanel.MusicFolder = cleaned[0]
+	} else {
+		m.cfg.MusicPanel.MusicFolder = ""
+	}
+	m.sanitize()
+	m.mu.Unlock()
+	m.logf("MusicFolders -> %v", cleaned)
+	return m.Save()
+}
+
+func (m *Manager) AddMusicFolder(folder string) error {
+	folder = strings.TrimSpace(folder)
+	if folder == "" {
+		return fmt.Errorf("carpeta vacía")
+	}
+	clean := filepath.Clean(folder)
+	m.mu.Lock()
+	for _, f := range m.cfg.MusicPanel.MusicFolders {
+		if f == clean {
+			m.mu.Unlock()
+			return nil
+		}
+	}
+	m.cfg.MusicPanel.MusicFolders = append(m.cfg.MusicPanel.MusicFolders, clean)
+	if len(m.cfg.MusicPanel.MusicFolders) == 1 {
+		m.cfg.MusicPanel.MusicFolder = clean
+	}
+	m.sanitize()
+	m.mu.Unlock()
+	m.logf("MusicFolder añadida -> %s", clean)
+	return m.Save()
+}
+
+func (m *Manager) RemoveMusicFolder(folder string) error {
+	folder = strings.TrimSpace(folder)
+	if folder == "" {
+		return fmt.Errorf("carpeta vacía")
+	}
+	clean := filepath.Clean(folder)
+	m.mu.Lock()
+	var out []string
+	for _, f := range m.cfg.MusicPanel.MusicFolders {
+		if f != clean {
+			out = append(out, f)
+		}
+	}
+	m.cfg.MusicPanel.MusicFolders = out
+	if len(out) > 0 {
+		m.cfg.MusicPanel.MusicFolder = out[0]
+	} else {
+		m.cfg.MusicPanel.MusicFolder = ""
+	}
+	m.sanitize()
+	m.mu.Unlock()
+	m.logf("MusicFolder eliminada -> %s", clean)
+	return m.Save()
+}
+
 func (m *Manager) SetFirstLaunchDone() error {
 	m.mu.Lock()
 	m.cfg.FirstLaunch = false
@@ -777,6 +1118,10 @@ func (m *Manager) RegisterExtraFile(key, name string) error {
 		m.cfg.ExtraData.Profiles = name
 	case ExtraKeyCrashHistory:
 		m.cfg.ExtraData.CrashHistory = name
+	case ExtraKeyPlaylists:
+		m.cfg.ExtraData.Playlists = name
+	case ExtraKeyMusicHistory:
+		m.cfg.ExtraData.MusicHistory = name
 	default:
 		m.mu.Unlock()
 		return nil

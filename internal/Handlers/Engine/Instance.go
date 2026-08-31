@@ -14,6 +14,7 @@ type CloneInstanceReq = linstance.CloneInstanceReq
 type AddVersionReq = linstance.AddVersionReq
 type VerifyResult = linstance.VerifyResult
 type VerifyIssue = linstance.VerifyIssue
+type InstanceVerifyProgress = linstance.InstanceVerifyProgress
 type InstanceLaunchResult = linstance.InstanceLaunchResult
 
 func (e *Engine) CreateInstance(req CreateInstanceReq) (*InstanceMetadata, string, error) {
@@ -66,6 +67,28 @@ func (e *Engine) VerifyInstance(name string) ([]VerifyResult, error) {
 
 func (e *Engine) VerifyInstanceVersion(name, version string) (*VerifyResult, error) {
 	return e.instances.VerifySingleVersion(name, version)
+}
+
+// StartInstanceVerify lanza la verificación de integridad ASÍNCRONA de una
+// instancia concreta: mientras dure, la instancia NO se puede utilizar
+// (lanzar, descargar, editar...). El progreso se consulta con
+// InstanceVerifyStatus.
+func (e *Engine) StartInstanceVerify(name string) error {
+	return e.instances.StartInstanceVerify(name)
+}
+
+func (e *Engine) CancelInstanceVerify(name string) {
+	e.instances.CancelInstanceVerify(name)
+}
+
+func (e *Engine) InstanceVerifyStatus(name string) *InstanceVerifyProgress {
+	return e.instances.InstanceVerifyStatus(name)
+}
+
+// CreateInstanceBackup genera el zip de la instancia en
+// <instances>/backups/<name>.zip y devuelve su ruta.
+func (e *Engine) CreateInstanceBackup(name string) (string, error) {
+	return e.instances.CreateBackup(name)
 }
 
 func (e *Engine) CloneInstance(name, newName string, copyVersions bool) (*InstanceMetadata, error) {

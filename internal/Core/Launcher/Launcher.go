@@ -86,14 +86,25 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 
 	if adv.AuthLibConfig.Enabled && adv.AuthLibConfig.PreVerifyServer {
 		if err := l.preVerifyAuthServer(adv.AuthLibConfig); err != nil {
-			return nil, fmt.Errorf("auth server pre-verify failed: %w", err)
+			if !l.hasInternet() {
+				l.log("WARN: sin internet, omitiendo pre-verificación del auth server: %v", err)
+			} else {
+				return nil, fmt.Errorf("auth server pre-verify failed: %w", err)
+			}
+		} else {
+			l.log("Auth server verified: %s", adv.AuthLibConfig.AuthServerURL)
 		}
-		l.log("Auth server verified: %s", adv.AuthLibConfig.AuthServerURL)
 	}
 
 	if adv.AuthLibConfig.Enabled {
 		if err := l.prepareAuthInjector(adv.AuthLibConfig); err != nil {
-			return nil, fmt.Errorf("authlib-injector: %w", err)
+			if !l.hasInternet() {
+				l.log("WARN: sin internet, continuando sin authlib-injector actualizado: %v", err)
+				// Si hay un injector cacheado, se usa; si no, se continúa sin él
+				// para permitir lanzamiento offline con cuentas ya autenticadas.
+			} else {
+				return nil, fmt.Errorf("authlib-injector: %w", err)
+			}
 		}
 	}
 
@@ -176,7 +187,7 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 	l.log("Assets dir: %s", adv.AssetsDir)
 	l.log("Libraries dir: %s", adv.LibrariesDir)
 	l.log("Versions dir: %s", adv.VersionsDir)
-	l.log("Java: %s", javaPath)
+	l.log("Java: %s (%s)", javaPath, helpers.JavaVersionLabel(javaPath))
 
 	if adv.ExecutionPlan != nil {
 		l.log("Modloader: %s", adv.ExecutionPlan.MainClass)
@@ -372,7 +383,7 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 		l.log("Setting %d environment variable(s) for game process", len(procEnv))
 	}
 
-	cmd, mcLogFile, err := utils.LaunchProcess(
+	cmd, mcLogFile, outWriter, err := utils.LaunchProcess(
 		javaPath, mainClass, adv.GameDir, logPath,
 		jvmArgs, gameArgs, procEnv,
 	)
@@ -390,7 +401,7 @@ func (l *Launcher) Launch() (*GameInstance, error) {
 	l.log("Minecraft launched (PID: %d)", instance.PID)
 	BroadcastStarted(l.eventBroadcast, instance)
 
-	go l.waitForExit(instance, mcLogFile)
+	go l.waitForExit(instance, mcLogFile, outWriter)
 
 	return instance, nil
 }
@@ -573,6 +584,12 @@ func (l *Launcher) buildGameArgs(vars map[string]string, adv AdvancedConfig) []s
 		result = append(result, "--quickPlayPath", adv.QuickPlayPath)
 	}
 
+	// Logs detallados de la instancia: si no hay un nivel de log explícito, se
+	// fuerza el nivel debug del juego para que el registro sea más verboso.
+	if adv.DetailedLogs && adv.LogLevel == "" {
+		result = append(result, "--log-level", "debug")
+	}
+
 	if adv.LogLevel != "" {
 		result = append(result, "--log-level", adv.LogLevel)
 	}
@@ -694,11 +711,36 @@ func (l *Launcher) prepareEmit(phase string, current, total int, label, message 
 	})
 }
 
+func (l *Launcher) hasInternet() bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 2500*time.Millisecond)
+	defer cancel()
+	client := &http.Client{Timeout: 2500 * time.Millisecond}
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json", nil)
+	if err != nil {
+		return false
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+	return resp.StatusCode >= 200 && resp.StatusCode < 400
+}
+
 func (l *Launcher) downloadMissingLibraries(cpEntries *[]helpers.ClasspathEntry, clientJarVer string) error {
 	adv := l.adv()
 	if adv.DisableLibraries {
 		l.log("Library download disabled by config, skipping")
 		return nil
+	}
+	// Verificación antes de lanzar: si el usuario la desactiva y hay internet,
+	// se omite la comprobación de librerías faltantes.
+	if !adv.VerifyBeforeLaunch {
+		if l.hasInternet() {
+			l.log("Verificación antes de lanzar desactivada, omitiendo comprobación de librerías")
+			return nil
+		}
+		l.log("Sin internet: verificación forzada antes de lanzar (ignorando preferencia del usuario)")
 	}
 
 	type missingEntry struct {
@@ -934,9 +976,11 @@ func (l *Launcher) loadVersion(version string) (*downloader.VersionJSON, error) 
 			return nil, fmt.Errorf("resolve parent version %s: %w", ver.InheritsFrom, err)
 		}
 		merged := mergeVersions(parent, &ver)
+		downloader.NormalizeVersion(merged)
 		return merged, nil
 	}
 
+	downloader.NormalizeVersion(&ver)
 	return &ver, nil
 }
 
@@ -1084,10 +1128,15 @@ func (l *Launcher) scanLogForCrashPatterns(logPath string) (category, reason str
 	return "", ""
 }
 
-func (l *Launcher) waitForExit(instance *GameInstance, mcLogFile *os.File) {
+func (l *Launcher) waitForExit(instance *GameInstance, mcLogFile *os.File, outWriter *utils.Log4j2XMLWriter) {
 	adv := l.adv()
 
 	defer func() {
+		if outWriter != nil {
+			// Vacía la última línea y cualquier evento XML que quedara abierto
+			// antes de cerrar el archivo del log del juego.
+			outWriter.Flush()
+		}
 		if mcLogFile != nil {
 			mcLogFile.Close()
 		}

@@ -1,5 +1,9 @@
 import { ref, computed } from 'vue';
-import { EventsOn, WindowHide, WindowShow } from '@wailsjs/runtime/runtime';
+import { Events, Window } from '@wailsio/runtime';
+import { ListDownloadedVersions } from '@wailsjs/StepLauncher/internal/Services/Download/downloadservice';
+import { GetSelectedVersion, SetSelectedVersion, ListProfiles, GetSelectedProfile, SetSelectedProfile, CreateProfile, UpdateProfile, DeleteProfile } from '@wailsjs/StepLauncher/internal/Services/Account/accountservice';
+import { LaunchMinecraft, ListGames } from '@wailsjs/StepLauncher/internal/Services/Game/gameservice';
+import { GetConfig } from '@wailsjs/StepLauncher/internal/Services/Config/configservice';
 
 export interface InstalledVersion {
     id: string;
@@ -22,8 +26,6 @@ export interface LauncherProfile {
     lastUsed?: string;
     customProperties?: Record<string, string>;
 }
-
-const goApp = () => (window as any)?.go?.main?.App;
 
 export const installedVersions = ref<InstalledVersion[]>([]);
 export const selectedVersion = ref('');
@@ -94,7 +96,7 @@ function onPrepareProgress(raw: unknown): void {
     try {
         const s = typeof raw === 'string' ? raw : JSON.stringify(raw ?? '');
         obj = JSON.parse(s);
-    } catch { }
+    } catch (_e) {}
     const d = obj?.data ?? obj;
     if (!d || typeof d !== 'object') return;
     if (d.finished) {
@@ -114,9 +116,8 @@ let prepareSubs: (() => void)[] | null = null;
 
 function subscribeLaunchPrepare() {
     if (prepareSubs) return;
-    if (!(window as any).runtime) return;
     prepareSubs = [
-        EventsOn('game_prepare', (raw) => {
+        Events.On('game_prepare', ({ data: raw }: any) => {
             if (!launching.value) return;
             onPrepareProgress(raw);
         }),
@@ -154,7 +155,7 @@ export function onGameCrash(raw: unknown): void {
     try {
         const s = typeof raw === 'string' ? raw : JSON.stringify(raw ?? '');
         obj = JSON.parse(s);
-    } catch { }
+    } catch (_e) {}
     const d = obj?.data ?? obj;
     if (!d || typeof d !== 'object') return;
     crashInfo.value = {
@@ -269,29 +270,29 @@ export const groupedVersions = computed(() => {
 
 export async function loadVersions(): Promise<void> {
     try {
-        const list = await goApp()?.ListDownloadedVersions?.();
+        const list = await ListDownloadedVersions();
         if (Array.isArray(list)) {
             installedVersions.value = (list as InstalledVersion[]).filter((v) => v && typeof v.id === 'string');
         }
-    } catch { }
+    } catch (_e) {}
     try {
-        const last = await goApp()?.GetSelectedVersion?.();
+        const last = await GetSelectedVersion();
         if (typeof last === 'string' && last && installedVersions.value.some((v) => v.id === last)) {
             selectedVersion.value = last;
         }
-    } catch { }
+    } catch (_e) {}
     ensureVersionSelected();
 }
 
 export async function loadProfiles(): Promise<void> {
     try {
-        const p = await goApp()?.ListProfiles?.();
+        const p = await ListProfiles();
         if (p && typeof p === 'object') profiles.value = p as Record<string, LauncherProfile>;
-    } catch { }
+    } catch (_e) {}
     try {
-        const sel = await goApp()?.GetSelectedProfile?.();
+        const sel = await GetSelectedProfile();
         if (typeof sel === 'string') selectedProfile.value = sel;
-    } catch { }
+    } catch (_e) {}
     ensureVersionSelected();
     syncProfileVersion();
 }
@@ -327,19 +328,19 @@ export function selectVersion(id: string): void {
 
 export async function persistSelectedVersion(id: string): Promise<void> {
     try {
-        await goApp()?.SetSelectedVersion?.(id);
-    } catch { }
+        await SetSelectedVersion(id);
+    } catch (_e) {}
 }
 
 async function dismissPersistedProfile(): Promise<void> {
     try {
-        await goApp()?.SetSelectedProfile?.('');
-    } catch { }
+        await SetSelectedProfile('');
+    } catch (_e) {}
 }
 
 export async function createProfile(p: LauncherProfile): Promise<string> {
     try {
-        await goApp()?.CreateProfile?.(p);
+        await CreateProfile(p as any);
         await loadProfiles();
         return '';
     } catch (e: any) {
@@ -349,7 +350,7 @@ export async function createProfile(p: LauncherProfile): Promise<string> {
 
 export async function updateProfile(name: string, p: LauncherProfile): Promise<string> {
     try {
-        await goApp()?.UpdateProfile?.(name, p);
+        await UpdateProfile(name, p as any);
         await loadProfiles();
         return '';
     } catch (e: any) {
@@ -359,7 +360,7 @@ export async function updateProfile(name: string, p: LauncherProfile): Promise<s
 
 export async function deleteProfile(name: string): Promise<string> {
     try {
-        await goApp()?.DeleteProfile?.(name);
+        await DeleteProfile(name);
         if (selectedProfile.value === name) selectedProfile.value = '';
         await loadProfiles();
         return '';
@@ -370,7 +371,7 @@ export async function deleteProfile(name: string): Promise<string> {
 
 export async function setSelectedProfile(name: string): Promise<string> {
     try {
-        await goApp()?.SetSelectedProfile?.(name || '');
+        await SetSelectedProfile(name || '');
         selectedProfile.value = name || '';
         await loadProfiles();
         const v = selectedVersion.value;
@@ -397,10 +398,10 @@ export async function launchGame(): Promise<string> {
     resetLaunchPrepare();
     subscribeLaunchPrepare();
     try {
-        const resp = await goApp()?.LaunchMinecraft?.({
+        const resp = await LaunchMinecraft({
             Version: effVersion,
             Profile: selectedProfile.value || '',
-        });
+        } as any);
         if (resp?.id) {
             setLaunchMessage(label, false, true);
             hideOnLaunchIfEnabled();
@@ -419,40 +420,79 @@ let windowHideSubs: (() => void)[] | null = null;
 
 export function subscribeWindowHideRestore() {
     if (windowHideSubs) return;
-    if (!(window as any).runtime) return;
     windowHideSubs = [
-        EventsOn('game_exited', () => maybeShowWindow()),
-        EventsOn('game_crashed', (data) => {
+        Events.On('game_exited', () => maybeShowWindow()),
+        Events.On('game_crashed', ({ data }: any) => {
             onGameCrash(data);
             maybeShowWindow();
         }),
-        EventsOn('game_stopped', () => maybeShowWindow()),
+        Events.On('game_stopped', () => maybeShowWindow()),
     ];
 }
 
 export async function maybeShowWindow() {
     try {
-        const games = await goApp()?.ListGames?.();
+        const games = await ListGames();
         const running = Array.isArray(games) && games.some((g) => g.status === 'running' || g.status === 'starting');
-        if (!running) WindowShow();
+        if (!running) Window.Show();
     } catch {
-        WindowShow();
+        Window.Show();
     }
 }
 
 export async function hideOnLaunchIfEnabled() {
     try {
-        const cfg = await goApp()?.GetConfig?.();
+        const cfg = await GetConfig();
         if (cfg?.launcher?.hideLauncherOnLaunch === false) return;
-        const games = await goApp()?.ListGames?.();
+        const games = await ListGames();
         const running = Array.isArray(games) && games.some((g) => g.status === 'running' || g.status === 'starting');
         if (!running) return;
         subscribeWindowHideRestore();
-        WindowHide();
-    } catch { }
+        Window.Hide();
+    } catch (_e) {}
 }
 
 export async function refreshAfterDownload(): Promise<void> {
     await loadVersions();
     await loadProfiles();
+}
+
+// El system tray ("Jugar de nuevo" y el submenú "Últimas Sesiones") lanza la
+// versión pulsada: el backend emite este evento con el nombre de la versión al
+// hacer clic en el menú del área de notificaciones.
+Events.On('tray_launch_version', ({ data }: any) => {
+    const version = typeof data === 'string' ? data : (data?.version ?? '');
+    if (version) void launchVersion(version);
+});
+
+// Lanza una versión concreta (usada por el system tray) mostrando el mismo
+// feedback de lanzamiento que el botón Jugar.
+export async function launchVersion(version: string): Promise<string> {
+    hideLaunchMessage();
+    if (!version) {
+        setLaunchMessage('Elige una versión descargada para poder jugar.', true);
+        return launchError.value;
+    }
+    const label = `Lanzando ${version}…`;
+    launching.value = true;
+    setLaunchMessage(label, false, true);
+    resetLaunchPrepare();
+    subscribeLaunchPrepare();
+    try {
+        const resp = await LaunchMinecraft({
+            Version: version,
+            Profile: selectedProfile.value || '',
+        } as any);
+        if (resp?.id) {
+            setLaunchMessage(label, false, true);
+            hideOnLaunchIfEnabled();
+        }
+    } catch (e: any) {
+        setLaunchMessage(e?.message ?? 'No se pudo lanzar Minecraft.', true);
+    } finally {
+        launching.value = false;
+        resetLaunchPrepare();
+        if (!launchError.value) setLaunchMessage(label, false);
+    }
+    return launchError.value;
 }

@@ -39,6 +39,9 @@ func (p *AbstractFabricProvider) GetVersions(mcVersion string) ([]modloader.Load
 
 	var raw []fabricVersion
 	if err := fetchCachedJSON(p.CacheDir, url, cacheKey, p.HttpClient, &raw, p.CacheManager); err != nil {
+		if metaRejectsVersion(err) {
+			return nil, fmt.Errorf("el modloader %s no soporta la versión de Minecraft %s", p.NameVal, mcVersion)
+		}
 		return nil, fmt.Errorf("fetch %s versions: %w", p.NameVal, err)
 	}
 
@@ -64,6 +67,9 @@ func (p *AbstractFabricProvider) ResolveDownload(mcVersion, loaderVersion, insta
 
 	var profile downloader.VersionJSON
 	if err := fetchCachedJSON(p.CacheDir, profileURL, cacheKey, p.HttpClient, &profile, p.CacheManager); err != nil {
+		if metaRejectsVersion(err) {
+			return nil, fmt.Errorf("el modloader %s no soporta la versión de Minecraft %s", p.NameVal, mcVersion)
+		}
 		return nil, fmt.Errorf("fetch profile: %w", err)
 	}
 
@@ -190,6 +196,17 @@ func NewFabricProvider(cacheDir string, client *http.Client, cacheMgr *cache.Man
 			HttpClient:   client,
 		},
 	}
+}
+
+// metaRejectsVersion indica si la API de meta rechazó la petición (HTTP 400 o
+// 404): el modloader no ofrece versiones de loader para esa versión de
+// Minecraft (p. ej. LegacyFabric solo da servicio a versiones antiguas).
+func metaRejectsVersion(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "HTTP 400") || strings.Contains(msg, "HTTP 404")
 }
 
 func fetchCachedJSON(cacheDir, url, cacheKey string, client *http.Client, out interface{}, mgr *cache.Manager) error {

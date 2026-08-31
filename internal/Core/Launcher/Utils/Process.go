@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func LaunchProcess(javaPath, mainClass, workDir, logPath string, jvmArgs, gameArgs []string, extraEnv map[string]string) (*exec.Cmd, *os.File, error) {
+func LaunchProcess(javaPath, mainClass, workDir, logPath string, jvmArgs, gameArgs []string, extraEnv map[string]string) (*exec.Cmd, *os.File, *Log4j2XMLWriter, error) {
 	fullArgs := append(jvmArgs, mainClass)
 	fullArgs = append(fullArgs, gameArgs...)
 
@@ -24,21 +24,25 @@ func LaunchProcess(javaPath, mainClass, workDir, logPath string, jvmArgs, gameAr
 
 	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot open log file %s: %w", logPath, err)
+		return nil, nil, nil, fmt.Errorf("cannot open log file %s: %w", logPath, err)
 	}
 
-	cmd.Stdout = logFile
-	cmd.Stderr = logFile
+	// El mismo writer para stdout y stderr: las versiones que usan layout XML
+	// de log4j2 (p. ej. BatMod) escriben el output como eventos XML; el writer
+	// los convierte a texto plano y el resto lo reenvía tal cual.
+	out := NewLog4j2XMLWriter(logFile)
+	cmd.Stdout = out
+	cmd.Stderr = out
 	cmd.Dir = workDir
 
 	setDetachedAttr(cmd)
 
 	if err := cmd.Start(); err != nil {
 		logFile.Close()
-		return nil, nil, fmt.Errorf("cannot start process: %w", err)
+		return nil, nil, nil, fmt.Errorf("cannot start process: %w", err)
 	}
 
-	return cmd, logFile, nil
+	return cmd, logFile, out, nil
 }
 
 func envMapToSlice(m map[string]string) []string {

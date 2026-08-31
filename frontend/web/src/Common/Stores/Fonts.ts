@@ -63,13 +63,13 @@ export async function ensureCustomFonts(assets: LauncherAssets | null): Promise<
             await face.load();
             document.fonts.add(face);
             loadedFaces.set(key, face);
-        } catch { }
+        } catch (_e) {}
     }
     for (const [key, face] of [...loadedFaces]) {
         if (wanted.has(key)) continue;
         try {
             document.fonts.delete(face);
-        } catch { }
+        } catch (_e) {}
         loadedFaces.delete(key);
     }
 }

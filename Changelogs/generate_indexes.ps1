@@ -107,6 +107,15 @@ foreach ($vd in (Get-VersionDirs (Join-Path $changelogs 'Errors'))) {
 }
 Save-Json (Join-Path $changelogs 'Errors\index.json') @{ versions = $errVersions }
 
+# --- Bugs/index.json ---
+$bugVersions = @()
+foreach ($vd in (Get-VersionDirs (Join-Path $changelogs 'Bugs'))) {
+    $files = @(Sort-MdByNumber (Get-ChildItem (Join-Path $changelogs "Bugs\$($vd.Name)")))
+    $paths = @($files | ForEach-Object { './' + $vd.Name + '/' + $_.Name })
+    $bugVersions += [ordered]@{ version = $vd.Version.ToString(); bugs = $paths }
+}
+Save-Json (Join-Path $changelogs 'Bugs\index.json') @{ versions = $bugVersions }
+
 # --- Changes/index.json ---
 $chgVersions = @()
 foreach ($vd in (Get-VersionDirs (Join-Path $changelogs 'Changes'))) {

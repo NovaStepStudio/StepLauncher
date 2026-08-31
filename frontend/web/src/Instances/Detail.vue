@@ -7,11 +7,8 @@ import {
     IconBox, IconX, IconCheck, IconDownload, IconClock, IconDeviceGamepad, IconPhoto,
     IconFolderOpen, IconHistory, IconInfoCircle, IconPlayerStop,
 } from '@tabler/icons-vue';
-import {
-    ListInstanceScreenshots,
-    ReadLocalFile,
-    RemoveInstanceVersion,
-} from '@wailsjs/go/main/App';
+import { ListInstanceScreenshots, RemoveInstanceVersion } from '@wailsjs/StepLauncher/internal/Services/Instance/instanceservice';
+import { ReadLocalFile } from '@wailsjs/StepLauncher/internal/Services/System/systemservice';
 import {
     detailOf,
     loadDetails,
@@ -34,6 +31,8 @@ import {
     type InstalledLoaderInfo,
 } from './Store';
 import { loadLocal } from '@/Common/Stores/Ui';
+import { isOffline } from '@/Common/Stores/Connectivity';
+import OfflineBadge from '@/Common/Components/OfflineBadge.vue';
 
 import iconVanilla from '../../assets/icons/minecraft.png';
 import iconFabric from '../../assets/icons/fabric.png';
@@ -405,9 +404,18 @@ onMounted(() => {
                         <IconDeviceGamepad stroke="2" />
                         {{ playing ? 'Lanzando…' : instDl ? 'Descargando…' : instLdr ? 'Instalando…' : 'Jugar' }}
                     </button>
-                    <button class="InstDet_DlHero" title="Descargar versión" :disabled="opBusy" @click="emit('download', props.name)">
-                        <IconDownload stroke="2" /> {{ instDl ? 'Descargando…' : instLdr ? 'Instalando…' : 'Descargar' }}
-                    </button>
+                    <span class="offline-wrap" style="position: relative; display: inline-flex;">
+                        <button
+                            class="InstDet_DlHero"
+                            :class="{ offline: isOffline }"
+                            :title="isOffline ? 'Sin conexión — Descargar versión requiere internet y no está disponible sin conexión.' : 'Descargar versión'"
+                            :disabled="opBusy || isOffline"
+                            @click="isOffline ? undefined : emit('download', props.name)"
+                        >
+                            <IconDownload stroke="2" /> {{ instDl ? 'Descargando…' : instLdr ? 'Instalando…' : 'Descargar' }}
+                        </button>
+                        <OfflineBadge v-if="isOffline" placement="inside" tooltip="bottom" message="Sin conexión — Descargar versión requiere internet y no está disponible sin conexión." />
+                    </span>
                     <button class="InstDet_Tool" :class="{ on: d?.meta?.favorite }" title="Favorita" @click="toggleFav()">
                         <IconStarFilled v-if="d?.meta?.favorite" stroke="2" />
                         <IconStar v-else stroke="2" />
@@ -508,9 +516,18 @@ onMounted(() => {
             <template v-else-if="tab === 'versiones'">
                 <div class="InstDet_SectionHead">
                     <span>Versiones instaladas</span>
-                    <button class="SsBtn SsBtnPrimary InstDet_DlBtn" :disabled="opBusy" @click="emit('download', props.name)">
-                        <IconDownload stroke="2" /> {{ instDl ? 'Descargando…' : instLdr ? 'Instalando…' : 'Añadir versión' }}
-                    </button>
+                    <span class="offline-wrap" style="position: relative; display: inline-flex;">
+                        <button
+                            class="SsBtn SsBtnPrimary InstDet_DlBtn"
+                            :class="{ offline: isOffline }"
+                            :title="isOffline ? 'Sin conexión — Añadir versión requiere internet y no está disponible sin conexión.' : undefined"
+                            :disabled="opBusy || isOffline"
+                            @click="isOffline ? undefined : emit('download', props.name)"
+                        >
+                            <IconDownload stroke="2" /> {{ instDl ? 'Descargando…' : instLdr ? 'Instalando…' : 'Añadir versión' }}
+                        </button>
+                        <OfflineBadge v-if="isOffline" placement="inside" tooltip="bottom" message="Sin conexión — Añadir versión requiere internet y no está disponible sin conexión." />
+                    </span>
                 </div>
 
                 <div v-if="d?.meta?.versions?.length" class="InstDet_VersionRows">

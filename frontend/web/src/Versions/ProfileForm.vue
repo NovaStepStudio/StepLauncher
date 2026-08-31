@@ -2,7 +2,7 @@
 import { ref, reactive, watch } from 'vue';
 import { IconX } from '@tabler/icons-vue';
 import { installedVersions, createProfile, updateProfile, type LauncherProfile } from '@/Launcher/Store';
-import { GetConfig } from '@wailsjs/go/main/App';
+import { GetConfig } from '@wailsjs/StepLauncher/internal/Services/Config/configservice';
 import { useOverlayEscape } from '@/Common/Composables/useOverlayEscape';
 
 const props = defineProps<{
@@ -117,8 +117,7 @@ async function prefillWindowDefaults() {
         if (mc.windowWidth > 0) form.resWidth = String(mc.windowWidth);
         if (mc.windowHeight > 0) form.resHeight = String(mc.windowHeight);
         form.fullscreen = !!mc.fullscreen;
-    } catch {
-    }
+    } catch (_e) {}
 }
 
 function close() {

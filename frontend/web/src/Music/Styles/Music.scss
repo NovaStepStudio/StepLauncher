@@ -1,0 +1,165 @@
+@use '../../Common/Styles/Components' as *;
+
+.MusicModal_Overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--background-modal-primary);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.MusicModal_Head {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.9rem 1.25rem 0.8rem;
+    border-bottom: var(--border-modal-style);
+    flex-shrink: 0;
+    background: transparent;
+}
+.MusicModal_Overlay.has-gradient {
+    background: var(--background-modal-primary);
+    overflow: hidden;
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, var(--panel-cover-color, transparent) 0%, var(--panel-cover-color, transparent) 28%, var(--background-modal-primary) 62%);
+        opacity: var(--panel-cover-opacity, 1);
+        transition: opacity 0.22s ease;
+        z-index: 0;
+        pointer-events: none;
+    }
+    .MusicModal_Head,
+    .MusicLayout,
+    .MusicBar {
+        position: relative;
+        z-index: 1;
+    }
+    .MusicModal_Head { background: transparent; backdrop-filter: none; }
+    .MusicMenu { background: transparent !important; }
+    .MusicMain { background: transparent !important; }
+    .MusicSection { background: transparent !important; }
+}
+
+.MusicModal_Title {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.MusicModal_Icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.6rem;
+    background: color-mix(in srgb, var(--background-modal-primary) 50%, gray 5%);
+    border: var(--border-style);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: color-mix(in srgb, var(--background-modal-primary) 25%, white 85%);
+    flex-shrink: 0;
+
+    svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+}
+
+.MusicModal_Titles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    min-width: 0;
+
+    h3 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(1rem * var(--font-size-primary, 1));
+        font-weight: 800;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+        letter-spacing: -0.01em;
+    }
+
+    p {
+        margin: 0;
+        font-size: calc(0.66rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+        opacity: 0.5;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.MusicHead_Actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.MusicHead_Chip {
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    padding: 0.22rem 0.5rem;
+    border-radius: 999px;
+    background: var(--control-bg);
+    border: var(--border-style);
+    color: var(--text-secondary);
+    font-weight: 600;
+
+    &.subtle {
+        opacity: 0.6;
+        background: transparent;
+    }
+}
+
+.MusicModal_Close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 2rem;
+    width: 2rem;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    &:hover {
+        background: var(--control-bg);
+        color: var(--text-primary);
+    }
+}
+
+.MusicModal_Body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--background-modal-primary) 96%, white 4%);
+}
+
+.MusicModal-enter-active,
+.MusicModal-leave-active {
+    transition: var(--transition);
+}
+
+.MusicModal-enter-from,
+.MusicModal-leave-to {
+    opacity: 0;
+}

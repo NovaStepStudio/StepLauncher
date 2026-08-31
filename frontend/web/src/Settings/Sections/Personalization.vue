@@ -1,9 +1,22 @@
 <script setup lang="ts">
-import { ref, onMounted, onActivated } from 'vue';
+import { ref, watch, onMounted, onActivated } from 'vue';
 import { applyPersonalization, loadLocal, personalization } from '@/Common/Stores/Ui';
 import { ensureCustomFonts, isBuiltinFont, cleanFontName, fontByType, type LauncherAssets } from '@/Common/Stores/Fonts';
+import {
+    musicList as musicTracks,
+    metaCache,
+    MAX_MUSIC_TRACKS,
+    formatDuration,
+    validateAndReadMusic,
+    addMusic,
+    removeMusic,
+    loadMusicList,
+    setVolume,
+} from '@/Common/Stores/Music';
 import ColorField from '@/Common/Components/ColorField.vue';
 import { openDialog, PERSONALIZATION_PREVIEW_EVENT } from '@/Common/Overlays/Store';
+import { GetLauncherAssets, ListFontFiles, SaveLauncherAssets, UpdatePersonalization, PickBackgroundFile, PickMusicFile } from '@wailsjs/StepLauncher/internal/Services/Appearance/appearanceservice';
+import { GetConfig } from '@wailsjs/StepLauncher/internal/Services/Config/configservice';
 
 const bgType = ref('none');
 const bgImage = ref('');
@@ -36,6 +49,13 @@ const recentColors = ref<string[]>([]);
 
 const errorMsg = ref('');
 
+const musicEnabled = ref(false);
+const musicCoverSel = ref<'disc' | 'square' | 'background'>('disc');
+const musicRotate = ref(true);
+const musicVolume = ref(80);
+const musicBusy = ref(false);
+const musicMsg = ref('');
+
 const fontOptions = ref(['Lexend', 'Inter', 'Fredoka', 'system']);
 const fontFiles = ref<string[]>([]);
 const assetsRef = ref<LauncherAssets>({ fonts: [] });
@@ -49,12 +69,12 @@ async function loadFontData() {
     let assets: any = null;
     let files: string[] = [];
     try {
-        assets = await (window as any).go?.main?.App?.GetLauncherAssets?.();
-    } catch { }
+        assets = await GetLauncherAssets?.();
+    } catch (_e) {}
     try {
-        const f = await (window as any).go?.main?.App?.ListFontFiles?.();
+        const f = await ListFontFiles?.();
         files = Array.isArray(f) ? f : [];
-    } catch { }
+    } catch (_e) {}
     assetsRef.value = { fonts: Array.isArray(assets?.fonts) ? assets.fonts : [] };
     fontFiles.value = files;
     const custom: string[] = [];
@@ -116,9 +136,9 @@ async function syncFontSelects() {
 
 async function saveAssets() {
     try {
-        await (window as any).go?.main?.App?.SaveLauncherAssets?.(assetsRef.value);
+        await SaveLauncherAssets?.(assetsRef.value as any);
         await ensureCustomFonts(assetsRef.value);
-    } catch { }
+    } catch (_e) {}
 }
 
 async function onFontChange(slot: 'primary' | 'secundary') {
@@ -168,6 +188,8 @@ async function onFontsChanged() {
 
 function buildPersonalization() {
     const base = (personalization.value ?? {}) as any;
+    const baseBg = (base.background ?? {}) as any;
+    const isImageBg = bgType.value === 'image';
     return {
         ...base,
         background: {
@@ -177,6 +199,16 @@ function buildPersonalization() {
             dynamicImages: dynamicImages.value,
             dynamicOrder: dynamicOrder.value,
             dynamicInterval: dynamicInterval.value,
+            imageAuthor: isImageBg ? (baseBg.imageAuthor ?? '') : '',
+            imageModName: isImageBg ? (baseBg.imageModName ?? '') : '',
+            imageUrl: isImageBg ? (baseBg.imageUrl ?? '') : '',
+        },
+        backgroundMusic: {
+            enabled: musicEnabled.value,
+            position: 'bottom-center',
+            coverStyle: musicCoverSel.value,
+            discRotation: musicRotate.value,
+            volume: musicVolume.value / 100,
         },
         fontPrimary: fontPrimary.value,
         fontSecondary: fontSecondary.value,
@@ -225,8 +257,8 @@ async function save() {
     const p = buildPersonalization();
     applyPersonalization(p as any);
     try {
-        await (window as any).go?.main?.App?.UpdatePersonalization?.(p);
-    } catch { }
+        await UpdatePersonalization?.(p);
+    } catch (_e) {}
     await refreshPreviews();
 }
 
@@ -244,7 +276,7 @@ function onPreviewColor(field: 'sidebar' | 'border', v: string) {
 async function pickBackground(kind: 'image' | 'video'): Promise<string | null> {
     errorMsg.value = '';
     try {
-        const rel = await (window as any).go?.main?.App?.PickBackgroundFile?.(kind);
+        const rel = await PickBackgroundFile?.(kind);
         if (typeof rel === 'string') {
             if (rel) return rel;
             return null;
@@ -303,13 +335,83 @@ function clearVideo() {
     save();
 }
 
+// ---- Música de fondo ----
+
+async function onMusicToggle() {
+    save();
+    if (musicEnabled.value && musicTracks.value.length === 0) {
+        musicMsg.value = 'Aún no hay pistas. Añade una para que suene de fondo.';
+    } else {
+        musicMsg.value = '';
+    }
+}
+
+async function onPickMusic() {
+    if (musicBusy.value) return;
+    musicBusy.value = true;
+    musicMsg.value = '';
+    try {
+        const src = await PickMusicFile?.();
+        if (!src) {
+            musicBusy.value = false;
+            return;
+        }
+        const info = await validateAndReadMusic(src);
+        const err = await addMusic(info.path, info.name, info.ext);
+        if (err) {
+            musicMsg.value = err;
+        } else {
+            musicMsg.value = '';
+            if (!musicEnabled.value) {
+                musicEnabled.value = true;
+            }
+            save();
+        }
+    } catch (e: any) {
+        musicMsg.value = e?.message ?? 'No se pudo añadir el audio.';
+    }
+    musicBusy.value = false;
+}
+
+async function onRemoveMusic(name: string) {
+    musicMsg.value = '';
+    const err = await removeMusic(name);
+    if (err) {
+        musicMsg.value = err;
+    } else {
+        save();
+    }
+}
+
+// El volumen puede cambiar desde el propio widget de música; el slider de
+// Ajustes se sincroniza en vivo con la personalización global.
+watch(
+    () => personalization.value?.backgroundMusic?.volume,
+    (v) => {
+        if (typeof v === 'number' && v >= 0 && v <= 1) {
+            musicVolume.value = Math.round(v * 100);
+        }
+    }
+);
+
+// El volumen se aplica en vivo al reproductor mientras se mueve el control y
+// se persiste en la personalización global al soltar el cambio.
+function onMusicVolumeInput() {
+    setVolume(musicVolume.value / 100);
+}
+
+function onMusicVolumeChange() {
+    setVolume(musicVolume.value / 100);
+    save();
+}
+
 function openPreview() {
     window.dispatchEvent(new CustomEvent(PERSONALIZATION_PREVIEW_EVENT));
 }
 
 onMounted(async () => {
     try {
-        const cfg = await (window as any).go?.main?.App?.GetConfig?.();
+        const cfg = await GetConfig?.();
         const p = cfg?.personalization ?? {};
         const b = p.background ?? {};
         bgType.value = b.type ?? 'none';
@@ -318,6 +420,11 @@ onMounted(async () => {
         dynamicImages.value = Array.isArray(b.dynamicImages) ? b.dynamicImages : [];
         dynamicOrder.value = b.dynamicOrder ?? 'sequential';
         dynamicInterval.value = b.dynamicInterval ?? 10;
+        const m = p.backgroundMusic ?? {};
+        musicEnabled.value = !!m.enabled;
+        musicCoverSel.value = (['square', 'background'].includes(m.coverStyle) ? m.coverStyle : 'disc') as 'disc' | 'square' | 'background';
+        musicRotate.value = typeof m.discRotation === 'boolean' ? m.discRotation : true;
+        musicVolume.value = Math.round((typeof m.volume === 'number' && m.volume >= 0 && m.volume <= 1 ? m.volume : 0.8) * 100);
         fontPrimary.value = p.fontPrimary ?? 'Lexend';
         fontSecondary.value = p.fontSecondary ?? 'Inter';
         fontPrimaryColor.value = p.fontPrimaryColor ?? '#ffffff';
@@ -338,12 +445,15 @@ onMounted(async () => {
         colorButtonPrimary.value = c.buttonPrimary ?? '#111';
         recentColors.value = Array.isArray(p.recentColors) ? p.recentColors : [];
         localApply();
-    } catch { }
-    try { await refreshPreviews(); } catch { }
+    } catch (_e) {}
+    try { await refreshPreviews(); } catch (_e) {}
     try {
         await loadFontData();
         await syncFontSelects();
-    } catch { }
+    } catch (_e) {}
+    try {
+        await loadMusicList();
+    } catch (_e) {}
 });
 
 let firstActivate = true;
@@ -355,7 +465,7 @@ onActivated(async () => {
     try {
         await loadFontData();
         await syncFontSelects();
-    } catch { }
+    } catch (_e) {}
 });
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
@@ -471,6 +581,108 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         <div v-if="errorMsg" class="SsTip SsTipDanger">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <span>{{ errorMsg }}</span>
+        </div>
+    </div>
+
+    <div class="SsGroup">
+        <div class="SsGroupHead">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            <span>Música de fondo</span>
+        </div>
+        <div class="SsRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Activar música de fondo</span>
+                <span class="SsDesc">Reproduce un audio mientras usas el launcher. MP3, WAV, OGG o M4A, de máximo 10 minutos y 15 MB.</span>
+            </div>
+            <div class="SsCtrl">
+                <label class="SsTg">
+                    <input type="checkbox" v-model="musicEnabled" @change="onMusicToggle" />
+                    <span class="SsTgS"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="SsRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Estilo de la carátula</span>
+                <span class="SsDesc">Disco (gira), cuadrado, o como fondo del widget (1:1, a la derecha, desvaneciéndose hacia la izquierda).</span>
+            </div>
+            <div class="SsCtrl">
+                <select class="SsSel" v-model="musicCoverSel" @change="save">
+                    <option value="disc">Disco</option>
+                    <option value="square">Cuadrado</option>
+                    <option value="background">Fondo del widget</option>
+                </select>
+            </div>
+        </div>
+
+        <div v-if="musicCoverSel === 'disc'" class="SsRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Rotar el disco</span>
+                <span class="SsDesc">El disco gira siempre, aunque la música esté en pausa.</span>
+            </div>
+            <div class="SsCtrl">
+                <label class="SsTg">
+                    <input type="checkbox" v-model="musicRotate" @change="save" />
+                    <span class="SsTgS"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="SsRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Volumen</span>
+                <span class="SsDesc">Nivel de sonido de la música de fondo (se guarda en tu personalización, no en el widget).</span>
+            </div>
+            <div class="SsCtrl">
+                <div class="SsVol">
+                    <input
+                        class="SsVolRange"
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        v-model.number="musicVolume"
+                        @input="onMusicVolumeInput"
+                        @change="onMusicVolumeChange"
+                    />
+                    <span class="SsVolVal">{{ musicVolume }}%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="SsRow">
+            <div class="SsInfo">
+                <span class="SsLabel">Añadir audio</span>
+                <span class="SsDesc">Se guarda en <code>cache/audio</code> y se registra en launcher_assets.json. Máximo {{ MAX_MUSIC_TRACKS }} pistas.</span>
+            </div>
+            <div class="SsCtrl">
+                <button class="SsBtn" :disabled="musicBusy || musicTracks.length >= MAX_MUSIC_TRACKS" @click="onPickMusic">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    {{ musicBusy ? 'Añadiendo…' : `Añadir audio (${musicTracks.length}/${MAX_MUSIC_TRACKS})` }}
+                </button>
+            </div>
+        </div>
+
+        <div v-for="(t, i) in musicTracks" :key="t.path" class="SsRow">
+            <div class="SsInfo">
+                <span class="SsLabel">{{ t.name }}</span>
+                <span class="SsDesc">
+                    {{ metaCache[t.path]?.title || t.name }} · {{ metaCache[t.path]?.duration ? formatDuration(metaCache[t.path]?.duration ?? 0) : 'Duración desconocida' }}
+                </span>
+            </div>
+            <div class="SsCtrl">
+                <div class="SsMusicThumb">
+                    <img v-if="metaCache[t.path]?.coverUrl" :src="metaCache[t.path]?.coverUrl" alt="">
+                    <span v-else></span>
+                </div>
+                <button class="SsBtn SsBtnDanger" :disabled="musicBusy" @click="onRemoveMusic(t.name)">Quitar</button>
+            </div>
+        </div>
+
+        <div v-if="musicMsg" class="SsTip" :class="{ 'SsTipDanger': musicMsg.includes('no') }">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>{{ musicMsg }}</span>
         </div>
     </div>
 

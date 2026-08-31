@@ -1,6 +1,30 @@
 {
     "versions": [
         {
+            "version": "2.5.0",
+            "changes": [
+                "./StepLauncher-2.5.0/StepLauncher-Change-1.md",
+                "./StepLauncher-2.5.0/StepLauncher-Change-2.md",
+                "./StepLauncher-2.5.0/StepLauncher-Change-3.md",
+                "./StepLauncher-2.5.0/StepLauncher-Change-4.md",
+                "./StepLauncher-2.5.0/StepLauncher-Change-5.md",
+                "./StepLauncher-2.5.0/StepLauncher-Change-6.md",
+                "./StepLauncher-2.5.0/StepLauncher-Change-7.md",
+                "./StepLauncher-2.5.0/StepLauncher-Change-8.md",
+                "./StepLauncher-2.5.0/StepLauncher-Change-9.md",
+                "./StepLauncher-2.5.0/StepLauncher-Change-10.md",
+                "./StepLauncher-2.5.0/StepLauncher-Change-11.md"
+            ]
+        },
+        {
+            "version": "2.4.1",
+            "changes": [
+                "./StepLauncher-2.4.1/StepLauncher-Change-1.md",
+                "./StepLauncher-2.4.1/StepLauncher-Change-2.md",
+                "./StepLauncher-2.4.1/StepLauncher-Change-3.md"
+            ]
+        },
+        {
             "version": "2.3.1",
             "changes": [
                 "./StepLauncher-2.3.1/StepLauncher-Change-1.md",

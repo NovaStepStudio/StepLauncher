@@ -10,6 +10,9 @@ import (
 )
 
 func (m *InstanceManager) LaunchInstance(name string, auth launcher.LaunchConfig) (*InstanceLaunchResult, error) {
+	if err := m.assertUsable(name); err != nil {
+		return nil, err
+	}
 	meta, cfg, err := m.Get(name)
 	if err != nil {
 		return nil, fmt.Errorf("instance %s not found", name)
@@ -66,6 +69,9 @@ func (m *InstanceManager) LaunchInstance(name string, auth launcher.LaunchConfig
 		adv.UserType = nonEmpty(adv.UserType, cfg.UserType, "mojang")
 		if cfg.GCPreset != nil {
 			adv.GCPreset = *cfg.GCPreset
+		}
+		if cfg.DetailedLogs != nil {
+			adv.DetailedLogs = *cfg.DetailedLogs
 		}
 		if cfg.GPUPreference != nil {
 			adv.GPUPreference = *cfg.GPUPreference
@@ -157,6 +163,24 @@ func (m *InstanceManager) LaunchInstance(name string, auth launcher.LaunchConfig
 		}
 	}
 
+	// "Utilizar el java del launcher" (useOfficialJava=true, o sin configurar):
+	// la instancia NO copia ni ignora el Java: consulta en vivo la config
+	// global del launcher y hereda la misma elección que el lanzamiento normal.
+	useLauncherJava := cfg.UseOfficialJava == nil || *cfg.UseOfficialJava
+	if useLauncherJava && m.globalJavaConfig != nil {
+		mode, customPath := m.globalJavaConfig()
+		switch mode {
+		case "official":
+			adv.UseOfficialJava = true
+		case "system", "custom":
+			adv.UseOfficialJava = false
+			adv.JavaExec = customPath
+		default: // "auto" o vacío: Java del sistema resuelto por PATH/LookPath
+			adv.UseOfficialJava = false
+			adv.JavaExec = ""
+		}
+	}
+
 	launchCfg := launcher.LaunchConfig{
 		Version:         cfg.Version,
 		Username:        auth.Username,
@@ -206,6 +230,10 @@ func (m *InstanceManager) LaunchInstance(name string, auth launcher.LaunchConfig
 			m.log("WARN: failed to persist playtime for %s: %v", name, err)
 		}
 		m.log("Instance %s stopped | PID: %d | exit: %d | playtime: %ds", name, instance.PID, instance.ExitCode, secs)
+		// Los backups automáticos se disparan con la instancia cerrada (fin de
+		// la sesión de juego): es el único momento en que los archivos están
+		// estables y no hay riesgo de comprimir un lanzamiento en curso.
+		m.maybeAutoBackup(name, cfg)
 	}()
 
 	return &InstanceLaunchResult{

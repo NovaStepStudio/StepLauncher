@@ -1,6 +1,15 @@
 {
     "versions": [
         {
+            "version": "2.5.0",
+            "errors": [
+                "./StepLauncher-2.5.0/StepLauncher-Error-1.md",
+                "./StepLauncher-2.5.0/StepLauncher-Error-2.md",
+                "./StepLauncher-2.5.0/StepLauncher-Error-3.md",
+                "./StepLauncher-2.5.0/StepLauncher-Error-4.md"
+            ]
+        },
+        {
             "version": "2.3.1",
             "errors": [
                 "./StepLauncher-2.3.1/StepLauncher-Error-1.md",

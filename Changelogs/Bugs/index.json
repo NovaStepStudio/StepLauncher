@@ -1,0 +1,18 @@
+{
+    "versions": [
+        {
+            "version": "2.5.0",
+            "bugs": [
+                "./StepLauncher-2.5.0/StepLauncher-Bug-1.md",
+                "./StepLauncher-2.5.0/StepLauncher-Bug-2.md"
+            ]
+        },
+        {
+            "version": "2.4.1",
+            "bugs": [
+                "./StepLauncher-2.4.1/StepLauncher-Bug-1.md",
+                "./StepLauncher-2.4.1/StepLauncher-Bug-2.md"
+            ]
+        }
+    ]
+}

@@ -123,12 +123,9 @@ func ResolveNativeArtifact(lib Library, os, arch string) *Artifact {
 	}
 
 	if lib.Natives != nil && lib.Downloads != nil && lib.Downloads.Classifiers != nil {
-		if raw, ok := lib.Natives[os]; ok && raw != "" {
-			archSuffix := "64"
-			if arch == "x86" {
-				archSuffix = "32"
-			}
-			if a, ok := lib.Downloads.Classifiers[strings.ReplaceAll(raw, "${arch}", archSuffix)]; ok && a.URL != "" {
+		key := NativeClassifierKey(lib, os, arch)
+		if key != "" {
+			if a, ok := lib.Downloads.Classifiers[key]; ok && a.URL != "" {
 				return &a
 			}
 		}
@@ -194,9 +191,15 @@ func addLibraryTasks(tasks *[]DownloadTask, ver *VersionJSON, libDir string, fil
 				url = LibraryRepositoryBase(lib) + "/" + a.Path
 			}
 			if url != "" {
+				path := a.Path
+				if path == "" {
+					// Terceros (p. ej. BatMod) omiten path: se deriva de la
+					// coordenada maven para no descargar al directorio raíz.
+					path = globalutils.MavenPath(lib.Name)
+				}
 				*tasks = append(*tasks, DownloadTask{
 					URL:     url,
-					Dest:    filepath.Join(libDir, a.Path),
+					Dest:    filepath.Join(libDir, path),
 					SHA1:    a.SHA1,
 					Size:    a.Size,
 					Section: "libraries",
@@ -233,6 +236,13 @@ func addNativeTasks(tasks *[]DownloadTask, ver *VersionJSON, libDir string, filt
 			continue
 		}
 		destPath := artifact.Path
+		if destPath == "" {
+			// Terceros (p. ej. BatMod) omiten path en classifiers: se deriva
+			// de la coordenada maven con el clasificador resuelto.
+			if key := NativeClassifierKey(lib, os, arch); key != "" {
+				destPath = globalutils.MavenPath(lib.Name + ":" + key)
+			}
+		}
 		if destPath == "" {
 			destPath = globalutils.MavenPath(lib.Name)
 		}

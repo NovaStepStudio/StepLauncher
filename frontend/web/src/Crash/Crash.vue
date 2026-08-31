@@ -4,6 +4,7 @@ import { IconAlertOctagon, IconX, IconInfoCircle, IconFolderOpen, IconFileText, 
 import { crashInfo, clearCrash } from '@/Launcher/Store';
 import { CLOSE_OVERLAYS_EVENT } from '@/Common/Stores/Idle';
 import { useOverlayEscape } from '@/Common/Composables/useOverlayEscape';
+import { OpenPath } from '@wailsjs/StepLauncher/internal/Services/System/systemservice';
 
 const props = defineProps<{
     visible: boolean;
@@ -29,14 +30,14 @@ async function copyLog() {
             copied.value = false;
             copyTimer = null;
         }, 1600);
-    } catch { }
+    } catch (_e) {}
 }
 
 async function openLog(path: string | undefined) {
     if (!path) return;
     try {
-        await (window as any).go?.main?.App?.OpenPath?.(path);
-    } catch { }
+        await OpenPath?.(path);
+    } catch (_e) {}
 }
 
 function categoryLabel(cat: string | undefined): string {

@@ -106,8 +106,7 @@ function tryLock(el: HTMLElement) {
     try {
         const p = el.requestPointerLock() as unknown as Promise<void>;
         if (p && typeof p.catch === 'function') p.catch(() => {});
-    } catch {
-    }
+    } catch (_e) {}
 }
 
 function unlockPointer() {

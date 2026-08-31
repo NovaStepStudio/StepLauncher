@@ -1,6 +1,7 @@
 package instance
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"StepLauncher/internal/Core/Downloader"
 	"StepLauncher/internal/Core/Launcher"
 	"StepLauncher/internal/Core/ModLoader"
+	"StepLauncher/internal/Core/Platform"
 )
 
 const (
@@ -39,6 +41,22 @@ type InstanceManager struct {
 	separateGameDir bool
 
 	onVersionReady func(name, version string)
+
+	// globalJavaConfig devuelve el modo Java y la ruta personalizada de la
+	// config GLOBAL del launcher; se usa cuando la instancia tiene activo
+	// "utilizar el java del launcher" (useOfficialJava=true) para heredar la
+	// elección de Java del launcher en vez de copiarla o ignorarla.
+	globalJavaConfig func() (mode, customPath string)
+
+	// Verificación asíncrona de integridad por instancia: mientras una
+	// instancia está en verificación NO se puede utilizar (lanzar, descargar,
+	// editar, instalar modloaders, borrar...).
+	verifying      map[string]bool
+	verifyCancel   map[string]context.CancelFunc
+	verifyProgress map[string]*InstanceVerifyProgress
+
+	// Impide backups concurrentes de la misma instancia.
+	backingUp map[string]bool
 }
 
 func NewManager(instancesDir, sharedDir string) *InstanceManager {
@@ -47,7 +65,27 @@ func NewManager(instancesDir, sharedDir string) *InstanceManager {
 		sharedDir:       sharedDir,
 		separateGameDir: true,
 		downloads:       make(map[string]*instanceDownload),
+		verifying:       make(map[string]bool),
+		verifyCancel:    make(map[string]context.CancelFunc),
+		verifyProgress:  make(map[string]*InstanceVerifyProgress),
+		backingUp:       make(map[string]bool),
 	}
+}
+
+// isVerifying indica si la instancia está en una verificación de integridad
+// en curso. Mientras lo esté, cualquier operación que la modifique o la lance
+// se rechaza (la instancia NO se puede utilizar durante el proceso).
+func (m *InstanceManager) isVerifying(name string) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.verifying[name]
+}
+
+func (m *InstanceManager) assertUsable(name string) error {
+	if m.isVerifying(name) {
+		return fmt.Errorf("la instancia %s se está verificando y no se puede utilizar hasta que termine", name)
+	}
+	return nil
 }
 
 // SetSeparateGameDir controla si el gameDir de las instancias es
@@ -89,6 +127,13 @@ func (m *InstanceManager) SetLogger(fn func(string, ...interface{})) {
 // la descarga de una version en una instancia (sin bloquear al llamador: va en goroutine).
 func (m *InstanceManager) SetOnVersionReady(fn func(name, version string)) {
 	m.onVersionReady = fn
+}
+
+// SetGlobalJavaConfig registra un resolver de la config Java global del
+// launcher (modo + ruta personalizada). Lo consulta LaunchInstance cuando la
+// instancia tiene activado "utilizar el java del launcher".
+func (m *InstanceManager) SetGlobalJavaConfig(fn func() (mode, customPath string)) {
+	m.globalJavaConfig = fn
 }
 
 func (m *InstanceManager) fireVersionReady(name, version string) {
@@ -231,23 +276,31 @@ func (m *InstanceManager) Create(req CreateInstanceReq) (*InstanceMetadata, stri
 		dlVersion = req.LaunchConfig.Version
 	}
 
+	var cfg *InstanceLaunchConfig
 	if req.LaunchConfig != nil {
-		if dlVersion != "" {
-			req.LaunchConfig.Version = dlVersion
-		}
-		if err := m.writeConfig(req.Name, req.LaunchConfig); err != nil {
-			os.RemoveAll(instPath)
-			return nil, "", err
-		}
-	} else {
-		cfg := &InstanceLaunchConfig{}
+		cfg = req.LaunchConfig
 		if dlVersion != "" {
 			cfg.Version = dlVersion
 		}
-		if err := m.writeConfig(req.Name, cfg); err != nil {
-			os.RemoveAll(instPath)
-			return nil, "", err
+	} else {
+		cfg = &InstanceLaunchConfig{}
+		if dlVersion != "" {
+			cfg.Version = dlVersion
 		}
+	}
+
+	// Default de RAM: si la PC lo permite (al menos 2 GB + 512 MB del sistema),
+	// la instancia nueva nace con 2 GB de RAM en vez de sin configurar.
+	if cfg.MaxRAM == nil && platform.TotalRAMMB() >= 2560 {
+		maxRAM := 2048
+		minRAM := 512
+		cfg.MaxRAM = &maxRAM
+		cfg.MinRAM = &minRAM
+	}
+
+	if err := m.writeConfig(req.Name, cfg); err != nil {
+		os.RemoveAll(instPath)
+		return nil, "", err
 	}
 
 	m.log("Instance created: %s", req.Name)
@@ -276,8 +329,8 @@ func (m *InstanceManager) List() []*InstanceInfo {
 			continue
 		}
 		result = append(result, &InstanceInfo{
-			Name: meta.Name, Title: meta.Title, Versions: meta.Versions,
-			Favorite: meta.Favorite, Pinned: meta.Pinned, Group: meta.Group,
+			Name: meta.Name, Title: meta.Title, Versions: m.scanVersionsFromDisk(e.Name()),
+			Favorite: meta.Favorite, Pinned: meta.Pinned, Group: meta.Group, Tags: meta.Tags,
 			LastPlayed: meta.LastPlayed, PlayTime: meta.PlayTime,
 		})
 	}
@@ -293,6 +346,9 @@ func (m *InstanceManager) Get(name string) (*InstanceMetadata, *InstanceLaunchCo
 	if err != nil {
 		return nil, nil, fmt.Errorf("config not found for instance %s: %w", name, err)
 	}
+	// La carpeta versions/ de la instancia es la fuente de verdad: se relee en
+	// cada consulta para que el frontend nunca muestre un estado viejo.
+	meta.Versions = m.scanVersionsFromDisk(name)
 	return meta, cfg, nil
 }
 
@@ -312,6 +368,9 @@ func (m *InstanceManager) OpenFolder(name string) error {
 }
 
 func (m *InstanceManager) Delete(name string) error {
+	if err := m.assertUsable(name); err != nil {
+		return err
+	}
 	if err := sanitizeInstanceName(name); err != nil {
 		return err
 	}
@@ -330,6 +389,9 @@ func (m *InstanceManager) Delete(name string) error {
 }
 
 func (m *InstanceManager) UpdateMetadata(name string, req UpdateMetadataReq) (*InstanceMetadata, error) {
+	if err := m.assertUsable(name); err != nil {
+		return nil, err
+	}
 	meta, err := m.readMetadata(name)
 	if err != nil {
 		return nil, err
@@ -371,6 +433,9 @@ func (m *InstanceManager) UpdateMetadata(name string, req UpdateMetadataReq) (*I
 }
 
 func (m *InstanceManager) UpdateConfig(name string, cfg *InstanceLaunchConfig) (*InstanceLaunchConfig, error) {
+	if err := m.assertUsable(name); err != nil {
+		return nil, err
+	}
 	existing, err := m.readConfig(name)
 	if err != nil {
 		return nil, fmt.Errorf("instance %s not found", name)
@@ -416,6 +481,23 @@ func (m *InstanceManager) UpdateConfig(name string, cfg *InstanceLaunchConfig) (
 	if cfg.ResHeight != nil {
 		existing.ResHeight = cfg.ResHeight
 	}
+	if cfg.DetailedLogs != nil {
+		existing.DetailedLogs = cfg.DetailedLogs
+	}
+	// Los slices se copian siempre (aunque vengan vacíos) para poder vaciar
+	// los argumentos propios de la instancia y volver a heredar los globales.
+	if cfg.JavaArgs != nil {
+		existing.JavaArgs = cfg.JavaArgs
+	}
+	if cfg.GameArgs != nil {
+		existing.GameArgs = cfg.GameArgs
+	}
+	if cfg.BackupSchedule != "" {
+		existing.BackupSchedule = cfg.BackupSchedule
+	}
+	if cfg.BackupInterval > 0 {
+		existing.BackupInterval = cfg.BackupInterval
+	}
 
 	if err := m.writeConfig(name, existing); err != nil {
 		return nil, err
@@ -424,11 +506,33 @@ func (m *InstanceManager) UpdateConfig(name string, cfg *InstanceLaunchConfig) (
 }
 
 func (m *InstanceManager) Versions(name string) ([]string, error) {
-	meta, err := m.readMetadata(name)
-	if err != nil {
+	if _, err := m.readMetadata(name); err != nil {
 		return nil, err
 	}
-	return meta.Versions, nil
+	return m.scanVersionsFromDisk(name), nil
+}
+
+// scanVersionsFromDisk enumera las versiones instaladas leyendo el directorio
+// versions/ de la instancia en disco (fuente de verdad; el metadata.json no se
+// usa para esto, porque puede quedar desincronizado si la instalación termina
+// con el modal cerrado o si un instalador crea su propia carpeta de versión).
+func (m *InstanceManager) scanVersionsFromDisk(name string) []string {
+	instPath, err := m.instancePath(name)
+	if err != nil {
+		return nil
+	}
+	versionsDir := filepath.Join(instPath, "versions")
+	entries, err := os.ReadDir(versionsDir)
+	if err != nil {
+		return nil
+	}
+	var out []string
+	for _, e := range entries {
+		if e.IsDir() {
+			out = append(out, e.Name())
+		}
+	}
+	return out
 }
 
 func (m *InstanceManager) RemoveVersion(name, version string) error {
@@ -457,6 +561,9 @@ func (m *InstanceManager) RemoveVersion(name, version string) error {
 }
 
 func (m *InstanceManager) Clone(name, newName string, copyVersions bool) (*InstanceMetadata, error) {
+	if err := m.assertUsable(name); err != nil {
+		return nil, err
+	}
 	meta, cfg, err := m.Get(name)
 	if err != nil {
 		return nil, fmt.Errorf("source instance not found: %w", err)

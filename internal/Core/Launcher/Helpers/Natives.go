@@ -191,6 +191,14 @@ func resolveNativeJar(lib downloader.Library, librariesDir, osName string) strin
 				}
 			}
 		}
+		// Los version.json de terceros (p. ej. BatMod) omiten path en los
+		// classifiers: se deriva de la coordenada maven + clasificador.
+		if classifier != "" {
+			p := filepath.Join(librariesDir, utils.MavenPath(lib.Name+":"+classifier))
+			if fileExists(p) {
+				return p
+			}
+		}
 	}
 
 	return ""
@@ -221,12 +229,23 @@ func ResolveNativeJarDownload(lib downloader.Library, librariesDir, osName strin
 		return "", "", "", 0
 	}
 	art, ok := lib.Downloads.Classifiers[classifier]
-	if !ok || art.Path == "" {
+	if !ok {
 		return "", "", "", 0
+	}
+	p := art.Path
+	if p == "" {
+		// Igual que resolveNativeJar: se deriva la ruta si el JSON no la trae.
+		p = utils.MavenPath(lib.Name + ":" + classifier)
+		if p == "" {
+			return "", "", "", 0
+		}
 	}
 	u := art.URL
 	if u == "" {
-		u = downloader.LibraryRepositoryBase(lib) + "/" + art.Path
+		u = downloader.LibraryRepositoryBase(lib) + "/" + p
 	}
-	return filepath.Join(librariesDir, art.Path), u, art.SHA1, art.Size
+	if u == "" {
+		return "", "", "", 0
+	}
+	return filepath.Join(librariesDir, p), u, art.SHA1, art.Size
 }

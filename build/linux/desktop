@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=StepLauncher
+Comment=Launcher de Minecraft de NovaStepStudio
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/steplauncher %u
+Terminal=false
+Type=Application
+Icon=steplauncher
+Categories=Utility;
+StartupWMClass=steplauncher
+
+ 

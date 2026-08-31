@@ -11,7 +11,7 @@ import {
     IconChevronRight,
 } from '@tabler/icons-vue';
 import { marked } from 'marked';
-import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
+import { Browser } from '@wailsio/runtime';
 import {
     indexState,
     indexLoading,
@@ -235,16 +235,16 @@ function onDocClick(e: MouseEvent) {
     if (isInternalUrl(url)) {
         if (url.startsWith('http') && !url.startsWith(NEWS_BASE_URL)) {
             try {
-                BrowserOpenURL(url);
-            } catch { }
+                Browser.OpenURL(url);
+            } catch (_e) {}
             return;
         }
         openReaderUrl(url, docFileName(url));
         return;
     }
     try {
-        BrowserOpenURL(url);
-    } catch { }
+        Browser.OpenURL(url);
+    } catch (_e) {}
 }
 
 function retryCurrent() {

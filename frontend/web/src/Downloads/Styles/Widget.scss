@@ -20,6 +20,7 @@
     text-align: left;
     cursor: pointer;
     transition: var(--transition);
+    overflow: hidden;
 
     &.gap {
         bottom: 5rem;
@@ -75,6 +76,10 @@
 .DownloadWidget_Sub {
     font-size: 0.64rem;
     opacity: 0.6;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .DownloadWidget_Bar {

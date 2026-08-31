@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, reactive, watch, onMounted, onUnmounted } from 'vue';
 import { IconPhoto, IconX, IconZoomIn, IconZoomOut, IconChevronLeft, IconChevronRight } from '@tabler/icons-vue';
-import { ListScreenshots, ReadLocalFile } from '@wailsjs/go/main/App';
-import type { Handlers } from '@wailsjs/go/models';
+import { ListScreenshots } from '@wailsjs/StepLauncher/internal/Services/Appearance/appearanceservice';
+import { ListInstanceScreenshots } from '@wailsjs/StepLauncher/internal/Services/Instance/instanceservice';
+import { ReadLocalFile } from '@wailsjs/StepLauncher/internal/Services/System/systemservice';
+import type { ScreenshotInfo } from '@wailsjs/StepLauncher/internal/Handlers/models';
 import { CLOSE_OVERLAYS_EVENT } from '@/Common/Stores/Idle';
 import {
     heavyPanel, openHeavyPanel, closeHeavyPanel,
@@ -12,7 +14,7 @@ import { useOverlayEscape } from '@/Common/Composables/useOverlayEscape';
 
 const SHOTS_REFRESH_EVENT = 'sl:shots-refresh';
 
-const shots = ref<Handlers.ScreenshotInfo[]>([]);
+const shots = ref<ScreenshotInfo[]>([]);
 const loading = ref(false);
 const error = ref('');
 
@@ -127,10 +129,10 @@ function refresh() {
     loading.value = true;
     error.value = '';
     const load = shotsInstance.value
-        ? (window as any)?.go?.main?.App?.ListInstanceScreenshots?.(shotsInstance.value)
+        ? ListInstanceScreenshots(shotsInstance.value)
         : ListScreenshots();
     Promise.resolve(load)
-        .then((list: Handlers.ScreenshotInfo[] | null | undefined) => {
+        .then((list: ScreenshotInfo[] | null | undefined) => {
             shots.value = list ?? [];
         })
         .catch(() => {

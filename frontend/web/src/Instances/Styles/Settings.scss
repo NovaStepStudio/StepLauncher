@@ -109,6 +109,83 @@
     opacity: 0.5;
 }
 
+.InstSet_Args {
+    resize: vertical;
+    min-height: 3.2rem;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: calc(0.7rem * var(--font-size-secundary, 1)) !important;
+    line-height: 1.45;
+}
+
+.InstSet_Verify {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.6rem;
+    border: var(--border-style);
+    background: var(--control-bg);
+
+    .InstSet_VerifyText {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        font-size: calc(0.72rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+        opacity: 0.85;
+        line-height: 1.45;
+    }
+
+    .InstSet_VerifyBtn {
+        flex-shrink: 0;
+    }
+}
+
+.InstSet_VerifyProgress {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.6rem;
+    border: var(--border-style);
+    background: var(--control-bg);
+}
+
+.InstSet_VerifyBar {
+    flex: 1;
+    min-width: 0;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: var(--progress-bg, rgba(255, 255, 255, 0.08));
+    overflow: hidden;
+}
+
+.InstSet_VerifyBarFill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--progress-color);
+    transition: width 0.3s ease;
+}
+
+.InstSet_VerifyState {
+    flex-shrink: 0;
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 45%;
+}
+
+.InstSet_VerifyCancel {
+    flex-shrink: 0;
+    font-size: calc(0.66rem * var(--font-size-secundary, 1)) !important;
+    padding: 0.25rem 0.6rem !important;
+}
+
 .InstSet_Row {
     display: flex;
     gap: 0.85rem;

@@ -6,9 +6,22 @@
     "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
     "removeComments": true,
+    "allowJs": true,
+    "checkJs": false,
+    "noImplicitAny": false,
+    "forceConsistentCasingInFileNames": false,
     "paths": {
       "@/*": ["./web/src/*"],
-      "@wailsjs/*": ["./wailsjs/*"]
+      "@wailsjs/*": ["./bindings/*"],
+      "@wailsjs/StepLauncher/SystemService": ["./bindings/StepLauncher/internal/Services/System/systemservice.js"],
+      "@wailsjs/StepLauncher/ConfigService": ["./bindings/StepLauncher/internal/Services/Config/configservice.js"],
+      "@wailsjs/StepLauncher/InstanceService": ["./bindings/StepLauncher/internal/Services/Instance/instanceservice.js"],
+      "@wailsjs/StepLauncher/GameService": ["./bindings/StepLauncher/internal/Services/Game/gameservice.js"],
+      "@wailsjs/StepLauncher/DownloadService": ["./bindings/StepLauncher/internal/Services/Download/downloadservice.js"],
+      "@wailsjs/StepLauncher/AccountService": ["./bindings/StepLauncher/internal/Services/Account/accountservice.js"],
+      "@wailsjs/StepLauncher/ModLoaderService": ["./bindings/StepLauncher/internal/Services/ModLoader/modloaderservice.js"],
+      "@wailsjs/StepLauncher/MusicService": ["./bindings/StepLauncher/internal/Services/Music/musicservice.js"],
+      "@wailsjs/StepLauncher/AppearanceService": ["./bindings/StepLauncher/internal/Services/Appearance/appearanceservice.js"]
     },
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo"
   }

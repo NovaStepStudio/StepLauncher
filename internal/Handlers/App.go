@@ -1,7 +1,6 @@
 package Handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,20 +13,26 @@ import (
 
 	"StepLauncher/internal/Config"
 	assets "StepLauncher/internal/Core/Assets"
+	musichistory "StepLauncher/internal/Music/MusicHistory"
+	"StepLauncher/internal/Music/NowPlaying"
 	news "StepLauncher/internal/Core/News"
+	playlists "StepLauncher/internal/Music/Playlist"
 	engine "StepLauncher/internal/Handlers/Engine"
+	music "StepLauncher/internal/Music"
 	RichPresence "StepLauncher/internal/RichPresence"
-
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type App struct {
-	ctx    context.Context
-	engine *engine.Engine
-	config *Config.Manager
-	assets *assets.Manager
-	news   *news.Manager
-	rp     *RichPresence.Manager
+	engine       *engine.Engine
+	config       *Config.Manager
+	assets       *assets.Manager
+	news         *news.Manager
+	playlists    *playlists.Manager
+	musicHistory *musichistory.Manager
+	nowPlaying   *nowplaying.Manager
+	musicCache   *music.Manager
+	rp           *RichPresence.Manager
+	runtime      RuntimeBridge
 
 	firstLaunchPending bool
 }
@@ -54,6 +59,31 @@ func NewApp(eng *engine.Engine, configPath string) *App {
 	a.news = news.NewManager(rootDir, func(f string, args ...interface{}) {
 		a.logf(f, args...)
 	})
+	a.playlists = playlists.NewManager(rootDir)
+	a.musicHistory = musichistory.NewManager(rootDir)
+	a.nowPlaying = nowplaying.NewManager(rootDir)
+	a.musicCache = music.NewManager(rootDir)
+	// Wire resolvers para que playlists cachee TotalDuration/TrackCount y PreviewCovers (primeras 4) al crear/editar/importar
+	// sin que la UI tenga que leer la playlist entera y recuperar las 4 carátulas cada vez
+	if a.playlists != nil && a.musicCache != nil {
+		a.playlists.SetDurationResolver(func(path string) float64 {
+			if meta, ok := a.musicCache.GetMetadata(path); ok {
+				return meta.Duration
+			}
+			return 0
+		})
+		a.playlists.SetCoverResolver(func(path string) string {
+			thumb, err := a.musicCache.GetCoverBase64(path, "thumb")
+			if err == nil && thumb != "" {
+				return thumb
+			}
+			return ""
+		})
+		// Migrar playlists existentes con stats/preview vacíos en segundo plano
+		go func() {
+			_ = a.playlists.RefreshMissingStats()
+		}()
+	}
 	a.initAssets(rootDir)
 	return a
 }
@@ -78,12 +108,20 @@ func (a *App) initAssets(rootDir string) {
 			{Config.ExtraKeyHistory, Config.FileHistory},
 			{Config.ExtraKeyProfiles, Config.FileProfiles},
 			{Config.ExtraKeyCrashHistory, Config.FileCrashHistory},
+			{Config.ExtraKeyPlaylists, Config.FilePlaylists},
+			{Config.ExtraKeyMusicHistory, Config.FileMusicHistory},
 		} {
 			if err := a.config.RegisterExtraFile(reg.key, reg.file); err != nil {
 				a.logf("[Config] WARN: no se pudo registrar extraData %s: %v", reg.file, err)
 			}
 		}
 	}
+}
+
+// SetRuntimeBridge inyecta la implementación de runtime (diálogos, navegador,
+// salir) que provee el bootstrap de la aplicación.
+func (a *App) SetRuntimeBridge(b RuntimeBridge) {
+	a.runtime = b
 }
 
 func (a *App) Engine() *engine.Engine {
@@ -114,8 +152,12 @@ func (a *App) Startup() {
 	a.engine.SetMaxMbps(cfg.Launcher.MaxMbps)
 	a.engine.SetConcurrentDownloads(cfg.Launcher.ConcurrentDownloads)
 	a.engine.SetVerifyIntegrity(cfg.Launcher.VerifyEnabled())
+	a.engine.SetVerifyBeforeLaunch(cfg.Launcher.VerifyBeforeLaunchEnabled())
 	a.applyMinecraft(cfg.MinecraftConfig)
 	a.applyRichPresence(cfg)
+	// Migración: purgar entradas huérfanas de gallery heredadas (p. ej. 22 entradas con solo 1 archivo existente).
+	// Se ejecuta al arrancar para limpiar instalaciones ya afectadas sin esperar a un cambio manual.
+	a.pruneOrphanGallery()
 }
 
 func (a *App) applyRichPresence(cfg Config.Config) {
@@ -230,8 +272,8 @@ func (a *App) ApplyUpdate() error {
 
 	if goruntime.GOOS == "windows" {
 		if info.UpdaterURL == "" {
-			if a.ctx != nil {
-				runtime.BrowserOpenURL(a.ctx, info.ReleaseURL)
+			if a.runtime != nil {
+				a.runtime.BrowserOpenURL(info.ReleaseURL)
 			}
 			return nil
 		}
@@ -242,14 +284,14 @@ func (a *App) ApplyUpdate() error {
 		if err := a.engine.LaunchUpdater(path); err != nil {
 			return err
 		}
-		if a.ctx != nil {
-			runtime.Quit(a.ctx)
+		if a.runtime != nil {
+			a.runtime.Quit()
 		}
 		return nil
 	}
 
-	if a.ctx != nil {
-		runtime.BrowserOpenURL(a.ctx, info.ReleaseURL)
+	if a.runtime != nil {
+		a.runtime.BrowserOpenURL(info.ReleaseURL)
 	}
 	return nil
 }
@@ -372,6 +414,16 @@ func (a *App) SetVerifyIntegrity(v bool) {
 	}
 }
 
+func (a *App) SetVerifyBeforeLaunch(v bool) {
+	if a.config == nil {
+		return
+	}
+	a.config.SetVerifyBeforeLaunch(v)
+	if a.engine != nil {
+		a.engine.SetVerifyBeforeLaunch(v)
+	}
+}
+
 func (a *App) StartIntegrityCheck(scope string) error {
 	if a.config != nil {
 		a.config.SetIntegritySector(scope)
@@ -448,7 +500,40 @@ func (a *App) UpdatePersonalization(p Config.Personalization) {
 	if a.config == nil {
 		return
 	}
-	a.config.UpdatePersonalization(p)
+	_ = a.updatePersonalizationInternal(p)
+}
+
+// updatePersonalizationInternal aplica el cambio de personalización y purga entradas huérfanas
+// de gallery en launcher_assets.json (evita acumulación infinita). Separa la lógica para que
+// DownloadGalleryImageAsBackground pueda reutilizarla y propagar errores.
+func (a *App) updatePersonalizationInternal(p Config.Personalization) error {
+	if a.config == nil {
+		return fmt.Errorf("config no disponible")
+	}
+	if err := a.config.UpdatePersonalization(p); err != nil {
+		return err
+	}
+	a.pruneOrphanGallery()
+	return nil
+}
+
+// pruneOrphanGallery elimina entradas huérfanas de launcher_assets.json.gallery que ya no están
+// referenciadas en Personalization.Background (ImagePath, VideoPath, DynamicImages). Borra también
+// el archivo físico si aún existe. Evita el bug reportado donde cada “Aplicar fondo” dejaba una
+// entrada eterna aunque el archivo fuese borrado por cleanupBackgrounds.
+func (a *App) pruneOrphanGallery() {
+	if a.assets == nil || a.config == nil {
+		return
+	}
+	ref := a.referencedBackgrounds()
+	n, err := a.assets.PruneOrphanGallery(ref)
+	if err != nil {
+		a.logf("[Assets] WARN: no se pudo purgar gallery huérfana: %v", err)
+		return
+	}
+	if n > 0 {
+		a.logf("[Assets] Gallery huérfana purgada: %d entradas eliminadas", n)
+	}
 }
 
 var imageExts = map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".webp": true, ".gif": true, ".bmp": true}
@@ -619,19 +704,12 @@ func (a *App) ImportInstanceAsset(name, kind, src string) (string, error) {
 }
 
 func (a *App) PickInstanceAssetFile() (string, error) {
-	if a.ctx == nil {
-		return "", fmt.Errorf("contexto no disponible")
+	if a.runtime == nil {
+		return "", fmt.Errorf("runtime no disponible")
 	}
-	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "Seleccionar imagen para la instancia",
-		Filters: []runtime.FileFilter{
-			{DisplayName: "Imagenes (*.png, *.jpg, *.jpeg, *.webp, *.gif, *.bmp)", Pattern: "*.png;*.jpg;*.jpeg;*.webp;*.gif;*.bmp"},
-		},
+	return a.runtime.OpenFileDialog("Seleccionar imagen para la instancia", []FileFilter{
+		{DisplayName: "Imagenes (*.png, *.jpg, *.jpeg, *.webp, *.gif, *.bmp)", Pattern: "*.png;*.jpg;*.jpeg;*.webp;*.gif;*.bmp"},
 	})
-	if err != nil {
-		return "", err
-	}
-	return path, nil
 }
 
 func (a *App) ImportBackground(src, kind string) (string, error) {
@@ -695,6 +773,7 @@ func (a *App) ResetConfig() error {
 	a.engine.SetMaxMbps(cfg.Launcher.MaxMbps)
 	a.engine.SetConcurrentDownloads(cfg.Launcher.ConcurrentDownloads)
 	a.engine.SetVerifyIntegrity(cfg.Launcher.VerifyEnabled())
+	a.engine.SetVerifyBeforeLaunch(cfg.Launcher.VerifyBeforeLaunchEnabled())
 	a.applyMinecraft(cfg.MinecraftConfig)
 	return nil
 }
@@ -727,6 +806,14 @@ func (a *App) GetCacheInfo() engine.CacheInfo {
 		info.Categories["launcher"] = launcher
 		info.TotalEntries += launcher
 	}
+	covers := a.coverCacheCount()
+	if covers > 0 {
+		if info.Categories == nil {
+			info.Categories = map[string]int{}
+		}
+		info.Categories["covers"] = covers
+		info.TotalEntries += covers
+	}
 	return info
 }
 
@@ -745,14 +832,23 @@ func (a *App) referencedBackgrounds() map[string]bool {
 	}
 	bg := a.config.Get().Personalization.Background
 	for _, rel := range []string{bg.ImagePath, bg.VideoPath} {
-		if rel != "" {
-			ref[filepath.Base(rel)] = true
+		if rel == "" {
+			continue
 		}
+		clean := filepath.ToSlash(filepath.Clean(strings.ReplaceAll(rel, "\\", "/")))
+		ref[clean] = true
+		ref[filepath.Base(clean)] = true
+		// compat: guardar también la clave original por si viene sin normalizar
+		ref[rel] = true
 	}
 	for _, rel := range bg.DynamicImages {
-		if rel != "" {
-			ref[filepath.Base(rel)] = true
+		if rel == "" {
+			continue
 		}
+		clean := filepath.ToSlash(filepath.Clean(strings.ReplaceAll(rel, "\\", "/")))
+		ref[clean] = true
+		ref[filepath.Base(clean)] = true
+		ref[rel] = true
 	}
 	return ref
 }
@@ -797,6 +893,14 @@ func (a *App) ClearAllCache() int {
 			if os.Remove(filepath.Join(dir, e.Name())) == nil {
 				total++
 			}
+		}
+	}
+	// Incluir caché de carátulas en la limpieza total
+	total += a.ClearCoverCache()
+	// Purgar entradas huérfanas de gallery cuyo archivo fue borrado por la limpieza o ya era huérfana
+	if a.assets != nil {
+		if n, _ := a.assets.PruneOrphanGallery(ref); n > 0 {
+			a.logf("[Assets] Gallery huérfana purgada tras limpiar caché: %d entradas", n)
 		}
 	}
 	after := a.GetCacheInfo().TotalEntries
@@ -864,6 +968,402 @@ func (a *App) GetDirectoryInfoSafe() engine.DirectoryInfo {
 		return engine.DirectoryInfo{}
 	}
 	return a.engine.DirectoryInfo()
+}
+
+func (a *App) GetMusicPanelConfig() Config.MusicPanelConfig {
+	if a.config == nil {
+		return Config.MusicPanelConfig{CoverStyle: "square", ColorMode: "vibrant", PageSize: 20}
+	}
+	return a.config.Get().MusicPanel
+}
+
+func (a *App) UpdateMusicPanelConfig(p Config.MusicPanelConfig) error {
+	if a.config == nil {
+		return fmt.Errorf("config no disponible")
+	}
+	return a.config.UpdateMusicPanel(p)
+}
+
+func (a *App) SetMusicFolder(folder string) error {
+	if a.config == nil {
+		return fmt.Errorf("config no disponible")
+	}
+	if err := a.config.SetMusicFolder(folder); err != nil {
+		return err
+	}
+	if len(a.config.GetMusicFolders()) == 0 && a.musicCache != nil {
+		_ = a.musicCache.Clear()
+	}
+	return nil
+}
+
+func (a *App) GetMusicFolders() []string {
+	if a.config == nil {
+		return []string{}
+	}
+	return a.config.GetMusicFolders()
+}
+
+func (a *App) SetMusicFolders(folders []string) error {
+	if a.config == nil {
+		return fmt.Errorf("config no disponible")
+	}
+	if err := a.config.SetMusicFolders(folders); err != nil {
+		return err
+	}
+	// PROHIBIDO carpeta por defecto: si se vacían las carpetas, limpiar índice para no mostrar pistas fantasma
+	if len(a.config.GetMusicFolders()) == 0 && a.musicCache != nil {
+		_ = a.musicCache.Clear()
+	}
+	return nil
+}
+
+func (a *App) AddMusicFolder(folder string) error {
+	if a.config == nil {
+		return fmt.Errorf("config no disponible")
+	}
+	return a.config.AddMusicFolder(folder)
+}
+
+func (a *App) RemoveMusicFolder(folder string) error {
+	if a.config == nil {
+		return fmt.Errorf("config no disponible")
+	}
+	if err := a.config.RemoveMusicFolder(folder); err != nil {
+		return err
+	}
+	// Si no quedan carpetas, limpiar índice — evita que aparezca carpeta fantasma en Ajustes > Música
+	if len(a.config.GetMusicFolders()) == 0 && a.musicCache != nil {
+		_ = a.musicCache.Clear()
+	}
+	return nil
+}
+
+func (a *App) PickMusicFolder() (string, error) {
+	if a.runtime == nil {
+		return "", fmt.Errorf("runtime no disponible")
+	}
+	return a.runtime.OpenDirectoryDialog("Seleccionar carpeta de música")
+}
+
+func (a *App) ScanAllMusicFolders() ([]string, error) {
+	if a.config == nil {
+		return nil, fmt.Errorf("config no disponible")
+	}
+	folders := a.config.GetMusicFolders()
+	// Compatibilidad legacy: usar MusicFolder si MusicFolders vacío — NO es carpeta por defecto
+	if len(folders) == 0 {
+		if mf := a.config.Get().MusicPanel.MusicFolder; mf != "" {
+			folders = []string{mf}
+		}
+	}
+	// PROHIBIDO: nunca crear ni usar carpeta por defecto — error explícito si no hay carpetas
+    if len(folders) == 0 {
+        return nil, fmt.Errorf("no hay carpetas de música configuradas")
+    }
+    var resolved []string
+    for _, f := range folders {
+        resolved = append(resolved, filepath.Clean(f))
+    }
+    if a.musicCache == nil {
+        return nil, fmt.Errorf("cache de música no disponible")
+    }
+    all, err := a.musicCache.ScanFolders(resolved)
+	if err != nil {
+		return nil, err
+	}
+	_ = a.autoImportPlaylistsFromFolders(resolved)
+	return all, nil
+}
+
+func (a *App) autoImportPlaylistsFromFolders(folders []string) error {
+	if a.playlists == nil {
+		return nil
+	}
+	playlistExts := map[string]bool{".m3u": true, ".m3u8": true, ".pls": true}
+	// Deduplicación por ruta absoluta normalizada y por contenido (título + tracks), sin usar hash
+	seenPaths := map[string]bool{}
+	for _, pl := range a.playlists.List() {
+		for _, tp := range pl.TrackPaths {
+			seenPaths[strings.ToLower(filepath.Clean(tp))] = true
+		}
+	}
+	existingTitles := map[string]bool{}
+	for _, pl := range a.playlists.List() {
+		existingTitles[strings.ToLower(strings.TrimSpace(pl.Title))] = true
+	}
+    for _, folder := range folders {
+        clean := filepath.Clean(folder)
+        _ = filepath.WalkDir(clean, func(path string, d os.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return nil
+			}
+			ext := strings.ToLower(filepath.Ext(path))
+			if !playlistExts[ext] {
+				return nil
+			}
+			normPath := strings.ToLower(filepath.Clean(path))
+			if seenPaths[normPath] {
+				return nil
+			}
+			title := strings.TrimSuffix(filepath.Base(path), ext)
+			ltitle := strings.ToLower(strings.TrimSpace(title))
+			if existingTitles[ltitle] {
+				return nil
+			}
+			// Resolver tracks para comparar sin duplicar
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return nil
+			}
+			tracks := parsePlaylistTracksForDedup(data, ext, filepath.Dir(path), a.GetMusicFolders())
+			if len(tracks) == 0 {
+				return nil
+			}
+			// Si ya existe playlist con mismo conjunto de tracks (mismo orden y cantidad), evitar duplicado
+			for _, pl := range a.playlists.List() {
+				if len(pl.TrackPaths) != len(tracks) {
+					continue
+				}
+				match := true
+				for i := range tracks {
+					if strings.ToLower(filepath.Clean(pl.TrackPaths[i])) != strings.ToLower(filepath.Clean(tracks[i])) {
+						match = false
+						break
+					}
+				}
+				if match {
+					seenPaths[normPath] = true
+					return nil
+				}
+			}
+			if _, err := a.ImportPlaylistFile(path); err == nil {
+				existingTitles[ltitle] = true
+				seenPaths[normPath] = true
+			}
+			return nil
+		})
+	}
+	return nil
+}
+
+func parsePlaylistTracksForDedup(data []byte, ext, base string, musicFolders []string) []string {
+	lines := strings.Split(string(data), "\n")
+	var tracks []string
+	for _, l := range lines {
+		l = strings.TrimSpace(l)
+		if l == "" || strings.HasPrefix(l, "#") {
+			continue
+		}
+		if ext == ".pls" && strings.Contains(l, "=") {
+			parts := strings.SplitN(l, "=", 2)
+			if len(parts) == 2 && strings.HasPrefix(strings.TrimSpace(parts[0]), "File") {
+				l = strings.TrimSpace(parts[1])
+			}
+		}
+		clean := filepath.Clean(l)
+		if !filepath.IsAbs(clean) {
+			if base != "" {
+				clean = filepath.Join(base, clean)
+			}
+		}
+		clean = filepath.Clean(clean)
+		tracks = append(tracks, clean)
+	}
+	return tracks
+}
+
+func (a *App) CancelMusicScan() bool {
+	if a.musicCache == nil {
+		return false
+	}
+	return a.musicCache.CancelScan()
+}
+
+func (a *App) ScanMusicFolder(folder string) ([]string, error) {
+    if folder == "" {
+        if a.config != nil {
+            folder = a.config.Get().MusicPanel.MusicFolder
+        }
+        // PROHIBIDO: nunca usar carpeta por defecto — error si no hay carpeta explícita
+        if folder == "" {
+            return nil, fmt.Errorf("no hay carpeta de música configurada")
+        }
+    }
+    folder = filepath.Clean(folder)
+	if a.musicCache == nil {
+		return nil, fmt.Errorf("cache de música no disponible")
+	}
+	return a.musicCache.ScanFolder(folder)
+}
+
+func (a *App) ReadAbsoluteFile(path string) ([]byte, error) {
+	clean := filepath.Clean(path)
+	if clean == "." || clean == "" {
+		return nil, fmt.Errorf("ruta inválida")
+	}
+	// Permitir absolutas y relativas; para absolutas validar que existe y es archivo regular
+	// y que está dentro de la carpeta de música configurada o es imagen/audio permitido
+	info, err := os.Stat(clean)
+	if err != nil {
+		// Si es relativa, intentar resolver contra rootDir
+		if !filepath.IsAbs(clean) && a.engine != nil {
+			alt := filepath.Join(a.engine.ConfigManager().RootDir(), clean)
+			if info2, err2 := os.Stat(alt); err2 == nil {
+				clean = alt
+				info = info2
+			} else {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	}
+	if !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("no es un archivo")
+	}
+	if info.Size() > 20*1024*1024 {
+		return nil, fmt.Errorf("archivo demasiado grande")
+	}
+	ext := strings.ToLower(filepath.Ext(clean))
+	allowed := map[string]bool{".mp3": true, ".wav": true, ".ogg": true, ".m4a": true, ".flac": true, ".png": true, ".jpg": true, ".jpeg": true, ".webp": true}
+	if !allowed[ext] {
+		return nil, fmt.Errorf("formato no soportado: %s", ext)
+	}
+	return os.ReadFile(clean)
+}
+
+// --- Playlists ---
+
+func (a *App) ListPlaylists() []playlists.Playlist {
+	if a.playlists == nil {
+		return []playlists.Playlist{}
+	}
+	return a.playlists.List()
+}
+
+func (a *App) GetPlaylist(id string) (*playlists.Playlist, error) {
+	if a.playlists == nil {
+		return nil, fmt.Errorf("playlists no disponible")
+	}
+	return a.playlists.Get(id)
+}
+
+func (a *App) CreatePlaylist(title string, trackPaths []string) (*playlists.Playlist, error) {
+	if a.playlists == nil {
+		return nil, fmt.Errorf("playlists no disponible")
+	}
+	return a.playlists.Create(title, trackPaths)
+}
+
+func (a *App) UpdatePlaylist(id string, p playlists.Playlist) (*playlists.Playlist, error) {
+	if a.playlists == nil {
+		return nil, fmt.Errorf("playlists no disponible")
+	}
+	return a.playlists.Update(id, p)
+}
+
+func (a *App) DeletePlaylist(id string) error {
+	if a.playlists == nil {
+		return fmt.Errorf("playlists no disponible")
+	}
+	return a.playlists.Delete(id)
+}
+
+func (a *App) ImportPlaylistFile(path string) (*playlists.Playlist, error) {
+	if a.playlists == nil {
+		return nil, fmt.Errorf("playlists no disponible")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	ext := strings.ToLower(filepath.Ext(path))
+	if ext == ".m3u" || ext == ".m3u8" || ext == ".pls" {
+		lines := strings.Split(string(data), "\n")
+		var tracks []string
+		base := filepath.Dir(path)
+		musicFolders := a.GetMusicFolders()
+		for _, l := range lines {
+			l = strings.TrimSpace(l)
+			if l == "" || strings.HasPrefix(l, "#") {
+				continue
+			}
+			// Manejar entradas tipo File1=path en .pls
+			if ext == ".pls" && strings.Contains(l, "=") {
+				parts := strings.SplitN(l, "=", 2)
+				if len(parts) == 2 {
+					key := strings.TrimSpace(parts[0])
+					if strings.HasPrefix(key, "File") {
+						l = strings.TrimSpace(parts[1])
+					}
+				}
+			}
+			// Resolver desde base del m3u, con fallback a musicFolders y rootDir
+			resolved := a.playlists.ResolveFromBase(l, base, musicFolders)
+			tracks = append(tracks, resolved)
+		}
+		title := strings.TrimSuffix(filepath.Base(path), ext)
+		return a.playlists.Create(title, tracks)
+	}
+	// Intentar JSON de playlist
+	var pl playlists.Playlist
+	if err := json.Unmarshal(data, &pl); err == nil && pl.Title != "" {
+		return a.playlists.Create(pl.Title, pl.TrackPaths)
+	}
+	return nil, fmt.Errorf("formato de playlist no soportado")
+}
+
+func (a *App) PickPlaylistFile() (string, error) {
+	if a.runtime == nil {
+		return "", fmt.Errorf("runtime no disponible")
+	}
+	return a.runtime.OpenFileDialog("Importar playlist", []FileFilter{
+		{DisplayName: "Playlist (*.m3u, *.m3u8, *.json)", Pattern: "*.m3u;*.m3u8;*.json"},
+	})
+}
+
+// --- Historial de música (launcher_music_history.json) ---
+func (a *App) GetMusicHistory() []musichistory.Entry {
+	if a.musicHistory == nil {
+		return []musichistory.Entry{}
+	}
+	return a.musicHistory.List()
+}
+
+func (a *App) AddMusicHistory(path, title, artist, coverUrl string) []musichistory.Entry {
+	if a.musicHistory == nil {
+		return []musichistory.Entry{}
+	}
+	return a.musicHistory.Add(path, title, artist, coverUrl)
+}
+
+func (a *App) ClearMusicHistory() error {
+	if a.musicHistory == nil {
+		return fmt.Errorf("historial no disponible")
+	}
+	return a.musicHistory.Clear()
+}
+
+func (a *App) GetNowPlayingQueue() nowplaying.Queue {
+	if a.nowPlaying == nil {
+		return nowplaying.Queue{Tracks: []string{}, CurrentIndex: -1}
+	}
+	return a.nowPlaying.Get()
+}
+
+func (a *App) SetNowPlayingQueue(tracks []string, idx int, curPath string) error {
+	if a.nowPlaying == nil {
+		return fmt.Errorf("cola no disponible")
+	}
+	return a.nowPlaying.Set(tracks, idx, curPath)
+}
+
+func (a *App) ClearNowPlayingQueue() error {
+	if a.nowPlaying == nil {
+		return fmt.Errorf("cola no disponible")
+	}
+	return a.nowPlaying.Clear()
 }
 
 func (a *App) Shutdown() {

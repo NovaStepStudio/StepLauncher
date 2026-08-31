@@ -104,6 +104,24 @@ func GetJavaVersion(javaPath string) (string, error) {
 	return string(out), nil
 }
 
+// JavaVersionLabel devuelve la versión limpia del ejecutable de Java indicado
+// (p. ej. "1.8.0_291", "21.0.4"), extraída de la primera línea de `-version`.
+// Si no se puede ejecutar o parsear, devuelve "desconocida".
+func JavaVersionLabel(javaPath string) string {
+	out, err := exec.Command(javaPath, "-version").CombinedOutput()
+	if err != nil {
+		return "desconocida"
+	}
+	line := strings.TrimSpace(strings.SplitN(string(out), "\n", 2)[0])
+	if idx := strings.LastIndex(line, "\""); idx >= 0 {
+		start := strings.LastIndex(line[:idx], "\"")
+		if start >= 0 {
+			return line[start+1 : idx]
+		}
+	}
+	return line
+}
+
 func DetectJavaMajorVersion(javaPath string) int {
 	out, err := exec.Command(javaPath, "-version").CombinedOutput()
 	if err != nil {

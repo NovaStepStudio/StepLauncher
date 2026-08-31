@@ -3,6 +3,7 @@ import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { cleanFontName, fontByPath, fontByType, type LauncherAssets, type FontSlotData } from '@/Common/Stores/Fonts';
 import { CLOSE_OVERLAYS_EVENT } from '@/Common/Stores/Idle';
 import { useOverlayEscape } from '@/Common/Composables/useOverlayEscape';
+import { ListFontFiles, SaveLauncherAssets, PickFontFile, ImportFont, DeleteFontFile } from '@wailsjs/StepLauncher/internal/Services/Appearance/appearanceservice';
 
 const props = defineProps<{
     visible: boolean;
@@ -58,14 +59,14 @@ function slotLabel(file: string): string {
 
 async function reload() {
     try {
-        const list = await (window as any).go?.main?.App?.ListFontFiles?.();
+        const list = await ListFontFiles?.();
         files.value = Array.isArray(list) ? list : [];
         const next: Record<string, string> = {};
         for (const f of files.value) {
             next[f] = names.value[f] || entryFor(f)?.name || cleanFontName(f);
         }
         names.value = next;
-    } catch { }
+    } catch (_e) {}
 }
 
 function withTimeout<T>(promise: Promise<T> | undefined, ms: number, message: string): Promise<T> {
@@ -107,9 +108,9 @@ async function persistNames() {
     }
     if (!changed) return;
     try {
-        await (window as any).go?.main?.App?.SaveLauncherAssets?.({ fonts: list });
+        await SaveLauncherAssets?.({ fonts: list } as any);
         emit('changed');
-    } catch { }
+    } catch (_e) {}
 }
 
 async function pickFont() {
@@ -117,7 +118,7 @@ async function pickFont() {
     busy.value = true;
     msg.value = '';
     try {
-        const p = await (window as any).go?.main?.App?.PickFontFile?.();
+        const p = await PickFontFile?.();
         if (typeof p === 'string' && p) {
             const base = p.split(/[\\/]/).pop() ?? 'tipografia';
             pickedPath.value = p;
@@ -143,7 +144,7 @@ async function confirmImport() {
     busy.value = true;
     msg.value = '';
     try {
-        const rel = await (window as any).go?.main?.App?.ImportFont?.(pickedPath.value);
+        const rel = await ImportFont?.(pickedPath.value);
         if (typeof rel !== 'string' || !rel) {
             msg.value = 'No se pudo importar la tipografía.';
             return;
@@ -160,7 +161,7 @@ async function confirmImport() {
         } else {
             list.push({ type: importSlot.value, name, path: rel });
         }
-        await (window as any).go?.main?.App?.SaveLauncherAssets?.({ fonts: list });
+        await SaveLauncherAssets?.({ fonts: list } as any);
         msg.value = `Tipografía importada como ${importSlot.value === 'primary' ? 'principal' : 'secundaria'}: ${name}`;
         step.value = 'list';
         await reload();
@@ -192,7 +193,7 @@ async function assign(slot: 'primary' | 'secundary', file: string) {
         list.push({ type: slot, name, path: ref });
     }
     try {
-        await (window as any).go?.main?.App?.SaveLauncherAssets?.({ fonts: list });
+        await SaveLauncherAssets?.({ fonts: list } as any);
         msg.value = `Tipografía asignada como ${slot === 'primary' ? 'principal' : 'secundaria'}: ${name}`;
         await reload();
         emit('changed');
@@ -212,13 +213,13 @@ async function remove(file: string) {
         const next: LauncherAssets = {
             fonts: (props.assets.fonts ?? []).filter((e) => e.path !== ref),
         };
-        await (window as any).go?.main?.App?.SaveLauncherAssets?.(next);
+        await SaveLauncherAssets?.(next as any);
         await reload();
         await nextTick();
         emit('changed');
         await delay(150);
         await withTimeout(
-            (window as any).go?.main?.App?.DeleteFontFile?.(file),
+            DeleteFontFile?.(file),
             8000,
             'La eliminación tardó demasiado (el archivo puede estar en uso).'
         );

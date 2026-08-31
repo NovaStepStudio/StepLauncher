@@ -22,7 +22,6 @@ type AdvancedConfig struct {
 
 	JavaExec             string `json:"javaExec,omitempty"`
 	UseOfficialJava      bool   `json:"useOfficialJava"`
-	UseSystemJava        bool   `json:"useSystemJava"`
 	MinRAM               int    `json:"minRam"`
 	MaxRAM               int    `json:"maxRam"`
 	GCPreset             string `json:"gcPreset,omitempty"`
@@ -36,6 +35,7 @@ type AdvancedConfig struct {
 	DemoUser             bool   `json:"demoUser"`
 	UserType             string `json:"userType,omitempty"`
 	LogLevel             string `json:"logLevel,omitempty"`
+	DetailedLogs         bool   `json:"detailedLogs"`
 
 	RuntimeDir     string `json:"runtimeDir,omitempty"`
 	GameDir        string `json:"gameDir,omitempty"`
@@ -99,6 +99,8 @@ type AdvancedConfig struct {
 	ReservedCodeCache int `json:"reservedCodeCache,omitempty"`
 	MetaspaceSize     int `json:"metaspaceSize,omitempty"`
 
+	VerifyBeforeLaunch bool `json:"verifyBeforeLaunch"`
+
 	AllowServerList  *bool  `json:"allowServerList,omitempty"`
 	AllowMultiplayer *bool  `json:"allowMultiplayer,omitempty"`
 	AllowChat        *bool  `json:"allowChat,omitempty"`
@@ -126,5 +128,6 @@ func DefaultAdvancedConfig() AdvancedConfig {
 		MaxRetries:          3,
 		ConnectionTimeout:   30,
 		GameLogLines:        1500,
+		VerifyBeforeLaunch:  true,
 	}
 }

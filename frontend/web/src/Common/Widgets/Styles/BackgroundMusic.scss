@@ -1,0 +1,788 @@
+// El widget usa exclusivamente variables de personalización del launcher y el
+// mismo patrón de sombras/colores que el resto de componentes (box-shadow con
+// color explícito, color-mix para derivar tonos), así se adapta al tema.
+
+.Bgm {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.Bgm_Fab,
+.Bgm_Card {
+    pointer-events: auto;
+}
+
+// ---- Animación de apertura: deslizamiento vertical sin escala ---------------
+
+.bgm-up-enter-active,
+.bgm-up-leave-active {
+    transition: transform 0.24s cubic-bezier(0.22, 1.2, 0.36, 1), opacity 0.16s ease;
+}
+
+.bgm-up-enter-active {
+    transition-duration: 0.22s;
+}
+
+.bgm-up-leave-active {
+    transition-duration: 0.12s;
+}
+
+.bgm-up-enter-from,
+.bgm-up-leave-to {
+    transform: translateY(130%);
+    opacity: 0;
+}
+
+// ---- Carátula (disco / cuadrado) -------------------------------------------
+
+.Bgm_Cover {
+    position: relative;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: var(--text-secondary);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    &.empty {
+        background: var(--control-bg);
+
+        svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+    }
+}
+
+// Disco: gira siempre (aunque esté en pausa) si la rotación está activada.
+.Bgm_Disc {
+    width: 4.1rem;
+    height: 4.1rem;
+    border-radius: 50%;
+    background:
+        repeating-radial-gradient(circle at 50% 50%, var(--control-bg-soft) 0 1px, transparent 1px 3px),
+        radial-gradient(circle at 50% 50%, var(--control-bg-soft), var(--control-bg-dark) 72%);
+    box-shadow:
+        var(--shadow-settings-normal) rgba(0, 0, 0, 0.4),
+        inset 0 0 0 2px var(--control-border);
+
+    &.spinning {
+        animation: bgm-spin 14s linear infinite;
+    }
+
+    .Bgm_Hole {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 0.42rem;
+        height: 0.42rem;
+        margin: -0.21rem 0 0 -0.21rem;
+        border-radius: 50%;
+        background: var(--control-bg-dark);
+        box-shadow: 0 0 0 3px var(--control-border);
+    }
+}
+
+.Bgm_Square {
+    width: 6rem;
+    height: 6rem;
+    border-radius: 5px;
+    box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.4);
+}
+
+@keyframes bgm-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// ---- Carátula como fondo del widget -----------------------------------------
+// La carátula se usa dos veces: como fondo de TODO el widget (cubre toda la
+// card, con blur + saturate y un paneo vertical muy lento de arriba hacia
+// abajo) y en un recuadro con la imagen completa para poder verla bien.
+
+.Bgm_Card--bg {
+    background: color-mix(in srgb, var(--background-modal-primary) 55%, transparent);
+}
+
+.Bgm_Bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    border-radius: 1rem;
+
+    // Veladura para que el texto y los controles sigan siendo legibles.
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            to bottom,
+            color-mix(in srgb, var(--background-modal-primary) 22%, transparent),
+            color-mix(in srgb, var(--background-modal-primary) 48%, transparent)
+        );
+    }
+}
+
+.Bgm_BgImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: .5;
+    filter: blur(10px) saturate(1.35);
+    animation: bgm-bg-pan 30s ease-in-out infinite alternate;
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+    }
+}
+
+// Paneo vertical muy lento: baja de arriba hacia abajo y vuelve, sin ruido.
+// La escala extra (1.14) evita que el desplazamiento deje ver los bordes.
+@keyframes bgm-bg-pan {
+    from {
+        transform: translateY(-3.5%) scale(1.14);
+    }
+    to {
+        transform: translateY(3.5%) scale(1.14);
+    }
+}
+
+// Recuadro con la carátula completa (sin blur), destacada sobre el fondo.
+.Bgm_Cover--bg {
+    width: 6rem;
+    height: 6rem;
+    border-radius: 5px;
+    box-shadow:
+        var(--shadow-settings-normal) rgba(0, 0, 0, 0.45),
+        0 0 0 2px color-mix(in srgb, var(--control-border) 55%, transparent);
+}
+
+
+// ---- Card ------------------------------------------------------------------
+
+.Bgm_Card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.5rem;
+    width: 25rem;
+    max-width: calc(100vw - 1.5rem);
+    background: color-mix(in srgb, var(--background-modal-primary) 88%, transparent);
+    backdrop-filter: var(--filter-blur);
+    border: var(--border-modal-style);
+    border-radius: 16px;
+    box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.4);
+
+    .Bgm_Close {
+        position: absolute;
+        top: 0.45rem;
+        right: 0.45rem;
+        z-index: 2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 1.55rem;
+        height: 1.55rem;
+        border-radius: 50%;
+        border: none;
+        background: var(--control-bg);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: var(--transition-fast);
+
+        svg {
+            width: 0.9rem;
+            height: 0.9rem;
+        }
+
+        &:hover {
+            color: var(--text-primary);
+            background: var(--control-bg-soft);
+        }
+    }
+}
+
+.Bgm_Body {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+    flex: 1;
+    margin-top: 0.2rem;
+}
+
+.Bgm_Head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding-right: 1.4rem;
+}
+
+.Bgm_Info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.Bgm_Title {
+    font-family: var(--font-primary);
+    font-size: calc(0.92rem * var(--font-size-primary));
+    font-weight: 600;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.Bgm_Artist {
+    font-family: var(--font-secundary);
+    font-size: calc(0.72rem * var(--font-size-secundary));
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// ---- Ecualizador animado ---------------------------------------------------
+
+.Bgm_Eq {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    height: 14px;
+
+    i {
+        width: 3px;
+        height: 100%;
+        border-radius: 2px;
+        background: var(--progress-color);
+        transform: scaleY(0.25);
+        transition: transform 0.2s ease-in-out;
+    }
+
+    &.live i {
+        animation: bgm-eq 0.85s ease-in-out infinite;
+    }
+
+    &.live i:nth-child(1) { animation-delay: 0s; }
+    &.live i:nth-child(3) { animation-delay: 0.22s; }
+    &.live i:nth-child(4) { animation-delay: 0.45s; }
+    &.live i:nth-child(2) { animation-delay: 0.12s; }
+}
+
+@keyframes bgm-eq {
+    0%,
+    100% {
+        transform: scaleY(0.25);
+    }
+    50% {
+        transform: scaleY(1);
+    }
+}
+
+// ---- Aviso de error de carga ------------------------------------------------
+
+.Bgm_Error {
+    display: flex;
+    align-items: center;
+    margin-top: 0.4rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.4rem;
+    border: 1px solid color-mix(in srgb, var(--color-error) 25%, transparent);
+    background: color-mix(in srgb, var(--color-error) 10%, transparent);
+    font-family: var(--font-secundary);
+    font-size: calc(0.68rem * var(--font-size-secundary));
+    color: var(--color-error);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// ---- Barra de progreso -----------------------------------------------------
+
+.Bgm_SeekRow {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.Bgm_Time {
+    font-size: 0.66rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+    min-width: 2.3rem;
+    text-align: center;
+}
+
+.Bgm_Seek {
+    flex: 1;
+    height: 4px;
+    cursor: pointer;
+    accent-color: var(--progress-color);
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: default;
+    }
+}
+
+// ---- Controles (centrados) --------------------------------------------------
+
+.Bgm_Controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 5rem;
+    padding: 0.2rem .5rem;
+    background: linear-gradient(to right, #0005, transparent,#0005);
+    gap: 0.7rem;
+
+}
+
+.Bgm_Transport {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.Bgm_Divider {
+    width: 1px;
+    height: 1.3rem;
+    background: var(--control-border-strong);
+}
+
+.Bgm_Btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+
+    svg {
+        width: 1.1rem;
+        height: 1.1rem;
+    }
+
+    &:hover {
+        background: var(--control-bg-soft);
+        transform: translateY(-1px);
+    }
+}
+
+.Bgm_BtnPlay {
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--background-play-button);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-settings-normal) color-mix(in srgb, var(--background-play-button) 30%, transparent);
+
+    svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    &:hover {
+        background: color-mix(in srgb, var(--background-play-button) 80%, white 20%);
+    }
+}
+
+// ---- Modos de reproducción -------------------------------------------------
+
+.Bgm_Modes {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.Bgm_Mode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+
+    svg {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+
+    &:hover {
+        color: var(--text-primary);
+        background: var(--control-bg-soft);
+    }
+
+    &.active {
+        background: color-mix(in srgb, var(--color-success) 22%, transparent);
+        color: var(--color-success);
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-success) 35%, transparent);
+    }
+}
+
+// ---- Botón de abrir --------------------------------------------------------
+
+.Bgm_Fab {
+    position: relative;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 0.5rem;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background-button-primary);
+    border: var(--border-modal-style);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+
+    svg {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+
+    &:hover {
+        background: color-mix(in srgb, var(--background-button-primary) 85%, white 15%);
+        transform: translateY(-2px);
+    }
+}
+
+.Bgm_FabEq {
+    position: absolute;
+    bottom: 0.34rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    height: 0.42rem;
+
+    i {
+        width: 2px;
+        height: 100%;
+        border-radius: 1px;
+        background: var(--progress-color);
+        transform-origin: bottom;
+        transform: scaleY(0.3);
+    }
+}
+
+.Bgm_Fab.live .Bgm_FabEq i {
+    animation: bgm-eq 0.8s ease-in-out infinite;
+}
+
+.Bgm_Fab.live .Bgm_FabEq i:nth-child(1) { animation-delay: 0s; }
+.Bgm_Fab.live .Bgm_FabEq i:nth-child(2) { animation-delay: 0.2s; }
+.Bgm_Fab.live .Bgm_FabEq i:nth-child(3) { animation-delay: 0.4s; }
+
+.Bgm_Right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.Bgm_Volume {
+    display: flex;
+    align-items: center;
+}
+
+.Bgm_VolBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+
+    svg {
+        width: 1.05rem;
+        height: 1.05rem;
+    }
+
+    &:hover,
+    &.active {
+        color: var(--text-primary);
+        background: var(--control-bg-soft);
+    }
+}
+
+.Bgm_VolMenu {
+    position: absolute;
+    right: var(--vol-right, 0.5rem);
+    bottom: var(--vol-bottom, 3.6rem);
+    z-index: 5;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.6rem;
+    background: color-mix(in srgb, var(--background-modal-primary) 92%, transparent);
+    backdrop-filter: var(--filter-blur);
+    border: var(--border-modal-style);
+    border-radius: 10px;
+    box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.45);
+}
+
+// Slider horizontal nativo: sin rotaciones ni writing-mode, así se renderiza
+// siempre igual en cualquier motor. direction: ltr explícito para que el
+// mínimo quede SIEMPRE a la izquierda (nunca invertido).
+.Bgm_VolIcon {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex: 0 0 auto;
+    color: var(--text-secondary);
+}
+
+.Bgm_VolRange {
+    width: 5.5rem;
+    height: 4px;
+    cursor: pointer;
+    accent-color: var(--progress-color);
+    direction: ltr;
+    writing-mode: horizontal-tb;
+}
+
+.Bgm_VolVal {
+    min-width: 2.2rem;
+    text-align: right;
+    font-family: var(--font-secundary);
+    font-size: 0.62rem;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.bgm-vol-enter-active,
+.bgm-vol-leave-active {
+    transition: opacity 0.14s ease, transform 0.16s ease;
+}
+
+.bgm-vol-enter-from,
+.bgm-vol-leave-to {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+// ---- Selector de fuente (fondo vs biblioteca) -------------------------------
+
+.Bgm_Source {
+    position: absolute;
+    top: -2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.2rem;
+    border-top-right-radius: .5rem;
+    border-top-left-radius: .5rem;
+    background: color-mix(in srgb, var(--background-modal-primary) 85%, transparent);
+    border: var(--border-style);
+    backdrop-filter: var(--filter-blur);
+}
+
+.Bgm_SourceBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.22rem 0.6rem;
+    border-radius: .5rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    svg { width: 0.85rem; height: 0.85rem; }
+    &:hover { background: var(--control-bg); color: var(--text-primary); }
+    &.active {
+        background: var(--background-button-primary);
+        color: var(--text-primary);
+        border-color: transparent;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.18);
+    }
+}
+
+// ---- Botón cola y panel -----------------------------------------------------
+
+.Bgm_QueueBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    svg { width: 1.05rem; height: 1.05rem; }
+    &:hover, &.active { color: var(--text-primary); background: var(--control-bg-soft); }
+}
+
+.Bgm_Queue {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 12rem;
+    z-index: 5;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.6rem;
+    width: 280px;
+    max-width: calc(100vw - 1rem);
+    max-height: 320px;
+    background: color-mix(in srgb, var(--background-modal-primary) 92%, transparent);
+    backdrop-filter: var(--filter-blur);
+    border: var(--border-modal-style);
+    border-radius: 12px;
+    box-shadow: var(--shadow-settings-normal) rgba(0,0,0,0.45);
+    overflow: hidden;
+}
+
+.Bgm_QueueHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    font-weight: 700;
+    color: var(--text-primary);
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
+    span { display: inline-flex; align-items: center; gap: 0.3rem; svg { width: 0.9rem; height: 0.9rem; } }
+}
+
+.Bgm_QueueCount {
+    font-size: calc(0.62rem * var(--font-size-secundary, 1));
+    opacity: 0.5;
+    font-weight: 400;
+}
+
+.Bgm_QueueList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding-right: 0.1rem;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text-primary) 14%, transparent) transparent;
+    &::-webkit-scrollbar { width: 5px; }
+    &::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text-primary) 14%, transparent); border-radius: 999px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+}
+
+.Bgm_QueueRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.45rem;
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, var(--control-bg) 45%, transparent);
+    border: 1px solid transparent;
+    transition: var(--transition);
+    &.active { background: color-mix(in srgb, var(--progress-color) 10%, var(--control-bg)); border-color: color-mix(in srgb, var(--progress-color) 16%, transparent); }
+}
+
+.Bgm_QueueNum {
+    min-width: 1.3rem;
+    text-align: center;
+    font-size: calc(0.62rem * var(--font-size-secundary, 1));
+    opacity: 0.5;
+    font-variant-numeric: tabular-nums;
+}
+
+.Bgm_QueueCover {
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 0.35rem;
+    background: var(--control-bg-dark);
+    border: var(--border-style);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    color: var(--text-secondary);
+    img { width: 100%; height: 100%; object-fit: cover; }
+    svg { width: 0.85rem; height: 0.85rem; }
+}
+
+.Bgm_QueueInfo {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    b { font-size: calc(0.7rem * var(--font-size-primary, 1)); font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
+    em { font-size: calc(0.6rem * var(--font-size-secundary, 1)); opacity: 0.5; font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+
+.Bgm_QueuePlay {
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 0.35rem;
+    border: var(--border-style);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: var(--transition);
+    &:hover { background: var(--background-button-primary); color: var(--text-primary); border-color: transparent; transform: translateY(-1px); }
+    &:active { transform: translateY(0); }
+}
+
+.Bgm_QueueEmpty {
+    font-size: calc(0.68rem * var(--font-size-secundary, 1));
+    opacity: 0.5;
+    text-align: center;
+    padding: 0.8rem 0;
+    margin: 0;
+}

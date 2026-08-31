@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue';
-import { EventsOn } from '@wailsjs/runtime/runtime';
+import { Events } from '@wailsio/runtime';
+import { ListAccounts, GetSelectedAccount, GetAccountsAutoRefresh, CreateAccount, UpdateAccount, DeleteAccount, SetSelectedAccount, LoginAuthlib, CancelAuthlibLogin, RefreshAccount, RefreshAllAccounts, SetAccountsAutoRefresh, GetAccountAssets } from '@wailsjs/StepLauncher/internal/Services/Account/accountservice';
 
 export type AccountType = 'offline' | 'authlib';
 
@@ -52,7 +53,7 @@ let assetsOff: (() => void) | null = null;
 
 function ensureAssetsListener() {
     if (assetsOff) return;
-    assetsOff = EventsOn('account_assets', (data: any) => {
+    assetsOff = Events.On('account_assets', ({ data }: any) => {
         let payload: any = data;
         if (typeof data === 'string') {
             try {
@@ -72,27 +73,26 @@ export function fetchAccountAvatar(id: string): void {
     if (accountAvatars.value[id]) return;
     ensureAssetsListener();
     try {
-        goApp()?.GetAccountAssets?.(id);
+        GetAccountAssets(id);
     } catch (e) {
         console.error('[Accounts] no se pudo pedir el avatar de', id, e);
     }
 }
 
-const goApp = () => (window as any)?.go?.main?.App;
 
 export async function loadAccounts(): Promise<void> {
     try {
-        const list = await goApp()?.ListAccounts?.();
-        if (Array.isArray(list)) accounts.value = list;
-    } catch { }
+        const list = await ListAccounts();
+        if (Array.isArray(list)) accounts.value = list as unknown as AccountInfo[];
+    } catch (_e) {}
     try {
-        const sel = await goApp()?.GetSelectedAccount?.();
+        const sel = await GetSelectedAccount();
         if (typeof sel === 'string') selectedAccountId.value = sel;
-    } catch { }
+    } catch (_e) {}
     try {
-        const ar = await goApp()?.GetAccountsAutoRefresh?.();
+        const ar = await GetAccountsAutoRefresh();
         autoRefresh.value = ar === true;
-    } catch { }
+    } catch (_e) {}
     for (const a of accounts.value) {
         if (a.type === 'authlib') fetchAccountAvatar(a.id);
     }
@@ -100,7 +100,7 @@ export async function loadAccounts(): Promise<void> {
 
 export async function createAccount(req: CreateAccountReq): Promise<string> {
     try {
-        const created = await goApp()?.CreateAccount?.(req);
+        const created = await CreateAccount(req as any);
         if (created?.id) selectedAccountId.value = created.id;
         await loadAccounts();
         return '';
@@ -111,7 +111,7 @@ export async function createAccount(req: CreateAccountReq): Promise<string> {
 
 export async function updateAccount(id: string, req: CreateAccountReq): Promise<string> {
     try {
-        await goApp()?.UpdateAccount?.(id, req);
+        await UpdateAccount(id, req as any);
         await loadAccounts();
         return '';
     } catch (e: any) {
@@ -121,7 +121,7 @@ export async function updateAccount(id: string, req: CreateAccountReq): Promise<
 
 export async function deleteAccount(id: string): Promise<string> {
     try {
-        await goApp()?.DeleteAccount?.(id);
+        await DeleteAccount(id);
         await loadAccounts();
         return '';
     } catch (e: any) {
@@ -131,7 +131,7 @@ export async function deleteAccount(id: string): Promise<string> {
 
 export async function setSelected(id: string): Promise<string> {
     try {
-        await goApp()?.SetSelectedAccount?.(id);
+        await SetSelectedAccount(id);
         selectedAccountId.value = id;
         await loadAccounts();
         return '';
@@ -147,7 +147,7 @@ export function loginAuthlib(req: AuthlibLoginReq): string | Promise<AuthLoginRe
 
     if (!loginResultPromise) {
         loginResultPromise = new Promise<AuthLoginResult>((resolve) => {
-            const off = EventsOn('account_login', (data: any) => {
+            const off = Events.On('account_login', ({ data }: any) => {
                 off();
                 let payload: any = data;
                 if (typeof data === 'string') {
@@ -173,7 +173,7 @@ export function loginAuthlib(req: AuthlibLoginReq): string | Promise<AuthLoginRe
         });
     }
     try {
-        goApp()?.LoginAuthlib?.(req);
+        LoginAuthlib(req);
         console.log('[Accounts] login iniciado:', req.username, '->', req.authServerUrl);
     } catch (e) {
         console.error('[Accounts] login: fallo al invocar LoginAuthlib', e);
@@ -187,7 +187,7 @@ export function pendingLogin(): Promise<AuthLoginResult> | null {
 
 export async function cancelLogin(): Promise<string> {
     try {
-        await goApp()?.CancelAuthlibLogin?.();
+        await CancelAuthlibLogin();
         console.log('[Accounts] cancelLogin solicitado');
         return '';
     } catch (e: any) {
@@ -198,7 +198,7 @@ export async function cancelLogin(): Promise<string> {
 
 export async function refreshAccount(id: string): Promise<string> {
     try {
-        await goApp()?.RefreshAccount?.(id);
+        await RefreshAccount(id);
         return '';
     } catch (e: any) {
         return e?.message ?? 'No se pudo renovar la sesión.';
@@ -206,13 +206,13 @@ export async function refreshAccount(id: string): Promise<string> {
 }
 
 export async function refreshAllAccounts(): Promise<string> {
-    const res = await goApp()?.RefreshAllAccounts?.();
+    const res = await RefreshAllAccounts();
     return typeof res === 'number' ? String(res) : '';
 }
 
 export async function setAutoRefresh(v: boolean): Promise<string> {
     try {
-        await goApp()?.SetAccountsAutoRefresh?.(v);
+        await SetAccountsAutoRefresh(v);
         autoRefresh.value = v;
         return '';
     } catch (e: any) {
@@ -222,6 +222,16 @@ export async function setAutoRefresh(v: boolean): Promise<string> {
 
 export const selectedAccount = computed<AccountInfo | null>(() => {
     return accounts.value.find((a) => a.id === selectedAccountId.value) ?? null;
+});
+
+// El system tray (submenú "Cuenta") cambia la cuenta activa: el backend
+// persiste la selección y emite este evento para sincronizar la UI.
+Events.On('tray_account_selected', ({ data }: any) => {
+    const id = typeof data === 'string' ? data : (data?.id ?? '');
+    if (id) {
+        selectedAccountId.value = id;
+        void loadAccounts();
+    }
 });
 
 export const selectedLabel = computed(() => {

@@ -26,6 +26,8 @@ import {
     loadAccounts,
     type AuthlibLoginReq,
 } from '@/Accounts/Store';
+import { GetDirectorySettings, PickDirectory, SetDirectoryMode, RestartApp, SetFirstLaunchDone } from '@wailsjs/StepLauncher/internal/Services/System/systemservice';
+import { UpdatePersonalization } from '@wailsjs/StepLauncher/internal/Services/Appearance/appearanceservice';
 import chickenRun from '../../assets/gif/chicken_jockey_run.gif';
 import logostep from '../../assets/logo-step.png';
 
@@ -184,7 +186,7 @@ watch(
 
 async function loadDirInfo() {
     try {
-        const info = await (window as any)?.go?.main?.App?.GetDirectorySettings?.();
+        const info = await GetDirectorySettings();
         if (!info) return;
         dirInfo.value = info;
         dirConfigured.value = info.configured;
@@ -193,7 +195,7 @@ async function loadDirInfo() {
         dirMsg.value = '';
         dirMsgOk.value = true;
         restartPending.value = false;
-    } catch { }
+    } catch (_e) {}
 }
 
 function nextFromCustomize() {
@@ -207,9 +209,9 @@ function useMinecraftDir() {
 
 async function pickCustomDir() {
     try {
-        const p = await (window as any)?.go?.main?.App?.PickDirectory?.();
+        const p = await PickDirectory();
         if (p) customPath.value = p;
-    } catch { }
+    } catch (_e) {}
 }
 
 async function saveDirectory() {
@@ -218,23 +220,17 @@ async function saveDirectory() {
     dirMsg.value = '';
     dirMsgOk.value = true;
     try {
-        const err = await (window as any)?.go?.main?.App?.SetDirectoryMode?.(
+        await SetDirectoryMode(
             dirMode.value,
             dirMode.value === 'custom' ? customPath.value.trim() : ''
         );
-        if (err) {
-            dirMsg.value = typeof err === 'string' ? err : 'No se pudo configurar la carpeta';
-            dirMsgOk.value = false;
-            dirBusy.value = false;
-            return;
-        }
         dirConfigured.value = true;
         dirBusy.value = false;
         if (dirChanged.value) {
             restartPending.value = true;
             try {
-                await (window as any)?.go?.main?.App?.RestartApp?.();
-            } catch { }
+                await RestartApp();
+            } catch (_e) {}
         } else {
             goTo('customize');
         }
@@ -253,8 +249,8 @@ useOverlayEscape(close, { isActive: () => props.visible });
 
 function finishOnboarding() {
     try {
-        (window as any)?.go?.main?.App?.SetFirstLaunchDone?.();
-    } catch { }
+        SetFirstLaunchDone();
+    } catch (_e) {}
 }
 
 function goTo(next: Step) {
@@ -283,8 +279,8 @@ async function applyPalette(pal: (typeof palettes)[number]) {
     };
     applyPersonalization(next);
     try {
-        await (window as any)?.go?.main?.App?.UpdatePersonalization?.(next);
-    } catch { }
+        await UpdatePersonalization(next as any);
+    } catch (_e) {}
 }
 
 async function toggle(kind: 'animations' | 'blur' | 'shadows') {
@@ -297,8 +293,8 @@ async function toggle(kind: 'animations' | 'blur' | 'shadows') {
     toggles[kind] = !toggles[kind];
     applyPersonalization(next);
     try {
-        await (window as any)?.go?.main?.App?.UpdatePersonalization?.(next);
-    } catch { }
+        await UpdatePersonalization(next as any);
+    } catch (_e) {}
 }
 
 async function submit() {

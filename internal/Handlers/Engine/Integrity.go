@@ -376,6 +376,7 @@ func (e *Engine) loadVersionJSON(path string) (*downloader.VersionJSON, error) {
 	if err := json.Unmarshal(data, &ver); err != nil {
 		return nil, err
 	}
+	downloader.NormalizeVersion(&ver)
 	return &ver, nil
 }
 

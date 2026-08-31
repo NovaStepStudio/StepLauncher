@@ -9,6 +9,9 @@ import (
 )
 
 func (m *InstanceManager) AddVersion(name string, req AddVersionReq) (*downloader.Download, error) {
+	if err := m.assertUsable(name); err != nil {
+		return nil, err
+	}
 	if req.Version == "" {
 		return nil, fmt.Errorf("version is required")
 	}

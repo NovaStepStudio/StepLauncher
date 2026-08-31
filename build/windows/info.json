@@ -1,15 +1,15 @@
 {
 	"fixed": {
-		"file_version": "{{.Info.ProductVersion}}"
+		"file_version": "2.5.0"
 	},
 	"info": {
 		"0000": {
-			"ProductVersion": "{{.Info.ProductVersion}}",
-			"CompanyName": "{{.Info.CompanyName}}",
-			"FileDescription": "{{.Info.ProductName}}",
-			"LegalCopyright": "{{.Info.Copyright}}",
-			"ProductName": "{{.Info.ProductName}}",
-			"Comments": "{{.Info.Comments}}"
+			"ProductVersion": "2.5.0",
+			"CompanyName": "NovaStepStudio",
+			"FileDescription": "Launcher de Minecraft de NovaStepStudio",
+			"LegalCopyright": "(c) 2026, NovaStepStudio",
+			"ProductName": "StepLauncher",
+			"Comments": "Launcher de Minecraft con instancias, modloaders y personalización completa"
 		}
 	}
 }

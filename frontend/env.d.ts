@@ -35,3 +35,7 @@ declare module '*.woff2' {
     const src: string;
     export default src;
 }
+declare module '@wailsjs/*' {
+    const mod: any;
+    export default mod;
+}

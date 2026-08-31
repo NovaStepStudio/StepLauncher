@@ -114,7 +114,13 @@ func ResolveLibraryDownload(lib downloader.Library, librariesDir string) (dest, 
 			artifactURL = downloader.LibraryRepositoryBase(lib) + "/" + a.Path
 		}
 		if artifactURL != "" {
-			return filepath.Join(librariesDir, a.Path), artifactURL, a.SHA1, a.Size
+			p := a.Path
+			if p == "" {
+				// Algunos version.json de terceros (p. ej. BatMod) omiten el
+				// campo path: se deriva de la coordenada maven.
+				p = utils.MavenPath(lib.Name)
+			}
+			return filepath.Join(librariesDir, p), artifactURL, a.SHA1, a.Size
 		}
 	}
 	if lib.Name != "" && !downloader.IsNativeLibrary(lib) {

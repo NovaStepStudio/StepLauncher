@@ -56,44 +56,55 @@ Un agente debe utilizar ambos: las reglas para saber qué hacer hoy y el histori
 
 | Carpeta       | Propósito                                                                                     |
 |---------------|-----------------------------------------------------------------------------------------------|
-| `Errors/`     | Bugs e incidentes reales que pasaron durante el desarrollo, en una **subcarpeta por versión**. Cada entrada incluye su `Fixed?`. |
-| `Changes/`    | Funcionalidades, mejoras y modificaciones reales implementadas, en una **subcarpeta por versión**. Cada entrada indica su `Release`. |
+| `Errors/`     | Bugs e incidentes reales que pasaron durante el desarrollo, en una **subcarpeta por versión**. Cada entrada incluye su `Estado` y su `Release`. |
+| `Bugs/`       | Reportes de bugs (formato híbrido error/cambio), en una **subcarpeta por versión**. Cada entrada incluye su `Estado` y su `Release`. |
+| `Changes/`    | Funcionalidades, mejoras y modificaciones reales implementadas, en una **subcarpeta por versión**. Cada entrada incluye su `Estado` y su `Release`. |
 | `Releases/`   | Una carpeta por versión publicada (`StepLauncher-X.Y.Z/`) con su changelog completo + noticia (JSON). |
-| `index.json`  | **Punto de entrada** de todas las entradas (uno por carpeta: `Errors/index.json`, `Changes/index.json`, `Releases/index.json`): lista la versión más reciente y las rutas relativas a cada archivo. Fuente para el centro de noticias del launcher. |
+| `index.json`  | **Punto de entrada** de todas las entradas (uno por carpeta: `Errors/index.json`, `Bugs/index.json`, `Changes/index.json`, `Releases/index.json`): lista la versión más reciente y las rutas relativas a cada archivo. Fuente para el centro de noticias del launcher. |
 | `README.md`   | Este archivo: estructura, convenciones, plantillas y el flujo para armar una release.          |
 
-Tanto errores como cambios y releases se guardan **por versión**:
+Tanto errores como bugs, cambios y releases se guardan **por versión**:
 
 | Tipo    | Formato                                            | Ejemplo                                                             |
 |---------|----------------------------------------------------|---------------------------------------------------------------------|
 | Error   | `Errors/StepLauncher-X.Y.Z/StepLauncher-Error-N.md`         | `Errors/StepLauncher-2.3.0/StepLauncher-Error-1.md`        |
+| Bug     | `Bugs/StepLauncher-X.Y.Z/StepLauncher-Bug-N.md`             | `Bugs/StepLauncher-2.4.1/StepLauncher-Bug-1.md`            |
 | Cambio  | `Changes/StepLauncher-X.Y.Z/StepLauncher-Change-N.md`       | `Changes/StepLauncher-2.3.0/StepLauncher-Change-1.md`      |
 | Release | `Releases/StepLauncher-X.Y.Z/` (carpeta)                    | `Releases/StepLauncher-2.3.0/`                              |
 
 - **`N` es secuencial por tipo y por versión**: cada versión nueva crea su carpeta `StepLauncher-X.Y.Z/` y la numeración empieza **de nuevo desde 1**. Dentro de una misma versión `N` no se reutiliza ni se re-numera; el número más alto de esa carpeta es la entrada más reciente de esa versión.
 - `X.Y.Z` corresponde al `productVersion` de `wails.json`.
-- Nombres de carpetas y archivos en inglés; **contenido en español**.
+- **TODO el contenido de las entradas debe estar escrito en español** (cabeceras, títulos, secciones, descripciones). Los únicos elementos que pueden ir en inglés son los nombres de carpetas y archivos (p. ej. `StepLauncher-Error-N.md`, `news.json`).
 
 ## Ciclo de vida de un Error
 
-Un error documentado en `Errors/` pasa por estos estados (indicarlo en la entrada):
+Cada error documentado en `Errors/` lleva una cabecera con **Fecha**, **Versión**, **Estado** y **Release**:
 
-1. **Encontrado** — el problema existe y está identificado.
-2. **En corrección** — hay un arreglo en curso.
-3. **Corregido** — verificado y cerrado, con la solución y la regla aprendida.
+- **Fecha** — cuándo se detectó/registró (`YYYY-MM-DD`).
+- **Versión** — la versión en la que ocurrió. Si la versión está en desarrollo: `en desarrollo`.
+- **Estado** — en qué fase está el error:
+  1. **Encontrado** — el problema existe y está identificado.
+  2. **En corrección** — hay un arreglo en curso.
+  3. **Corregido** — verificado y cerrado, con la solución y la regla aprendida.
+- **Release** — en qué release se menciona que fue corregido, o `en desarrollo` si aún no ha salido:
 
-Además, cada error tiene el campo **`Fixed?`**, que responde si ya se solucionó **y en qué release se menciona**:
-
-- `- **Fixed?**: Sí — corregido y mencionado en la release StepLauncher-2.3.0.`
-- `- **Fixed?**: No — sigue pendiente, aún no aparece en ninguna release.`
+- `- **Estado**: corregido`
+- `- **Release**: StepLauncher-2.3.0 — corregido y mencionado en esta release.`
+- `- **Release**: en desarrollo — aún no mencionado en ninguna release.`
 
 Siempre se documenta el error **aunque el arreglo siga en curso**; el historial advierte a quien trabaje después de lo que no debe repetirse.
 
 ## Ciclo de vida de un Cambio
 
-Cada cambio registrado en `Changes/` indica la **`Release`** donde se menciona que fue añadido por primera vez:
+Cada cambio registrado en `Changes/` lleva una cabecera con **Fecha**, **Versión**, **Estado** y **Release**:
+
+- **Fecha** — cuándo se implementó/registró (`YYYY-MM-DD`).
+- **Versión** — la versión en la que se implementó. Si la versión está en desarrollo: `en desarrollo`.
+- **Estado** — grado de finalización/confianza del cambio: `implementado y verificado`, `implementado y comprobado`, `implementado`, `en implementación`... (el estado confirma que el cambio existe y qué tan validado está).
+- **Release** — dónde se menciona que fue añadido por primera vez:
 
 - Formato clásico: `- **Release**: StepLauncher-2.3.0 — en este release se menciona que fue añadido.`
+- Si el cambio todavía no está publicado: `- **Release**: en desarrollo — aún no mencionado en ninguna release.`
 - Formato con sección (archivos que no declaran campos en la cabecera):
 
   ```markdown
@@ -101,22 +112,35 @@ Cada cambio registrado en `Changes/` indica la **`Release`** donde se menciona q
   StepLauncher-2.3.0 — se mencionó por primera vez en esta release.
   ```
 
-Si el cambio todavía no está publicado: `StepLauncher-2.3.0 (en desarrollo)`.
+## Ciclo de vida de un Bug
+
+Cada bug documentado en `Bugs/` es un **híbrido entre error y cambio**: describe el problema (como un error) y la solución final (como un cambio). Lleva una cabecera con **Fecha**, **Versión**, **Estado** y **Release**:
+
+- **Fecha** — cuándo se detectó/registró (`YYYY-MM-DD`).
+- **Versión** — la versión en la que ocurrió. Si la versión está en desarrollo: `en desarrollo`.
+- **Estado** — grado de resolución del bug: `encontrado`, `en corrección` o `corregido y verificado` (cuando la solución ya se comprobó).
+- **Release** — dónde se menciona que fue corregido, o `en desarrollo` si aún no ha salido:
+
+- `- **Estado**: corregido y verificado`
+- `- **Release**: StepLauncher-2.4.1 — corregido y mencionado en esta release.`
+- `- **Release**: en desarrollo — aún no mencionado en ninguna release.`
+
+Un bug se documenta en `Bugs/` cuando el reporte quiere **evidenciar el problema y su solución final** de forma compacta; si la investigación exige auditoría profunda (síntoma, causa raíz, evidencia, regla aprendida), usa la plantilla de `Errors/`.
 
 ## Una tarea, un solo MD (consolidación de entradas)
 
-Cada `StepLauncher-Error-N.md` o `StepLauncher-Change-N.md` representa **una tarea completa**, no un archivo tocado ni un subcambio aislado.
+Cada `StepLauncher-Error-N.md`, `StepLauncher-Bug-N.md` o `StepLauncher-Change-N.md` representa **una tarea completa**, no un archivo tocado ni un subcambio aislado.
 
-Si una misma petición o sesión de trabajo implica **más de un cambio** (varias funcionalidades, varios módulos, varios archivos) o **más de un error relacionado** (misma investigación, misma causa raíz, misma tanda de trabajo), se documenta todo en **UN SOLO MD** con subsecciones (p. ej. `### 1.`, `### 2.`...). No se genera un MD por cada cambio o error suelto: eso fragmenta el historial y dispara la numeración sin aportar trazabilidad.
+Si una misma petición o sesión de trabajo implica **más de un cambio** (varias funcionalidades, varios módulos, varios archivos) o **más de un error/bug relacionado** (misma investigación, misma causa raíz, misma tanda de trabajo), se documenta todo en **UN SOLO MD** con subsecciones (p. ej. `### 1.`, `### 2.`...). No se genera un MD por cada cambio o error suelto: eso fragmenta el historial y dispara la numeración sin aportar trazabilidad.
 
 Criterios:
 
-- **Tarea = 1 entrada**: una petición que toca varios sitios (backend, frontend, config, bindings...) agrupa todo en un `StepLauncher-Change-N.md` que enumera los bloques.
+- **Tarea = 1 entrada**: una petición que toca varios sitios (backend, frontend, config, bindings...) agrupa todo en un `StepLauncher-Change-N.md` o `StepLauncher-Bug-N.md` que enumera los bloques.
 - **Causa raíz = 1 error**: varios síntomas del mismo origen comparten el `StepLauncher-Error-N.md`. Solo se abre un error nuevo cuando la causa raíz es independiente (otro módulo, otro comportamiento, otra sesión).
 - **Ampliar antes que duplicar**: si la tarea ya tiene una entrada en la versión en curso, se extiende esa entrada; no se crea una nueva para lo mismo.
 - **Numeración baja = historial legible**: un MD con varias secciones es preferible a varias entradas de una sola línea.
 
-La regla práctica: **cuando una petición tenga más de un cambio o error, se juntan en un único MD**.
+La regla práctica: **cuando una petición tenga más de un cambio, error o bug, se juntan en un único MD**.
 
 ---
 
@@ -129,12 +153,13 @@ Un changelog de release **no es un solo archivo suelto**: cada versión vive en 
 Al empezar a trabajar sobre una versión nueva (según el `productVersion` de `wails.json`), crear:
 
 - `Changelogs/Errors/StepLauncher-X.Y.Z/` — donde se registran los errores de ESTA versión (numeración desde 1).
+- `Changelogs/Bugs/StepLauncher-X.Y.Z/` — donde se registran los bugs de ESTA versión (numeración desde 1).
 - `Changelogs/Changes/StepLauncher-X.Y.Z/` — donde se registran los cambios de ESTA versión (numeración desde 1).
 - `Changelogs/Releases/StepLauncher-X.Y.Z/` — donde se empaqueta la release al publicar (changelog + noticia).
 
-Ejemplo para la 2.3.0: `Errors/StepLauncher-2.3.0/`, `Changes/StepLauncher-2.3.0/`, `Releases/StepLauncher-2.3.0/`.
+Ejemplo para la 2.3.0: `Errors/StepLauncher-2.3.0/`, `Bugs/StepLauncher-2.3.0/`, `Changes/StepLauncher-2.3.0/`, `Releases/StepLauncher-2.3.0/`.
 
-Además, tener en cuenta cómo se actualizan los `index.json` (ver Paso 4): solo se vuelven a generar **al publicar la release**, no al crear cada error o cambio.
+Además, tener en cuenta cómo se actualizan los `index.json` (ver Paso 4): solo se vuelven a generar **al publicar la release**, no al crear cada error, bug o cambio.
 
 ### Paso 2 — Changelog completo (MD)
 
@@ -192,6 +217,7 @@ Cada carpeta tiene su `index.json` que sirve como **punto de entrada de TODAS su
 
 - `Releases/index.json` → apunta a cada `news.json` (la noticia de cada release).
 - `Errors/index.json` → apunta a cada `StepLauncher-Error-N.md` (el archivo, sin resumir su contenido).
+- `Bugs/index.json` → apunta a cada `StepLauncher-Bug-N.md` (el archivo, sin resumir su contenido).
 - `Changes/index.json` → apunta a cada `StepLauncher-Change-N.md` (el archivo, sin resumir su contenido).
 
 > **⚠️ Los `index.json` se regeneran SOLO al publicar una release** — NO al crear cada error o cambio (esos MD se crean y listo, sin tocar índices). Cuando toque crear el MD de release (`StepLauncher-Release-X.Y.Z.md`), ejecutar el generador `generate_indexes.ps1` (en la raíz de `Changelogs/`): escanea las carpetas de versión ya escritas, agrupa por versión (la más nueva primero), aplica rutas relativas y formatea el JSON a 4 espacios. Ejecutar: `powershell -NoProfile -ExecutionPolicy Bypass -File Changelogs\generate_indexes.ps1`. No toca los MD: solo lee los nombres existentes. Regenerarlo además siempre que se cree una carpeta de versión nueva.
@@ -210,7 +236,7 @@ Estructura de `Releases/index.json`:
 }
 ```
 
-Estructura de `Errors/index.json` y `Changes/index.json` (agrupados por versión; cada bloque lista los archivos MD de esa versión):
+Estructura de `Errors/index.json`, `Bugs/index.json` y `Changes/index.json` (agrupados por versión; cada bloque lista los archivos MD de esa versión):
 
 ```json
 {
@@ -226,7 +252,7 @@ Estructura de `Errors/index.json` y `Changes/index.json` (agrupados por versión
 }
 ```
 
-`Changes/index.json` usa la clave `changes` en cada bloque (mismo formato).
+`Bugs/index.json` usa la clave `bugs` en cada bloque y `Changes/index.json` usa la clave `changes` (mismo formato).
 
 **TODAS las rutas de los JSON son RELATIVAS a la ubicación del propio `index.json`** (p. ej. dentro de `Releases/index.json` → `./StepLauncher-2.3.0/news.json`). **NUNCA** rutas absolutas, nunca `Changelogs/...` ni `./Releases/...` desde la base: el launcher resuelve cada ruta partiendo del directorio donde está el índice que la contiene.
 
@@ -234,22 +260,23 @@ Estructura de `Errors/index.json` y `Changes/index.json` (agrupados por versión
 
 Actualizar los campos de auditoría de las entradas que entran en esta versión:
 
-- Errores corregidos: `- **Fixed?**: Sí — corregido y mencionado en la release StepLauncher-X.Y.Z.`
+- Errores corregidos: `- **Release**: StepLauncher-X.Y.Z — corregido y mencionado en esta release.`
+- Bugs corregidos: `- **Release**: StepLauncher-X.Y.Z — corregido y mencionado en esta release.`
 - Cambios añadidos: `- **Release**: StepLauncher-X.Y.Z — en este release se menciona que fue añadido.`
 
-Así la auditoría queda enlazada de punta a punta: error → fix → release → noticia.
+Así la auditoría queda enlazada de punta a punta: error/bug → fix → release → noticia.
 
 ---
 
 ## Plantilla de un Error
 
 ```markdown
-# Errors/StepLauncher-X.Y.Z/StepLauncher-Error-N.md — <título breve>
+# Errores de StepLauncher X.Y.Z (Error-N) — <título breve>
 
 - **Fecha**:     <YYYY-MM-DD>
 - **Versión**:   <X.Y.Z o "en desarrollo">
 - **Estado**:    encontrado | en corrección | corregido
-- **Fixed?**:    Sí — corregido y mencionado en la release StepLauncher-X.Y.Z. | No — sigue pendiente.
+- **Release**:   StepLauncher-X.Y.Z — corregido y mencionado en esta release. | en desarrollo — aún no mencionado en ninguna release.
 
 ## Síntoma
 Qué se veía/rompía y qué comandos afectaba.
@@ -271,14 +298,38 @@ Comandos/validaciones que confirmaron el arreglo
 (`go build ./...`, `wails build`, `wails dev`...).
 ```
 
+## Plantilla de un Bug
+
+Formato híbrido entre error y cambio: documenta el problema, su impacto y la solución final. Cabecera igual que el resto (Fecha, Versión, Estado, Release) y cuerpo compacto:
+
+```markdown
+# Bugs de StepLauncher X.Y.Z (Bug-N) — <título breve>
+
+- **Fecha**:   <YYYY-MM-DD>
+- **Versión**: <X.Y.Z o "en desarrollo">
+- **Estado**:  encontrado | en corrección | corregido y verificado
+- **Release**: StepLauncher-X.Y.Z — corregido y mencionado en esta release. | en desarrollo — aún no mencionado en ninguna release.
+
+## El bug en cuestión
+Qué era el bug, dónde aparecía y cómo se reproducía.
+
+## Qué afectaba y qué hacía
+Qué partes del launcher rompía y qué comportamiento causaba en el usuario.
+
+## Solución final
+Cómo se resolvió, con explicaciones de por qué esa solución funciona
+(y qué se evitó con ella).
+```
+
 ## Plantilla de un Cambio
 
 ```markdown
-# Changes/StepLauncher-X.Y.Z/StepLauncher-Change-N.md
+# Cambios de StepLauncher X.Y.Z (Step-N) — <título breve>
 
-- **Fecha**: <YYYY-MM-DD>
-- **Versión**: <X.Y.Z>
-- **Release**: StepLauncher-X.Y.Z — en este release se menciona que fue añadido.
+- **Fecha**:   <YYYY-MM-DD>
+- **Versión**: <X.Y.Z o "en desarrollo">
+- **Estado**:  implementado y verificado | implementado | en implementación
+- **Release**: StepLauncher-X.Y.Z — en este release se menciona que fue añadido. | en desarrollo — aún no mencionado en ninguna release.
 
 ## Qué cambió
 Archivos/componentes tocados (backend Go, frontend Vue, config...).
@@ -302,10 +353,11 @@ Comandos de build/dev (`bun run build`, `go build ./...`, `wails dev`...).
 Carpeta `Releases/StepLauncher-X.Y.Z/` con:
 
 ```markdown
-# Releases/StepLauncher-X.Y.Z/StepLauncher-Release-X.Y.Z.md
+# Actualización StepLauncher-X.Y.Z
 
-- **Fecha**: <YYYY-MM-DD>
+- **Fecha**:   <YYYY-MM-DD>
 - **Versión**: <X.Y.Z>
+- **Estado**:  publicada
 
 ## Funcionalidades nuevas
 - ...
@@ -331,21 +383,18 @@ Cuando un agente investiga un bug complejo, el flujo obligatorio es:
 5. **Determinar si el comportamiento actual coincide con la documentación histórica**: si el bug ya está documentado, usar la entrada como punto de partida y no re-investigarlo desde cero.
 6. **No reutilizar automáticamente una solución antigua si la arquitectura cambió**: verificar que el fix documentado siga siendo válido contra el código actual.
 7. **Verificar la causa raíz antes de aplicar un fix**: una hipótesis no es una causa raíz.
-8. **Documentar el problema en `Changelogs/` si es nuevo** (ver "Ciclo de vida de un Error").
+8. **Documentar el problema en `Changelogs/` si es nuevo** (ver "Ciclo de vida de un Error" y "Ciclo de vida de un Bug").
 9. **Actualizar `AGENTS.md` solamente** cuando se descubra una regla permanente que deba aplicarse en futuras tareas.
 10. **No convertir una hipótesis de la IA en una "causa raíz" sin evidencia**: distinguir entre hechos observados, hipótesis y conclusiones verificadas.
 
 ## Reglas
 
-> [!NOTE]
-> Para obtener instrucciones y flujos de trabajo detallados diseñados para agentes de IA sobre cómo manipular este sistema, consulta [.opencode/instructions/CHANGELOG_SYSTEM.md](file:///c:/Users/Stepnicka012/Desktop/Workflow/Go-Projects/StepLauncher/.opencode/instructions/CHANGELOG_SYSTEM.md).
-
 - **SIEMPRE consulta esta carpeta antes de diagnosticar o modificar el proyecto**: lo que hiciste pudo haber pasado antes, y la solución ya está documentada.
 - **SIEMPRE crea la entrada correspondiente en la carpeta de la versión en curso** al terminar de corregir un error o implementar un cambio relevante. No se da una tarea por terminada sin su registro en `Changelogs/`.
 - **Una tarea, un solo MD**: si una petición o sesión de trabajo implica varios cambios o errores relacionados, se documentan juntos en una única entrada (con subsecciones); no se fragmenta la documentación en varias entradas (ver "Una tarea, un solo MD").
-- **Cada versión nueva crea sus carpetas** `Errors/StepLauncher-X.Y.Z/`, `Changes/StepLauncher-X.Y.Z/` y `Releases/StepLauncher-X.Y.Z/`, y la numeración `N` de errores y cambios **empieza de nuevo desde 1** en cada una.
-- **Los `index.json` se regeneran SOLO al publicar la release** (con `generate_indexes.ps1`), nunca al crear un error o cambio: esos se registran en su carpeta de versión y listos; el generador los recogerá cuando toque la release.
+- **Cada versión nueva crea sus carpetas** `Errors/StepLauncher-X.Y.Z/`, `Bugs/StepLauncher-X.Y.Z/`, `Changes/StepLauncher-X.Y.Z/` y `Releases/StepLauncher-X.Y.Z/`, y la numeración `N` de errores, bugs y cambios **empieza de nuevo desde 1** en cada una.
+- **Los `index.json` se regeneran SOLO al publicar la release** (con `generate_indexes.ps1`), nunca al crear un error, bug o cambio: esos se registran en su carpeta de versión y listos; el generador los recogerá cuando toque la release.
 - **Toda release publicada necesita su carpeta `StepLauncher-X.Y.Z/`** con el changelog completo y su `news.json` para el centro de noticias — no basta con mencionar la release suelta.
-- Contenido en **español** (los nombres de carpetas y archivos, en inglés).
+- **TODO el contenido debe estar escrito en español** (cabeceras, títulos, secciones, descripciones). Los únicos elementos que pueden ir en inglés son los nombres de carpetas y archivos (p. ej. `StepLauncher-Error-N.md`, `news.json`).
 - No borrar entradas antiguas: el historial es la auditoría del proyecto.
 - Cuando el arreglo introduzca una **regla de arquitectura nueva** (p. ej. concurrencia, mutex, bindings), además de `Changelogs/` reflejala también en `AGENTS.md` si la regla debe aplicarse siempre.

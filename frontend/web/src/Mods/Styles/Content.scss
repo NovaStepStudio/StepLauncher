@@ -1,0 +1,1255 @@
+@use '../../Common/Styles/Components' as *;
+
+.ModsView {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+// ---------- Barra superior ----------
+
+.ModsView_Bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem 0.7rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.ModsView_BarInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+
+    h2 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.95rem * var(--font-size-primary, 1));
+        font-weight: 800;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+    }
+
+    p {
+        margin: 0;
+        font-size: calc(0.68rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+        opacity: 0.5;
+    }
+}
+
+.ModsView_BarActions {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.ModsView_Search {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.8rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    transition: var(--transition);
+
+    svg {
+        width: 0.9rem;
+        height: 0.9rem;
+        flex-shrink: 0;
+        opacity: 0.7;
+    }
+
+    input {
+        flex: 1;
+        min-width: 10.5rem;
+        max-width: 16rem;
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(0.76rem * var(--font-size-secundary, 1));
+        user-select: text;
+
+        &::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.55;
+        }
+    }
+
+    &:focus-within {
+        border-color: color-mix(in srgb, var(--progress-color) 45%, transparent);
+        background: color-mix(in srgb, var(--control-bg) 60%, var(--control-bg-soft) 40%);
+        box-shadow: var(--shadow-settings-normal) color-mix(in srgb, var(--progress-color) 12%, transparent);
+    }
+}
+
+.ModsView_SearchWrap {
+    position: relative;
+}
+
+.ModsView_History {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    left: 0;
+    right: 0;
+    min-width: 16rem;
+    max-height: 18rem;
+    overflow-y: auto;
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    border-radius: 0.65rem;
+    box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.45);
+    padding: 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    z-index: 20;
+}
+
+.ModsView_HistoryHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.3rem 0.35rem 0.35rem;
+    font-size: calc(0.6rem * var(--font-size-secundary, 1));
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.45;
+    border-bottom: 1px solid var(--border-style);
+    margin-bottom: 0.2rem;
+}
+
+.ModsView_HistoryClear {
+    width: 1.6rem;
+    height: 1.6rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 0.4rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+
+    svg { width: 0.85rem; height: 0.85rem; }
+
+    &:hover {
+        background: color-mix(in srgb, var(--color-error) 12%, transparent);
+        border-color: color-mix(in srgb, var(--color-error) 30%, transparent);
+        color: var(--color-error);
+    }
+}
+
+.ModsView_HistoryItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.42rem 0.5rem;
+    border-radius: 0.45rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    text-align: left;
+    cursor: pointer;
+    font-family: var(--font-secundary), Arial, sans-serif;
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    transition: var(--transition);
+
+    svg:first-child { width: 0.85rem; height: 0.85rem; opacity: 0.5; flex-shrink: 0; }
+
+    span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    &:hover {
+        background: var(--control-bg);
+        color: var(--text-primary);
+        border-color: var(--border-style);
+    }
+}
+
+.ModsView_HistoryRemove {
+    width: 1.3rem;
+    height: 1.3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 0.35rem;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    &:hover {
+        background: color-mix(in srgb, var(--color-error) 15%, transparent);
+        color: var(--color-error);
+        opacity: 1;
+    }
+}
+
+.ModsHistory-enter-active,
+.ModsHistory-leave-active {
+    transition: var(--transition);
+}
+
+.ModsHistory-enter-from,
+.ModsHistory-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
+.ModsView_Sel {
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    padding: 0.42rem 2rem 0.42rem 0.7rem;
+    max-width: 9rem;
+}
+
+.ModsView_Reload {
+    height: 2.05rem;
+    width: 2.05rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    svg {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+
+    &:hover:not(:disabled) {
+        color: var(--text-primary);
+        border-color: color-mix(in srgb, var(--progress-color) 45%, transparent);
+    }
+
+    &:active:not(:disabled) {
+        transform: scale(0.96);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: default;
+    }
+}
+
+.ModsView_ViewToggle {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
+
+    button {
+        width: 1.9rem;
+        height: 1.7rem;
+        border: none;
+        border-radius: 0.45rem;
+        background: transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: var(--transition);
+
+        svg {
+            width: 0.95rem;
+            height: 0.95rem;
+        }
+
+        &:hover {
+            color: var(--text-primary);
+        }
+
+        &.on {
+            background: color-mix(in srgb, var(--progress-color) 18%, transparent);
+            color: var(--progress-color);
+        }
+    }
+}
+
+// ---------- Pestañas de tipo de proyecto ----------
+
+.ModsView_Tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    padding: 0 1.5rem 0.8rem;
+    flex-shrink: 0;
+}
+
+.ModsView_Tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.34rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--text-primary) 12%, transparent);
+    background: var(--control-bg-soft);
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+
+    svg {
+        width: 0.9rem;
+        height: 0.9rem;
+    }
+
+    &:hover {
+        border-color: color-mix(in srgb, var(--background-button-primary) 45%, transparent);
+        color: var(--text-primary);
+    }
+
+    &.on {
+        background: color-mix(in srgb, var(--progress-color, var(--color-success)) 18%, transparent);
+        border-color: color-mix(in srgb, var(--progress-color, var(--color-success)) 55%, transparent);
+        color: var(--progress-color, var(--color-success));
+        box-shadow: var(--shadow-settings-normal) color-mix(in srgb, var(--progress-color, var(--color-success)) 18%, transparent);
+    }
+}
+
+// ---------- Cuerpo: sidebar + contenido ----------
+
+.ModsView_Body {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    gap: 1rem;
+    padding: 0 1rem .5rem;
+    overflow: hidden;
+}
+
+.ModsView_Sidebar {
+    width: 14.5rem;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    padding: 1rem;
+    border: var(--border-style);
+    border-radius: 0.8rem;
+    background: color-mix(in srgb, var(--control-bg) 30%, transparent);
+    overflow-y: auto;
+}
+
+.ModsView_FilterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ModsView_FilterTitle {
+    margin: 0;
+    font-size: calc(0.6rem * var(--font-size-secundary, 1));
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.45;
+}
+
+.ModsView_LoaderList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.ModsView_LoaderChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
+    font-family: var(--font-secundary), Arial, sans-serif;
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    cursor: pointer;
+    text-align: left;
+    transition: var(--transition);
+
+    img {
+        width: 1.1rem;
+        height: 1.1rem;
+        border-radius: 0.2rem;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    &:hover {
+        background: var(--control-bg);
+        color: var(--text-primary);
+    }
+
+    &.on {
+        background: color-mix(in srgb, var(--progress-color, var(--color-success)) 14%, transparent);
+        border-color: color-mix(in srgb, var(--progress-color, var(--color-success)) 40%, transparent);
+        color: var(--progress-color, var(--color-success));
+        font-weight: 600;
+    }
+}
+
+// ---------- Buscador de versión de Minecraft (estilo menú de instalación) ----------
+
+.ModsView_Vc {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.ModsView_VcSearch {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.5rem;
+    border: var(--border-style);
+    background: rgba(0, 0, 0, 0.22);
+    transition: var(--transition);
+
+    svg {
+        width: 0.9rem;
+        height: 0.9rem;
+        opacity: 0.45;
+        flex-shrink: 0;
+    }
+
+    input {
+        flex: 1;
+        min-width: 0;
+        background: none;
+        border: none;
+        outline: none;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(0.72rem * var(--font-size-secundary, 1));
+
+        &::placeholder {
+            opacity: 0.4;
+        }
+    }
+
+    &:focus-within {
+        border-color: color-mix(in srgb, var(--background-button-primary) 70%, white 18%);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--background-button-primary) 25%, transparent);
+    }
+}
+
+.ModsView_VcTabs {
+    display: flex;
+    gap: 0.3rem;
+
+    button {
+        flex: 1;
+        padding: 0.24rem 0.4rem;
+        border-radius: 99px;
+        border: var(--border-style);
+        background: var(--control-bg-dark);
+        color: var(--text-secondary);
+        text-shadow: var(--text-shadow-secundary, none);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(0.62rem * var(--font-size-secundary, 1));
+        cursor: pointer;
+        transition: var(--transition);
+
+        &:hover {
+            border-color: color-mix(in srgb, var(--background-button-primary) 75%, white 15%);
+        }
+
+        &.on {
+            background: color-mix(in srgb, var(--background-button-primary) 60%, transparent);
+            border-color: color-mix(in srgb, var(--background-button-primary) 75%, white 15%);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+    }
+}
+
+.ModsView_VcAll {
+    padding: 0.26rem 0.5rem;
+    border-radius: 0.45rem;
+    border: 1px dashed var(--control-border);
+    background: transparent;
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
+    font-family: var(--font-secundary), Arial, sans-serif;
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    cursor: pointer;
+    text-align: left;
+    transition: var(--transition);
+
+    &:hover {
+        color: var(--text-primary);
+        border-color: color-mix(in srgb, var(--progress-color) 40%, transparent);
+    }
+
+    &.on {
+        color: var(--progress-color);
+        border-color: color-mix(in srgb, var(--progress-color) 50%, transparent);
+        background: color-mix(in srgb, var(--progress-color) 8%, transparent);
+        font-weight: 600;
+    }
+}
+
+.ModsView_VcList {
+    max-height: 13rem;
+    overflow-y: auto;
+    border: var(--border-style);
+    border-radius: 0.5rem;
+    background: rgba(0, 0, 0, 0.14);
+    padding: 0.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+}
+
+.ModsView_VcGroupHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.35rem 0.45rem 0.2rem;
+    font-size: calc(0.56rem * var(--font-size-secundary, 1));
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.45;
+    font-family: var(--font-secundary), Arial, sans-serif;
+
+    em {
+        font-style: normal;
+        opacity: 0.6;
+    }
+}
+
+.ModsView_VcItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    padding: 0.3rem 0.45rem;
+    border-radius: 0.4rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
+    font-family: var(--font-secundary), Arial, sans-serif;
+    font-size: calc(0.68rem * var(--font-size-secundary, 1));
+    cursor: pointer;
+    text-align: left;
+    transition: var(--transition);
+
+    em {
+        font-style: normal;
+        font-size: calc(0.5rem * var(--font-size-secundary, 1));
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        opacity: 0.45;
+    }
+
+    &:hover {
+        background: var(--control-bg);
+        color: var(--text-primary);
+    }
+
+    &.on {
+        background: color-mix(in srgb, var(--progress-color) 14%, transparent);
+        border-color: color-mix(in srgb, var(--progress-color) 40%, transparent);
+        color: var(--progress-color);
+        font-weight: 600;
+    }
+}
+
+.ModsView_VcEmpty {
+    margin: 0;
+    padding: 0.5rem 0.45rem;
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.5;
+}
+
+.ModsView_SidebarError {
+    margin: 0;
+    font-size: calc(0.62rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    color: var(--color-error);
+    opacity: 0.8;
+    line-height: 1.4;
+}
+
+// ---------- Contenido principal ----------
+
+.ModsView_Main {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ModsView_Grid {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.8rem;
+    padding: 0.3rem 0.3rem 0.8rem;
+    align-content: start;
+    text-shadow: var(--text-shadow-secundary, none);
+}
+
+.ModsView_List {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.3rem 0.3rem 0.8rem;
+    text-shadow: var(--text-shadow-secundary, none);
+}
+
+// ---------- Footer (marca, estado y paginación) ----------
+
+.ModsView_Footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.7rem 0.9rem 0;
+    border-top: 1px solid color-mix(in srgb, var(--border-style) 60%, transparent);
+    margin-top: 0.3rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.ModsView_FooterLeft {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
+}
+
+.ModsView_Brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.55;
+    color: var(--text-secondary);
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: var(--transition);
+
+    b {
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+        font-weight: 700;
+    }
+
+    &:hover {
+        opacity: 0.9;
+    }
+}
+
+.ModsView_BrandLogo {
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 0.4rem;
+    background: color-mix(in srgb, var(--progress-color) 18%, var(--control-bg-dark));
+    border: 1px solid color-mix(in srgb, var(--progress-color) 40%, transparent);
+    color: var(--progress-color);
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: calc(0.7rem * var(--font-size-primary, 1));
+    font-weight: 800;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.ModsView_FooterState {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.55;
+    white-space: nowrap;
+
+    b {
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+        font-weight: 700;
+    }
+
+    &.loading {
+        opacity: 0.8;
+        color: var(--progress-color);
+    }
+}
+
+.ModsView_Spin {
+    width: 0.85rem;
+    height: 0.85rem;
+    animation: ModsView_SpinKey 1s linear infinite;
+}
+
+@keyframes ModsView_SpinKey {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.ModsView_Pages {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+}
+
+.ModsView_PgBtn {
+    min-width: 1.9rem;
+    height: 1.9rem;
+    padding: 0 0.45rem;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    text-shadow: var(--text-shadow-secundary, none);
+    font-family: var(--font-secundary), Arial, sans-serif;
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+
+    svg {
+        width: 0.9rem;
+        height: 0.9rem;
+    }
+
+    &:hover:not(:disabled) {
+        color: var(--text-primary);
+        border-color: color-mix(in srgb, var(--progress-color) 35%, transparent);
+    }
+
+    &:disabled {
+        opacity: 0.35;
+        cursor: default;
+    }
+
+    &.on {
+        background: color-mix(in srgb, var(--progress-color) 16%, transparent);
+        border-color: color-mix(in srgb, var(--progress-color) 50%, transparent);
+        color: var(--progress-color);
+        font-weight: 700;
+    }
+}
+
+.ModsView_PgGap {
+    color: var(--text-secondary);
+    opacity: 0.45;
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    padding: 0 0.1rem;
+    user-select: none;
+}
+
+// ---------- Estados vacíos / error ----------
+
+.ModsView_EmptyCard {
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    max-width: 25rem;
+    text-align: center;
+    padding: 1rem;
+}
+
+.ModsView_EmptyIcon {
+    width: 3.8rem;
+    height: 3.8rem;
+    border-radius: 1.1rem;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--color-tag) 18%, transparent), color-mix(in srgb, var(--progress-color) 8%, transparent));
+    border: 1px solid color-mix(in srgb, var(--color-tag) 32%, transparent);
+    color: color-mix(in srgb, var(--color-tag) 45%, var(--text-primary));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.3);
+    margin-bottom: 0.25rem;
+
+    svg {
+        width: 1.8rem;
+        height: 1.8rem;
+    }
+}
+
+.ModsView_EmptyTitle {
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: calc(1rem * var(--font-size-primary, 1));
+    font-weight: 700;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    opacity: 0.92;
+}
+
+.ModsView_EmptyText {
+    margin: 0;
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.55;
+    line-height: 1.6;
+}
+
+.ModsView_EmptyBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.55rem;
+
+    svg {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+}
+
+// ---------- Card de proyecto (vista grid) ----------
+
+.ModsCard {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    min-width: 0;
+    border-radius: 0.95rem;
+    border: var(--border-style);
+    background: color-mix(in srgb, var(--control-bg-soft) 45%, var(--background-modal-primary));
+    cursor: pointer;
+    transition: var(--transition-spring);
+
+    &:hover {
+        transform: translateY(-3px);
+        border-color: color-mix(in srgb, var(--progress-color) 45%, transparent);
+        box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.38), 0 0 0 1px color-mix(in srgb, var(--progress-color) 12%, transparent);
+    }
+}
+
+.ModsCard_Type {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 0.55rem;
+    color: color-mix(in srgb, var(--color-tag) 70%, var(--text-primary));
+    background: color-mix(in srgb, var(--color-tag) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-tag) 30%, transparent);
+
+    svg {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+}
+
+.ModsCard_Body {
+    padding: 0.85rem 0.9rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    flex: 1;
+}
+
+.ModsCard_Line {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.ModsCard_Icon {
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 0.7rem;
+    border: 2px solid color-mix(in srgb, var(--border-style) 55%, var(--text-primary) 20%);
+    background: color-mix(in srgb, var(--background-modal-primary) 60%, var(--control-bg-dark));
+    object-fit: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+
+    img {
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        object-fit: cover;
+    }
+
+    svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        opacity: 0.5;
+    }
+}
+
+.ModsCard_Titles {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+}
+
+.ModsCard_Title {
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: calc(0.9rem * var(--font-size-primary, 1));
+    font-weight: 700;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ModsCard_Sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: calc(0.63rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.55;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ModsCard_Desc {
+    margin: 0;
+    font-size: calc(0.68rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.75;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.ModsCard_Meta {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.ModsCard_Cat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: calc(0.6rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    font-weight: 500;
+    opacity: 0.75;
+    background: var(--control-bg);
+    border: 1px solid var(--border-style);
+    border-radius: 999px;
+    padding: 0.14rem 0.5rem;
+    text-transform: capitalize;
+
+    img {
+        width: 0.95rem;
+        height: 0.95rem;
+        border-radius: 0.18rem;
+        object-fit: cover;
+    }
+}
+
+.ModsCard_Dl {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: calc(0.6rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    font-weight: 600;
+    color: color-mix(in srgb, var(--progress-color) 75%, var(--text-primary) 15%);
+    border-color: color-mix(in srgb, var(--progress-color) 28%, transparent);
+    background: color-mix(in srgb, var(--progress-color) 8%, transparent);
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 0.12rem 0.5rem;
+
+    svg {
+        width: 0.72rem;
+        height: 0.72rem;
+    }
+}
+
+.ModsCard_Download {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+    background: var(--background-play-button);
+    border: none;
+    border-radius: 0.55rem;
+    color: var(--text-primary);
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: calc(0.76rem * var(--font-size-primary, 1));
+    font-weight: 700;
+    padding: 0.48rem 0.7rem;
+    margin-top: auto;
+    cursor: pointer;
+    text-shadow: var(--text-shadow-primary, none);
+    box-shadow: var(--shadow-settings-normal) color-mix(in srgb, var(--background-play-button) 24%, transparent);
+    transition: var(--transition);
+
+    svg {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+
+    &:hover {
+        filter: brightness(1.1);
+        box-shadow: var(--shadow-settings-normal) color-mix(in srgb, var(--background-play-button) 34%, transparent);
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+}
+
+// ---------- Skeleton ----------
+
+.ModsCard_Skeleton {
+    pointer-events: none;
+    cursor: default;
+}
+
+@keyframes ModsCard_Shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.ModsCard_SkIcon,
+.ModsCard_SkLine,
+.ModsCard_SkChips span,
+.ModsCard_SkBtn {
+    background: linear-gradient(90deg, var(--control-bg) 25%, var(--control-bg-soft) 50%, var(--control-bg) 75%);
+    background-size: 200% 100%;
+    animation: ModsCard_Shimmer 1.4s linear infinite;
+    border-radius: 0.4rem;
+}
+
+.ModsCard_SkIcon {
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 0.7rem;
+}
+
+.ModsCard_SkLine {
+    height: 0.9rem;
+    width: 70%;
+
+    &.short {
+        width: 45%;
+        height: 0.7rem;
+    }
+}
+
+.ModsCard_SkChips {
+    display: flex;
+    gap: 0.35rem;
+
+    span {
+        width: 3.2rem;
+        height: 1.1rem;
+        border-radius: 999px;
+    }
+}
+
+.ModsCard_SkBtn {
+    height: 2.1rem;
+    margin-top: auto;
+}
+
+// ---------- Fila de proyecto (vista list) ----------
+
+.ModsRow {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 0.75rem;
+    border: var(--border-style);
+    background: color-mix(in srgb, var(--control-bg-soft) 40%, var(--background-modal-primary));
+    cursor: pointer;
+    transition: var(--transition);
+
+    &:hover {
+        transform: translateY(-1px);
+        border-color: color-mix(in srgb, var(--progress-color) 40%, transparent);
+        box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.3), 0 0 0 1px color-mix(in srgb, var(--progress-color) 10%, transparent);
+    }
+}
+
+.ModsRow_Icon {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 0.65rem;
+    border: 2px solid color-mix(in srgb, var(--border-style) 55%, var(--text-primary) 20%);
+    background: color-mix(in srgb, var(--background-modal-primary) 60%, var(--control-bg-dark));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    overflow: hidden;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    svg {
+        width: 1.2rem;
+        height: 1.2rem;
+        opacity: 0.5;
+    }
+}
+
+.ModsRow_Info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+}
+
+.ModsRow_Title {
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: calc(0.82rem * var(--font-size-primary, 1));
+    font-weight: 700;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ModsRow_Sub {
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.55;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ModsRow_Chips {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.ModsRow_Chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: calc(0.6rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    font-weight: 500;
+    opacity: 0.75;
+    background: var(--control-bg);
+    border: 1px solid var(--border-style);
+    border-radius: 999px;
+    padding: 0.14rem 0.55rem;
+    white-space: nowrap;
+    text-transform: capitalize;
+
+    img {
+        width: 0.9rem;
+        height: 0.9rem;
+        border-radius: 0.16rem;
+        object-fit: cover;
+    }
+}
+
+.ModsRow_Dl {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: color-mix(in srgb, var(--progress-color) 75%, var(--text-primary) 15%);
+    border-color: color-mix(in srgb, var(--progress-color) 28%, transparent);
+    background: color-mix(in srgb, var(--progress-color) 8%, transparent);
+
+    svg {
+        width: 0.72rem;
+        height: 0.72rem;
+    }
+}
+
+.ModsRow_DlBtn {
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: 0.55rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 2.1rem;
+    height: 2.1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    svg {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+
+    &:hover {
+        color: var(--text-primary);
+        border-color: color-mix(in srgb, var(--progress-color) 40%, transparent);
+        filter: brightness(1.1);
+    }
+}

@@ -1,0 +1,197 @@
+@use '../../Common/Styles/Components' as *;
+
+.PlCard {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-radius: 0.85rem;
+    overflow: hidden;
+    height: max-content;
+    background: color-mix(in srgb, var(--card-accent, var(--control-bg)) 14%, color-mix(in srgb, var(--control-bg) 62%, transparent));
+    border: 1px solid color-mix(in srgb, var(--card-accent, var(--text-primary)) 12%, transparent);
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    position: relative;
+    outline: none;
+
+    &:hover {
+        transform: translateY(-2px);
+        background: color-mix(in srgb, var(--card-accent, var(--control-bg)) 18%, var(--control-bg));
+        border-color: color-mix(in srgb, var(--card-accent, var(--progress-color)) 22%, transparent);
+        box-shadow: 0 8px 22px rgba(0,0,0,0.14);
+        .PlCard_Play { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    &:focus-visible {
+        border-color: var(--progress-color);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--progress-color) 18%, transparent);
+    }
+    &.fav { border-color: color-mix(in srgb, var(--color-warning) 18%, transparent); }
+    &.pinned { border-color: color-mix(in srgb, var(--progress-color) 22%, transparent); }
+}
+
+.PlCard_CoverWrap {
+    position: relative;
+    aspect-ratio: 1;
+    width: 100%;
+    overflow: hidden;
+    background: var(--control-bg-dark);
+    flex-shrink: 0;
+}
+
+.PlCard_Cover {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+
+    &.is-custom {
+        img { width: 100%; height: 100%; object-fit: cover; }
+        background: var(--control-bg-dark);
+        display: flex; justify-content: center; align-items: center;
+        color: var(--text-secondary);
+    }
+    &.is-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 2px;
+        padding: 2px;
+        background: var(--control-bg);
+        &.empty {
+            display: flex; justify-content: center; align-items: center;
+            gap: 2px; padding: 0;
+            background: var(--control-bg-dark);
+            color: var(--text-secondary);
+        }
+    }
+}
+
+.PlCard_Cell {
+    border-radius: 0.35rem;
+    overflow: hidden;
+    background: var(--control-bg-dark);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-secondary);
+    position: relative;
+    img { width: 100%; height: 100%; object-fit: cover; }
+    &.is-empty { background: var(--control-bg-dark); }
+    &.is-loading {
+        background: color-mix(in srgb, var(--control-bg) 70%, transparent);
+        position: relative;
+        overflow: hidden;
+    }
+}
+
+.PlCard_Shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-primary) 7%, transparent) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: cardShimmer 1.15s linear infinite;
+}
+@keyframes cardShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.PlCard_Play {
+    position: absolute;
+    right: 0.55rem;
+    bottom: 0.55rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    border: 1px solid color-mix(in srgb, white 14%, transparent);
+    background: var(--background-button-primary);
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+    transition: opacity 0.18s ease, transform 0.18s ease, filter 0.15s ease;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.22);
+    &:hover { filter: brightness(1.08); }
+    &:active { transform: translateY(1px) scale(0.98); }
+}
+
+.PlCard_Badge {
+    position: absolute;
+    top: 0.45rem;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid transparent;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    &.is-fav {
+        right: 0.45rem;
+        background: color-mix(in srgb, var(--color-warning) 18%, rgba(0,0,0,0.35));
+        border-color: color-mix(in srgb, var(--color-warning) 26%, transparent);
+        color: var(--color-warning);
+    }
+    &.is-pin {
+        left: 0.45rem;
+        background: color-mix(in srgb, var(--progress-color) 18%, rgba(0,0,0,0.35));
+        border-color: color-mix(in srgb, var(--progress-color) 26%, transparent);
+        color: var(--progress-color);
+    }
+}
+.PlCard_Badge.is-fav + .PlCard_Badge.is-pin { left: 0.45rem; right: auto; }
+
+.PlCard_Info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+    padding: 0.65rem 0.7rem 0.7rem;
+    min-width: 0;
+    background: color-mix(in srgb, var(--background-modal-primary) 96%, transparent);
+}
+
+.PlCard_Title {
+    font-size: calc(0.82rem * var(--font-size-primary, 1));
+    font-weight: 700;
+    color: color-mix(in srgb, var(--text-primary) 85%, transparent 15%);
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.PlCard_Sub {
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    opacity: 0.55;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.PlCard_Actions {
+    display: flex;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+}
+.PlCard_Btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.45rem;
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    font-size: 0.66rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    &:hover { background: var(--control-bg-soft); color: var(--text-primary); }
+    &.is-play { background: var(--background-button-primary); color: var(--text-primary); border-color: transparent; &:hover { filter: brightness(1.08); } }
+}

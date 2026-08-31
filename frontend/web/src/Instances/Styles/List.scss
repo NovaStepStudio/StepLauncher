@@ -643,6 +643,48 @@ transition: var(--transition-panel);
     }
 }
 
+.InstCard_VerifyChip {
+    color: var(--color-warning, #e8b53a) !important;
+    border-color: color-mix(in srgb, var(--color-warning, #e8b53a) 30%, transparent) !important;
+    background: color-mix(in srgb, var(--color-warning, #e8b53a) 8%, transparent) !important;
+    animation: InstCard_VerifyPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes InstCard_VerifyPulse {
+    0%,
+    100% {
+        opacity: 0.55;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+.InstCard_Tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.45rem;
+}
+
+.InstCard_Tag {
+    font-size: calc(0.6rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    font-weight: 500;
+    opacity: 0.6;
+    background: var(--control-bg);
+    border: 1px solid var(--border-style);
+    border-radius: 999px;
+    padding: 0.12rem 0.5rem;
+}
+
+.InstCard_TagMore {
+    font-size: calc(0.6rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.45;
+    padding: 0.12rem 0.2rem;
+}
+
 .InstCard_Actions {
     display: flex;
     align-items: center;

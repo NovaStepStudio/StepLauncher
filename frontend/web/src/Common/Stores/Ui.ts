@@ -1,4 +1,5 @@
 import { ref, watch } from 'vue';
+import { ReadLocalFile } from '@wailsjs/StepLauncher/internal/Services/System/systemservice';
 
 export const uiScale = ref(100);
 
@@ -15,6 +16,17 @@ export interface BackgroundConfig {
     dynamicImages: string[];
     dynamicOrder: 'sequential' | 'random';
     dynamicInterval: number;
+    imageAuthor?: string;
+    imageModName?: string;
+    imageUrl?: string;
+}
+
+export interface MusicConfig {
+    enabled: boolean;
+    position: 'top-left' | 'bottom-center';
+    coverStyle: 'disc' | 'square' | 'background';
+    discRotation: boolean;
+    volume: number;
 }
 
 export interface ThemeColors {
@@ -35,6 +47,7 @@ export interface ThemeColors {
 export interface Personalization {
     uiScale: number;
     background: BackgroundConfig;
+    backgroundMusic: MusicConfig;
     fontPrimary: string;
     fontSecondary: string;
     fontPrimaryColor: string;
@@ -63,7 +76,7 @@ export function setUIScale(percent: number) {
     applyUIScaleZoom(uiScale.value);
 }
 
-function mimeOf(rel: string): string {
+export function mimeOf(rel: string): string {
     const ext = rel.split('.').pop()?.toLowerCase() ?? '';
     switch (ext) {
         case 'mp4': return 'video/mp4';
@@ -74,6 +87,10 @@ function mimeOf(rel: string): string {
         case 'jpeg': return 'image/jpeg';
         case 'webp': return 'image/webp';
         case 'bmp': return 'image/bmp';
+        case 'mp3': return 'audio/mpeg';
+        case 'wav': return 'audio/wav';
+        case 'ogg': return 'audio/ogg';
+        case 'm4a': return 'audio/mp4';
         default: return 'application/octet-stream';
     }
 }
@@ -87,7 +104,7 @@ export async function loadLocalFresh(rel: string): Promise<string> {
     localCache.delete(key);
     const url = await loadLocal(key);
     if (old && old !== url) {
-        try { URL.revokeObjectURL(old); } catch { }
+        try { URL.revokeObjectURL(old); } catch (_e) {}
     }
     return url;
 }
@@ -98,7 +115,7 @@ export async function loadLocal(rel: string): Promise<string> {
     const cached = localCache.get(key);
     if (cached) return cached;
     try {
-        const res = await (window as any).go?.main?.App?.ReadLocalFile?.(key);
+        const res: any = await ReadLocalFile(key);
         if (!res) return '';
         let data: Uint8Array;
         if (typeof res === 'string') {
@@ -140,6 +157,7 @@ function normalizePersonalization(p: any, cur: any): Personalization {
     const arr = (v: any, fb: string[]) => (Array.isArray(v) ? v : fb);
     const colorsIn = p?.colors ?? cur?.colors ?? {};
     const bgIn = p?.background ?? cur?.background ?? {};
+    const musicIn = p?.backgroundMusic ?? cur?.backgroundMusic ?? {};
     return {
         uiScale: num(p?.uiScale, num(cur?.uiScale, 100)),
         background: {
@@ -149,6 +167,16 @@ function normalizePersonalization(p: any, cur: any): Personalization {
             dynamicImages: arr(bgIn.dynamicImages, []),
             dynamicOrder: bgIn.dynamicOrder === 'random' ? 'random' : 'sequential',
             dynamicInterval: num(bgIn.dynamicInterval, 10),
+            imageAuthor: str(bgIn.imageAuthor, str(cur?.background?.imageAuthor, '')),
+            imageModName: str(bgIn.imageModName, str(cur?.background?.imageModName, '')),
+            imageUrl: str(bgIn.imageUrl, str(cur?.background?.imageUrl, '')),
+        },
+        backgroundMusic: {
+            enabled: bool(musicIn.enabled, false),
+            position: 'bottom-center',
+            coverStyle: ['square', 'background'].includes(musicIn.coverStyle) ? musicIn.coverStyle : 'disc',
+            discRotation: bool(musicIn.discRotation, true),
+            volume: num(musicIn.volume, num(cur?.backgroundMusic?.volume, 0.8)),
         },
         fontPrimary: str(p?.fontPrimary, str(cur?.fontPrimary, 'Lexend')),
         fontSecondary: str(p?.fontSecondary, str(cur?.fontSecondary, 'Inter')),

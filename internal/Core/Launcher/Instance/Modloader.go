@@ -16,6 +16,9 @@ import (
 // la instalación; el progreso se emite con los eventos modloader_* y el
 // sessionId correspondiente.
 func (m *InstanceManager) InstallModLoader(name, loader, loaderVersion, mcVersion string) (string, error) {
+	if err := m.assertUsable(name); err != nil {
+		return "", err
+	}
 	if m.mlOrchestrator == nil {
 		return "", fmt.Errorf("modloader engine not available")
 	}

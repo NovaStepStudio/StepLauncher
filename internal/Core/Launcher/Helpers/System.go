@@ -75,6 +75,10 @@ func GCFlags(preset string) []string {
 		return []string{"-XX:+UseZGC", "-XX:+ZGenerational"}
 	case "shenandoah":
 		return []string{"-XX:+UseShenandoahGC", "-XX:ShenandoahGCMode=iu"}
+	case "none":
+		// "none" desactiva EXPLÍCITAMENTE el recolector personalizado: no se
+		// añade ningún flag de GC (el JVM usa su recolector por defecto).
+		return nil
 	default:
 		return nil
 	}

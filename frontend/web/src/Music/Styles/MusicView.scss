@@ -1,0 +1,364 @@
+@use '../../Common/Styles/Components' as *;
+
+// MusicaView — listado principal con búsqueda, paginación y filas pulidas
+.MusicSection {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--background-modal-primary);
+}
+
+.MusicToolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1rem;
+    border-bottom: var(--border-style);
+    background: transparent;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.MusicSearch {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.55rem;
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    transition: var(--transition);
+    min-width: 0;
+
+    svg { width: 0.9rem; height: 0.9rem; opacity: 0.6; flex-shrink: 0; }
+
+    input {
+        flex: 1;
+        min-width: 0;
+        background: none;
+        border: none;
+        outline: none;
+        color: var(--text-primary);
+        font-family: var(--font-secundary), Arial, sans-serif;
+        font-size: calc(0.74rem * var(--font-size-secundary, 1));
+        &::placeholder { color: var(--text-secondary); opacity: 0.45; }
+    }
+
+    &:focus-within {
+        border-color: color-mix(in srgb, var(--progress-color) 32%, transparent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--progress-color) 10%, transparent);
+    }
+}
+
+.MusicToolbar_Right {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+
+    .SsSel {
+        padding: 0.35rem 0.55rem;
+        border-radius: 0.45rem;
+        border: 1px solid var(--control-border);
+        background: var(--control-bg);
+        color: var(--text-secondary);
+        font-size: calc(0.68rem * var(--font-size-secundary, 1));
+        cursor: pointer;
+    }
+}
+
+.SsBtnSmall {
+    padding: 0.3rem 0.6rem !important;
+    font-size: calc(0.66rem * var(--font-size-secundary, 1)) !important;
+    border-radius: 0.45rem !important;
+}
+
+.MusicCount {
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    opacity: 0.5;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.MusicAlert {
+    margin: 0.7rem 1rem 0;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: calc(0.7rem * var(--font-size-secundary, 1));
+    line-height: 1.35;
+    flex-shrink: 0;
+
+    &.error {
+        background: color-mix(in srgb, var(--color-error) 8%, transparent);
+        border: 1px solid color-mix(in srgb, var(--color-error) 18%, transparent);
+        color: var(--color-error);
+    }
+}
+
+.MusicLoading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    font-size: calc(0.7rem * var(--font-size-secundary, 1));
+    opacity: 0.7;
+    flex-shrink: 0;
+    border-bottom: var(--border-style);
+    background: color-mix(in srgb, var(--control-bg) 50%, transparent);
+}
+
+.MusicLoading_Dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--progress-color);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--progress-color) 18%, transparent);
+    animation: musicPulse 1.1s ease-in-out infinite;
+}
+
+@keyframes musicPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.15); opacity: 0.85; }
+}
+
+.spinning { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.MusicRows {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.75rem 1rem 0.6rem;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text-primary) 14%, transparent) transparent;
+    &::-webkit-scrollbar { width: 6px; height: 6px; }
+    &::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text-primary) 14%, transparent); border-radius: 999px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+}
+
+.MusicRow {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: 0.6rem;
+    border: 1px solid transparent;
+    background: color-mix(in srgb, var(--control-bg) 45%, transparent);
+    transition: var(--transition);
+    cursor: pointer;
+
+    &:hover {
+        background: var(--control-bg);
+        border-color: color-mix(in srgb, var(--text-primary) 7%, transparent);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    &.active {
+        background: color-mix(in srgb, var(--progress-color) 10%, var(--control-bg));
+        border-color: color-mix(in srgb, var(--progress-color) 18%, transparent);
+        box-shadow: 0 2px 10px color-mix(in srgb, var(--progress-color) 12%, transparent);
+    }
+}
+
+.MusicRow_Cover {
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 0.45rem;
+    background: var(--control-bg-dark);
+    border: var(--border-style);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    color: var(--text-secondary);
+    position: relative;
+
+    img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+    svg { width: 1rem; height: 1rem; opacity: 0.6; }
+
+    &.playing::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(0deg, rgba(0,0,0,0.28), transparent);
+        border-radius: inherit;
+    }
+}
+
+.MusicRow_Info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.MusicRow_Title {
+    font-size: calc(0.76rem * var(--font-size-primary, 1));
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.1;
+}
+
+.MusicRow_Sub {
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    opacity: 0.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.MusicRow_Dur {
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    opacity: 0.45;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    min-width: 2.2rem;
+    text-align: right;
+}
+
+.MusicRow_Play {
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 0.45rem;
+    border: var(--border-style);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    &:hover { background: var(--background-button-primary); color: var(--text-primary); border-color: transparent; }
+    &.on { background: var(--progress-color); color: #111; border-color: transparent; box-shadow: 0 2px 8px color-mix(in srgb, var(--progress-color) 30%, transparent); }
+}
+
+.MusicEmpty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.45rem;
+    padding: 1.4rem 1rem;
+    border-radius: 0.7rem;
+    background: color-mix(in srgb, var(--control-bg) 40%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--text-primary) 8%, transparent);
+    margin-top: 0.4rem;
+
+    b { color: var(--text-primary); font-size: calc(0.84rem * var(--font-size-primary, 1)); }
+}
+
+.MusicEmpty_Icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.6rem;
+    background: var(--control-bg);
+    border: var(--border-style);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-secondary);
+}
+
+.MusicEmpty_Desc {
+    margin: 0;
+    font-size: calc(0.7rem * var(--font-size-secundary, 1));
+    opacity: 0.62;
+    line-height: 1.5;
+    max-width: 30rem;
+    b { opacity: 1; }
+}
+
+.MusicFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.65rem 1rem;
+    border-top: var(--border-style);
+    background: color-mix(in srgb, var(--background-modal-primary) 98%, white 2%);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.MusicFooter_Info {
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    opacity: 0.55;
+    b { color: var(--text-primary); opacity: 0.85; }
+}
+
+.MusicPages {
+    display: flex;
+    align-items: center;
+    gap: 0.22rem;
+}
+
+.MusicPgBtn {
+    min-width: 1.85rem;
+    height: 1.85rem;
+    padding: 0 0.4rem;
+    border-radius: 0.45rem;
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    font-size: calc(0.7rem * var(--font-size-secundary, 1));
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: var(--transition);
+    &:hover:not(:disabled):not(.on) { background: var(--control-bg-soft); color: var(--text-primary); }
+    &.on { background: var(--background-button-primary); color: var(--text-primary); border-color: transparent; box-shadow: 0 1px 6px rgba(0,0,0,0.15); }
+    &:disabled { opacity: 0.35; cursor: not-allowed; }
+}
+
+.MusicPgGap { padding: 0 0.15rem; opacity: 0.4; font-size: 0.8rem; }
+
+.MusicRow.is-skeleton {
+    pointer-events: none;
+    .MusicRow_Cover.is-skeleton { background: color-mix(in srgb, var(--control-bg) 70%, transparent); position: relative; overflow: hidden; }
+    .MusicRow_Title.skeleton, .MusicRow_Sub.skeleton, .MusicRow_Dur.skeleton {
+        background: linear-gradient(90deg, color-mix(in srgb, var(--control-bg) 60%, transparent) 25%, color-mix(in srgb, var(--control-bg) 85%, transparent) 50%, color-mix(in srgb, var(--control-bg) 60%, transparent) 75%);
+        background-size: 200% 100%;
+        animation: musicShimmer 1.15s linear infinite;
+        border-radius: 0.25rem;
+        color: transparent;
+    }
+    .MusicRow_Title.skeleton { width: 8rem; height: 0.76rem; }
+    .MusicRow_Sub.skeleton { width: 5rem; height: 0.6rem; margin-top: 0.2rem; }
+    .MusicRow_Dur.skeleton { width: 1.8rem; height: 0.6rem; }
+}
+.MusicRow_Cover.is-loading { position: relative; overflow: hidden; background: color-mix(in srgb, var(--control-bg) 70%, transparent); }
+.MusicRow_Shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-primary) 7%, transparent) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: musicShimmer 1.15s linear infinite;
+}
+@keyframes musicShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}

@@ -14,7 +14,7 @@ import {
     type AccountInfo,
 } from './Store';
 import { openDialog, ask } from '@/Common/Overlays/Store';
-import { EventsOn } from '@wailsjs/runtime/runtime';
+import { Events } from '@wailsio/runtime';
 
 const busy = ref(false);
 const msg = ref('');
@@ -128,7 +128,7 @@ function sessionClass(a: AccountInfo): string {
 let offRefresh: (() => void) | null = null;
 
 onMounted(() => {
-    offRefresh = EventsOn('account_refresh', onRefreshResult);
+    offRefresh = Events.On('account_refresh', ({ data }: any) => onRefreshResult(data));
     loadAccounts();
     for (const a of accounts.value) {
         if (a.type === 'authlib') fetchAccountAvatar(a.id);

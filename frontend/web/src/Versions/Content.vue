@@ -15,11 +15,12 @@ import {
     selectedProfile,
     setSelectedProfile,
     deleteProfile,
-    loadVersions,
     loadProfiles,
     type LauncherProfile,
 } from '@/Launcher/Store';
 import { openDialog, ask } from '@/Common/Overlays/Store';
+import { isOffline } from '@/Common/Stores/Connectivity';
+import OfflineBadge from '@/Common/Components/OfflineBadge.vue';
 
 const emit = defineEmits<{
     (e: 'open-download'): void;
@@ -242,13 +243,22 @@ function profileSub(p: LauncherProfile): string {
                 <p class="Vers_SideDesc">Toca una versión para jugar con ella. Los perfiles guardan tu configuración por forma de juego.</p>
             </div>
 
-            <button class="SsBtn Vers_SideBtn" @click="emit('open-download')">
-                <IconDownload class="Vers_SideIcon" stroke="2" />
-                <span class="Vers_SideBtnTxt">
-                    <span class="Vers_SideBtnTitle">Descargar versión</span>
-                    <span class="Vers_SideBtnSub">Instala una versión desde Mojang</span>
-                </span>
-            </button>
+            <span class="offline-wrap" style="position: relative; display: flex;">
+                <button
+                    class="SsBtn Vers_SideBtn"
+                    :class="{ offline: isOffline }"
+                    :disabled="isOffline"
+                    :title="isOffline ? 'Sin conexión — Descargar versión requiere internet y no está disponible sin conexión.' : undefined"
+                    @click="isOffline ? undefined : emit('open-download')"
+                >
+                    <IconDownload class="Vers_SideIcon" stroke="2" />
+                    <span class="Vers_SideBtnTxt">
+                        <span class="Vers_SideBtnTitle">Descargar versión</span>
+                        <span class="Vers_SideBtnSub">Instala una versión desde Mojang</span>
+                    </span>
+                </button>
+                <OfflineBadge v-if="isOffline" placement="inside" tooltip="left" message="Sin conexión — Descargar versión requiere internet y no está disponible sin conexión." />
+            </span>
             <button class="SsBtn Vers_SideBtn" :disabled="!installedVersions.length" @click="openCreate">
                 <IconUserPlus class="Vers_SideIcon" stroke="2" />
                 <span class="Vers_SideBtnTxt">

@@ -108,6 +108,69 @@
     }
 }
 
+.InstForm_FieldHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.InstForm_Count {
+    font-style: normal;
+    font-size: calc(0.6rem * var(--font-size-secundary, 1));
+    opacity: 0.5;
+    white-space: nowrap;
+}
+
+.InstForm_Tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.InstForm_Tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    border: var(--border-style);
+    background: color-mix(in srgb, var(--control-bg) 70%, transparent);
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.9;
+}
+
+.InstForm_TagDel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    opacity: 0.55;
+    cursor: pointer;
+    border-radius: 50%;
+
+    svg {
+        width: 0.8rem;
+        height: 0.8rem;
+    }
+
+    &:hover {
+        opacity: 1;
+        color: var(--color-error);
+    }
+}
+
+.InstForm_TagInput {
+    flex: 1;
+    min-width: 9rem;
+    padding: 0.25rem 0.6rem;
+}
+
 .InstForm_Textarea {
     resize: vertical;
     min-height: 3.2rem;

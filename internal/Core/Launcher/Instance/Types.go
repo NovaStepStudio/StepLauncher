@@ -77,6 +77,17 @@ type InstanceLaunchConfig struct {
 	JavaArgs        []string          `json:"javaArgs,omitempty"`
 	GameArgs        []string          `json:"gameArgs,omitempty"`
 
+	// Logs detallados: añade --log-level debug a los argumentos del juego.
+	DetailedLogs *bool `json:"detailedLogs,omitempty"`
+
+	// Backups automáticos: "off" | "session" (al cerrar una sesión de juego) |
+	// "hours" | "days" (cada BackupInterval horas/días tras la última copia).
+	// LastBackupAt lo gestiona el backend y solo indica cuándo se hizo la
+	// última copia (formato RFC3339).
+	BackupSchedule string `json:"backupSchedule,omitempty"`
+	BackupInterval int    `json:"backupInterval,omitempty"`
+	LastBackupAt   string `json:"lastBackupAt,omitempty"`
+
 	SkipLibraryCheck    *bool `json:"skipLibraryCheck,omitempty"`
 	SkipAssetCheck      *bool `json:"skipAssetCheck,omitempty"`
 	SkipNativeExtract   *bool `json:"skipNativeExtract,omitempty"`
@@ -97,6 +108,7 @@ type InstanceInfo struct {
 	Favorite   bool     `json:"favorite"`
 	Pinned     bool     `json:"pinned"`
 	Group      string   `json:"group"`
+	Tags       []string `json:"tags"`
 	LastPlayed string   `json:"lastPlayed"`
 	PlayTime   int64    `json:"playTime"`
 }
@@ -153,6 +165,18 @@ type VerifyIssue struct {
 	Type    string `json:"type"`
 	File    string `json:"file"`
 	Message string `json:"message"`
+}
+
+// InstanceVerifyProgress es el estado consultable (por polling) de la
+// verificación de integridad asíncrona de una instancia concreta.
+type InstanceVerifyProgress struct {
+	State   string `json:"state"` // "idle" | "verifying" | "done" | "error" | "cancelled"
+	Phase   string `json:"phase"`
+	Version string `json:"version"`
+	Percent int    `json:"percent"`
+	Found   int    `json:"found"`  // versiones verificadas
+	Issues  int    `json:"issues"` // problemas encontrados
+	Error   string `json:"error"`
 }
 
 type InstanceLaunchResult struct {

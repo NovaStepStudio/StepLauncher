@@ -9,12 +9,12 @@ export interface SectionConfig {
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { IconX, IconSettings } from '@tabler/icons-vue';
-import appInfo from '../../../../wails.json';
+import { useAppVersion } from '@/Common/Composables/useAppVersion';
 import { previewColorFieldId } from './Colorfield';
 import { useOverlayEscape } from '@/Common/Composables/useOverlayEscape';
 
-const appName = appInfo.name ?? 'StepLauncher';
-const appVersion = appInfo.version ?? '0.0.0';
+const appName = 'StepLauncher';
+const { appVersion } = useAppVersion();
 
 const props = defineProps<{
     visible: boolean;

@@ -9,6 +9,7 @@ import FontManager from '@/Settings/FontManager.vue';
 import InstanceForm from '@/Instances/Form.vue';
 import InstanceSettings from '@/Instances/Settings.vue';
 import InstanceDownload from '@/Instances/Download.vue';
+import ModsDownloadDialog from '@/Mods/DownloadDialog.vue';
 
 const REGISTRY: Record<string, unknown> = {
     'account-form': AccountForm,
@@ -17,6 +18,7 @@ const REGISTRY: Record<string, unknown> = {
     'instances-form': InstanceForm,
     'instances-settings': InstanceSettings,
     'instances-download': InstanceDownload,
+    'mods-download': ModsDownloadDialog,
 };
 
 function onCloseOverlays() {

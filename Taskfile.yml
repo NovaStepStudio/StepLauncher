@@ -1,0 +1,171 @@
+version: '3'
+
+vars:
+  APP_NAME: "steplauncher"
+  BIN_DIR: "bin"
+  PACKAGE_MANAGER: '{{.PACKAGE_MANAGER | default "bun"}}'
+  VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
+  GOOS: '{{.GOOS | default OS}}'
+
+includes:
+  common: ./build/Taskfile.yml
+  windows: ./build/windows/Taskfile.yml
+  darwin: ./build/darwin/Taskfile.yml
+  linux: ./build/linux/Taskfile.yml
+
+tasks:
+  build:
+    summary: Builds the application for the current platform
+    cmds:
+      - task: "{{.GOOS}}:build"
+
+  package:
+    summary: Packages a production build of the application
+    cmds:
+      - task: "{{.GOOS}}:package"
+
+  run:
+    summary: Runs the application
+    cmds:
+      - task: "{{.GOOS}}:run"
+
+  dev:
+    summary: Runs the application in development mode
+    cmds:
+      - wails3 dev -config ./build/config.yml -port {{.VITE_PORT}}
+
+  # ── Cross-platform build tasks ──────────────────────────────────
+
+  build:windows:
+    summary: Builds the application for Windows
+    cmds:
+      - task: windows:build
+
+  build:linux:
+    summary: Builds the application for Linux (requires Docker on non-Linux hosts)
+    cmds:
+      - task: linux:build
+
+  build:macos:
+    summary: Builds the application for macOS (requires Docker on non-macOS hosts)
+    cmds:
+      - task: darwin:build
+
+  build:macos:universal:
+    summary: Builds universal binary for macOS (arm64 + amd64, requires Docker)
+    cmds:
+      - task: darwin:build:universal
+
+  # ── Cross-platform package tasks ────────────────────────────────
+
+  package:windows:
+    summary: Packages the application for Windows (NSIS installer by default)
+    cmds:
+      - task: windows:package
+
+  package:windows:msix:
+    summary: Packages the application for Windows as MSIX
+    cmds:
+      - task: windows:package FORMAT=msix
+
+  package:linux:
+    summary: Packages the application for Linux (AppImage, DEB, RPM, AUR)
+    cmds:
+      - task: linux:package
+
+  package:linux:appimage:
+    summary: Creates an AppImage for Linux
+    cmds:
+      - task: linux:create:appimage
+
+  package:linux:deb:
+    summary: Creates a DEB package for Linux
+    cmds:
+      - task: linux:create:deb
+
+  package:linux:rpm:
+    summary: Creates an RPM package for Linux
+    cmds:
+      - task: linux:create:rpm
+
+  package:linux:aur:
+    summary: Creates an Arch Linux package for Linux
+    cmds:
+      - task: linux:create:aur
+
+  package:macos:
+    summary: Packages the application for macOS (.app bundle)
+    cmds:
+      - task: darwin:package
+
+  package:macos:dmg:
+    summary: Packages the application for macOS (.dmg)
+    cmds:
+      - task: darwin:package:dmg
+
+  package:macos:universal:
+    summary: Packages universal binary for macOS (.app bundle, arm64 + amd64)
+    cmds:
+      - task: darwin:package:universal
+
+  # ── Cross-platform signing tasks ────────────────────────────────
+
+  sign:windows:
+    summary: Signs the Windows executable
+    cmds:
+      - task: windows:sign
+
+  sign:windows:installer:
+    summary: Signs the NSIS installer
+    cmds:
+      - task: windows:sign:installer
+
+  sign:linux:deb:
+    summary: Signs the DEB package
+    cmds:
+      - task: linux:sign:deb
+
+  sign:linux:rpm:
+    summary: Signs the RPM package
+    cmds:
+      - task: linux:sign:rpm
+
+  sign:linux:
+    summary: Signs all Linux packages (DEB + RPM)
+    cmds:
+      - task: linux:sign:packages
+
+  sign:macos:
+    summary: Signs the macOS .app bundle
+    cmds:
+      - task: darwin:sign
+
+  sign:macos:notarize:
+    summary: Signs and notarizes the macOS .app bundle
+    cmds:
+      - task: darwin:sign:notarize
+
+  setup:docker:
+    summary: Builds Docker image for cross-compilation (~800MB download)
+    cmds:
+      - task: common:setup:docker
+
+  build:server:
+    summary: Builds the application in server mode (no GUI, HTTP server only)
+    cmds:
+      - task: common:build:server
+
+  run:server:
+    summary: Runs the application in server mode
+    cmds:
+      - task: common:run:server
+
+  build:docker:
+    summary: Builds a Docker image for server mode deployment
+    cmds:
+      - task: common:build:docker
+
+  run:docker:
+    summary: Builds and runs the Docker image
+    cmds:
+      - task: common:run:docker

@@ -9,7 +9,7 @@ import (
 
 const (
 	AppName    = "StepLauncher"
-	AppVersion = "2.3.1"
+	AppVersion = "2.5.0"
 	AppAuthor  = "NovaStepStudio"
 )
 
@@ -67,6 +67,8 @@ type Config struct {
 
 	VerifyIntegrity bool `json:"verifyIntegrity"`
 
+	VerifyBeforeLaunch bool `json:"verifyBeforeLaunch"`
+
 	// SeparateGameDir indica si el gameDir es <workDir>/game (true) o el
 	// propio workDir (false). nil equivale a true. En modo Minecraft se
 	// fuerza a false para usar .minecraft directamente como gameDir.
@@ -114,6 +116,8 @@ func DefaultConfig() Config {
 		ConcurrentDownloads: 4,
 
 		VerifyIntegrity: true,
+
+		VerifyBeforeLaunch: true,
 	}
 }
 

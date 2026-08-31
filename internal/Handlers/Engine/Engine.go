@@ -109,8 +109,6 @@ func NewEngine(opts ...Option) (*Engine, error) {
 	log.System("  CacheDir: %s", cfg.CacheDir)
 	log.System("  Instances: %s (se crea al usar instancias)", filepath.Join(cfg.WorkDir, cfg.InstancesDir))
 	log.System("  Shared: %s (se crea al usar instancias)", filepath.Join(cfg.WorkDir, cfg.SharedDir))
-	log.System("  Config: cacheTTL manifest=%s | assets=%s | versions=%s | java=%s",
-		cfg.CacheTTLManifest, cfg.CacheTTLAssets, cfg.CacheTTLVersions, cfg.CacheTTLJava)
 	log.System("========================================")
 
 	e.log.SetBroadcastFn(func(t logger.Type, msg string) {
@@ -318,6 +316,12 @@ func NewEngine(opts ...Option) (*Engine, error) {
 	instMgr.SetLaunchManager(launchMgr)
 	instMgr.SetIdentity(cfg.LauncherName, cfg.LauncherVersion)
 	instMgr.SetLogger(func(f string, a ...interface{}) { log.Info(f, a...) })
+	// Las instancias con "utilizar el java del launcher" consultan la config
+	// global en el momento de lanzar (modo + ruta), no una copia guardada.
+	instMgr.SetGlobalJavaConfig(func() (string, string) {
+		ec := e.config.Get()
+		return ec.JavaMode, ec.JavaCustomPath
+	})
 	e.instances = instMgr
 
 	mlReg := modloader.NewRegistry()

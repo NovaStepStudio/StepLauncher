@@ -24,8 +24,11 @@ import {
     loaderDlOf,
     loaderDlStateText,
     isInstanceBusy,
+    isInstanceVerifying,
 } from './Store';
 import { loadLocal } from '@/Common/Stores/Ui';
+import { isOffline } from '@/Common/Stores/Connectivity';
+import OfflineBadge from '@/Common/Components/OfflineBadge.vue';
 
 import iconVanilla from '../../assets/icons/minecraft.png';
 import iconFabric from '../../assets/icons/fabric.png';
@@ -88,7 +91,8 @@ const filtered = computed(() => {
         return (
             title.includes(q) ||
             inst.name.toLowerCase().includes(q) ||
-            (inst.group || '').toLowerCase().includes(q)
+            (inst.group || '').toLowerCase().includes(q) ||
+            (inst.tags ?? []).some((t) => t.toLowerCase().includes(q))
         );
     });
 });
@@ -152,9 +156,19 @@ async function loadAllDetails() {
     for (const inst of instances.value) void loadDetails(inst.name);
 }
 
+// Carga perezosa: List.vue ya no dispara loadInstances al montarse.
+// La carga la orquesta Instances.vue cuando heavyPanel === 'instances'.
+// Aquí solo se escuchan eventos de UI y se cargan detalles cuando la lista existe.
 onMounted(() => {
-    void loadInstances().then(loadAllDetails);
     window.addEventListener('click', closeMenuOnClick);
+    // Si el padre ya cargó la lista antes de montar este hijo (reapertura),
+    // cargar los detalles de las tarjetas inmediatamente.
+    if (instances.value.length) void loadAllDetails();
+});
+
+// Cuando la lista de instancias cambie (primera carga perezosa), hidratar detalles
+watch(() => instances.value.length, (len) => {
+    if (len > 0) void loadAllDetails();
 });
 
 onUnmounted(() => {
@@ -177,9 +191,18 @@ onUnmounted(() => {
                     <IconSearch stroke="2" />
                     <input v-model="search" type="text" placeholder="Buscar instancia…" autocomplete="off" spellcheck="false" />
                 </label>
-                <button class="SsBtn SsBtnPrimary InstView_NewBtn" @click="emit('new')">
-                    <IconPlus stroke="2" /> Nueva instancia
-                </button>
+                <span class="offline-wrap" style="position: relative; display: inline-flex;">
+                    <button
+                        class="SsBtn SsBtnPrimary InstView_NewBtn"
+                        :class="{ offline: isOffline }"
+                        :disabled="isOffline"
+                        :title="isOffline ? 'Sin conexión — Crear instancia requiere internet y no está disponible sin conexión.' : undefined"
+                        @click="isOffline ? undefined : emit('new')"
+                    >
+                        <IconPlus stroke="2" /> Nueva instancia
+                    </button>
+                    <OfflineBadge v-if="isOffline" placement="inside" tooltip="left" message="Sin conexión — Crear instancia requiere internet y no está disponible sin conexión." />
+                </span>
             </div>
         </header>
 
@@ -210,9 +233,18 @@ onUnmounted(() => {
                 Las instancias son mundos de juego independientes con sus propias versiones, modloaders,
                 configuraciones y capturas. Los recursos compartidos del launcher se reutilizan automáticamente.
             </p>
-            <button class="SsBtn SsBtnPrimary InstView_EmptyBtn" @click="emit('new')">
-                <IconPlus stroke="2" /> Crear mi primera instancia
-            </button>
+            <span class="offline-wrap" style="position: relative; display: inline-flex;">
+                <button
+                    class="SsBtn SsBtnPrimary InstView_EmptyBtn"
+                    :class="{ offline: isOffline }"
+                    :disabled="isOffline"
+                    :title="isOffline ? 'Sin conexión — Crear instancia requiere internet y no está disponible sin conexión.' : undefined"
+                    @click="isOffline ? undefined : emit('new')"
+                >
+                    <IconPlus stroke="2" /> Crear mi primera instancia
+                </button>
+                <OfflineBadge v-if="isOffline" placement="inside" tooltip="bottom" message="Sin conexión — Crear instancia requiere internet y no está disponible sin conexión." />
+            </span>
         </div>
 
         <p v-else-if="!filtered.length" class="InstView_Empty">
@@ -295,6 +327,14 @@ onUnmounted(() => {
                             <img :src="loaderIcon(inst.name)" alt="" /> {{ loaderLabel(loaderOf(inst.name)) }}
                         </span>
                         <span class="InstCard_Chip"><IconClock stroke="2" /> {{ formatPlayTime(inst.playTime) }}</span>
+                        <span v-if="isInstanceVerifying(inst.name)" class="InstCard_Chip InstCard_VerifyChip" title="Verificando integridad… la instancia no se puede utilizar">
+                            Verificando…
+                        </span>
+                    </div>
+
+                    <div v-if="inst.tags?.length" class="InstCard_Tags">
+                        <span v-for="t in inst.tags.slice(0, 4)" :key="t" class="InstCard_Tag">{{ t }}</span>
+                        <span v-if="inst.tags.length > 4" class="InstCard_TagMore">+{{ inst.tags.length - 4 }}</span>
                     </div>
 
                     <div class="InstCard_Actions">
@@ -307,14 +347,18 @@ onUnmounted(() => {
                             <IconDeviceGamepad stroke="2" />
                             {{ launching[inst.name] ? 'Lanzando…' : isInstanceBusy(inst.name) ? 'Ocupada…' : 'Jugar' }}
                         </button>
-                        <button
-                            class="InstCard_DlBtn"
-                            title="Descargar versión"
-                            :disabled="isInstanceBusy(inst.name)"
-                            @click.stop="emit('download', inst.name)"
-                        >
-                            <IconDownload stroke="2" />
-                        </button>
+                        <span class="offline-wrap" style="position: relative; display: inline-flex;">
+                            <button
+                                class="InstCard_DlBtn"
+                                :class="{ offline: isOffline }"
+                                :title="isOffline ? 'Sin conexión — Descargar versión requiere internet y no está disponible sin conexión.' : 'Descargar versión'"
+                                :disabled="isInstanceBusy(inst.name) || isOffline"
+                                @click.stop="isOffline ? undefined : emit('download', inst.name)"
+                            >
+                                <IconDownload stroke="2" />
+                            </button>
+                            <OfflineBadge v-if="isOffline" placement="inside" tooltip="top" message="Sin conexión — Descargar versión requiere internet y no está disponible sin conexión." />
+                        </span>
                         <span class="InstCard_MenuWrap">
                             <button class="InstCard_MenuDots" title="Opciones" @click="openMenu(inst.name, $event)">
                                 <IconDots stroke="2" />

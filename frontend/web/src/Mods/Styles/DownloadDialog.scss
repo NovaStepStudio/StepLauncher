@@ -1,0 +1,432 @@
+@use '../../Common/Styles/Components' as *;
+
+.ModsDl_Overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: var(--filter-blur);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 130;
+}
+
+.ModsDl_Card {
+    width: min(30rem, 92vw);
+    max-height: min(36rem, 86vh);
+    background: var(--background-modal-primary);
+    border: var(--border-modal-style);
+    border-radius: 0.9rem;
+    box-shadow: var(--shadow-settings-normal) #000a;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ModsDl_Head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1.1rem 1.35rem 0.85rem;
+    border-bottom: var(--border-modal-style);
+    background: color-mix(in srgb, var(--background-modal-primary) 92%, black 8%);
+    flex-shrink: 0;
+}
+
+.ModsDl_Title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.ModsDl_Icon {
+    width: 2.7rem;
+    height: 2.7rem;
+    border-radius: 0.65rem;
+    border: 2px solid color-mix(in srgb, var(--border-style) 55%, var(--text-primary) 20%);
+    background: color-mix(in srgb, var(--background-modal-primary) 60%, var(--control-bg-dark));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: var(--shadow-settings-normal) rgba(0, 0, 0, 0.3);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        opacity: 0.5;
+    }
+}
+
+.ModsDl_Titles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+    flex: 1;
+
+    h3 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.95rem * var(--font-size-primary, 1));
+        font-weight: 700;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    p {
+        margin: 0;
+        font-size: calc(0.66rem * var(--font-size-secundary, 1));
+        text-shadow: var(--text-shadow-secundary, none);
+        opacity: 0.5;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.ModsDl_Close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 0.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 2rem;
+    width: 2rem;
+    flex-shrink: 0;
+    transition: var(--transition);
+
+    svg {
+        width: 1.1rem;
+        height: 1.1rem;
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.07);
+        color: var(--text-primary);
+    }
+}
+
+.ModsDl_Body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1.1rem 1.35rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.ModsDl_State {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.2rem 0.5rem;
+    font-size: calc(0.76rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.6;
+    text-align: center;
+    flex-direction: column;
+
+    &.error {
+        opacity: 1;
+        color: var(--text-primary);
+
+        b {
+            font-family: var(--font-primary), Arial, sans-serif;
+            font-size: calc(0.85rem * var(--font-size-primary, 1));
+            font-weight: 700;
+            color: var(--color-error);
+        }
+
+        span {
+            font-size: calc(0.72rem * var(--font-size-secundary, 1));
+            opacity: 0.6;
+        }
+
+        .SsBtn {
+            margin-top: 0.4rem;
+        }
+    }
+
+    svg {
+        width: 1.1rem;
+        height: 1.1rem;
+    }
+}
+
+.ModsDl_Fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.ModsDl_Field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.ModsDl_FieldLabel {
+    font-size: calc(0.68rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    font-weight: 600;
+    opacity: 0.65;
+}
+
+.ModsDl_Field .SsSel {
+    width: 100%;
+    max-width: none;
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        background: color-mix(in srgb, var(--control-bg) 60%, transparent);
+    }
+}
+
+.ModsDl_FieldHint {
+    font-size: calc(0.62rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.5;
+    font-style: italic;
+}
+
+.ModsDl_Check {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.55rem;
+    border: 1px dashed color-mix(in srgb, var(--background-button-primary) 30%, transparent);
+    background: color-mix(in srgb, var(--background-button-primary) 6%, transparent);
+    cursor: pointer;
+    user-select: none;
+    transition: var(--transition);
+
+    &:hover {
+        background: color-mix(in srgb, var(--background-button-primary) 10%, transparent);
+        border-color: color-mix(in srgb, var(--background-button-primary) 45%, transparent);
+    }
+
+    input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+.ModsDl_CheckBox {
+    width: 1.05rem;
+    height: 1.05rem;
+    flex-shrink: 0;
+    border-radius: 0.3rem;
+    border: 1px solid var(--control-border-strong);
+    background: var(--control-bg-soft);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: var(--transition);
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        width: 0.3rem;
+        height: 0.55rem;
+        border: solid var(--text-primary);
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg) scale(0);
+        opacity: 0;
+        transition: var(--transition);
+        margin-top: -0.05rem;
+    }
+}
+
+.ModsDl_Check input:checked + .ModsDl_CheckBox {
+    background: color-mix(in srgb, var(--background-button-primary) 65%, white 10%);
+    border-color: color-mix(in srgb, var(--background-button-primary) 75%, white 15%);
+
+    &::after {
+        transform: rotate(45deg) scale(1);
+        opacity: 1;
+    }
+}
+
+.ModsDl_CheckLabel {
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    font-weight: 600;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    flex: 1;
+}
+
+.ModsDl_CheckHint {
+    font-size: calc(0.6rem * var(--font-size-secundary, 1));
+    opacity: 0.45;
+    display: none;
+
+    @media (min-width: 560px) {
+        display: inline;
+    }
+}
+
+.ModsDl_NoMatch {
+    margin: 0;
+    padding: 0.7rem 0.9rem;
+    border-radius: 0.55rem;
+    border: 1px solid color-mix(in srgb, var(--color-warning) 25%, transparent);
+    background: color-mix(in srgb, var(--color-warning) 6%, transparent);
+    color: var(--color-warning);
+    font-size: calc(0.68rem * var(--font-size-secundary, 1));
+    line-height: 1.5;
+    text-align: center;
+}
+
+.ModsDl_Summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.65rem;
+    border: 1px solid var(--border-style);
+    background: color-mix(in srgb, var(--control-bg) 45%, transparent);
+}
+
+.ModsDl_SummaryLine {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.ModsDl_SummaryName {
+    font-family: var(--font-primary), Arial, sans-serif;
+    font-size: calc(0.82rem * var(--font-size-primary, 1));
+    font-weight: 700;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
+}
+
+.ModsDl_SummaryType {
+    flex-shrink: 0;
+    font-size: calc(0.56rem * var(--font-size-secundary, 1));
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 0.4rem;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid transparent;
+
+    &.Release {
+        color: var(--color-success);
+        border-color: color-mix(in srgb, var(--color-success) 35%, transparent);
+        background: color-mix(in srgb, var(--color-success) 8%, transparent);
+    }
+
+    &.Beta {
+        color: var(--color-warning);
+        border-color: color-mix(in srgb, var(--color-warning) 35%, transparent);
+        background: color-mix(in srgb, var(--color-warning) 8%, transparent);
+    }
+
+    &.Alpha {
+        color: var(--color-error);
+        border-color: color-mix(in srgb, var(--color-error) 35%, transparent);
+        background: color-mix(in srgb, var(--color-error) 8%, transparent);
+    }
+}
+
+.ModsDl_SummaryFile {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: calc(0.68rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    svg {
+        width: 0.85rem;
+        height: 0.85rem;
+        flex-shrink: 0;
+        opacity: 0.6;
+    }
+}
+
+.ModsDl_SummaryMeta {
+    margin: 0;
+    font-size: calc(0.62rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.5;
+}
+
+.ModsDl_Footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.85rem 1.35rem 1.1rem;
+    border-top: var(--border-modal-style);
+    background: color-mix(in srgb, var(--background-modal-primary) 96%, black 4%);
+    flex-shrink: 0;
+}
+
+.ModsDl_Confirm {
+    svg {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+}
+
+.spin {
+    animation: ModsDl_Spin 1s linear infinite;
+}
+
+@keyframes ModsDl_Spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.ModsDl-enter-active,
+.ModsDl-leave-active {
+    transition: var(--transition);
+
+    .ModsDl_Card {
+        transition: var(--transition-slow);
+    }
+}
+
+.ModsDl-enter-from,
+.ModsDl-leave-to {
+    opacity: 0;
+
+    .ModsDl_Card {
+        transform: translateY(8px) scale(0.97);
+        opacity: 0;
+    }
+}

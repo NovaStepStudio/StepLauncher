@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 
-export type HeavyPanel = 'instances' | 'shots' | null;
+export type HeavyPanel = 'instances' | 'shots' | 'mods' | 'music' | null;
 
 export const heavyPanel = ref<HeavyPanel>(null);
 

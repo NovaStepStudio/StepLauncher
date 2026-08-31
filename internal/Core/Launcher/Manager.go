@@ -14,14 +14,14 @@ import (
 type ManagerConfig struct {
 	WorkDir              string
 	LogDir               string
-	LogFn                func(string, ...interface{})
+	LogFn                func(string, ...interface{}) `json:"-"`
 	LauncherName         string
 	LauncherVersion      string
 	SeparateGameDir      bool
-	GameLogBroadcastFn   func(stream, line string)
-	GameEventBroadcastFn func([]byte)
-	GameEventReplayFn    func([]byte)
-	OnGameExitFn         func(instance *GameInstance, playTimeSeconds int)
+	GameLogBroadcastFn   func(stream, line string) `json:"-"`
+	GameEventBroadcastFn func([]byte) `json:"-"`
+	GameEventReplayFn    func([]byte) `json:"-"`
+	OnGameExitFn         func(instance *GameInstance, playTimeSeconds int) `json:"-"`
 }
 
 type LaunchManager struct {

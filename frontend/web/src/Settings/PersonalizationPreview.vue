@@ -21,7 +21,7 @@ import {
 import { CLOSE_OVERLAYS_EVENT } from '@/Common/Stores/Idle';
 import { useOverlayEscape } from '@/Common/Composables/useOverlayEscape';
 import { loadLocal, personalization } from '@/Common/Stores/Ui';
-import iconNotFoundVersion from '../../assets/not_found/not_found_version.png';
+import iconNotFoundVersion from '../../assets/icons/minecraft.png';
 import avatarNotFound from '../../assets/not_found/avatar_not_found.png';
 import chickenImg from '../../assets/decorations/chicken.png';
 import steveAlexImg from '../../assets/decorations/steve_and_alex.png';
@@ -343,10 +343,6 @@ onUnmounted(() => {
                         <div class="PlayButton">
                             <IconDeviceGamepad class="Icon" stroke="2" />
                             <h1>JUGAR</h1>
-                            <div class="Decoration">
-                                <img :src="chickenImg" class="Chicken" alt="" draggable="false" />
-                                <img :src="steveAlexImg" alt="" draggable="false" />
-                            </div>
                         </div>
                     </div>
                 </div>

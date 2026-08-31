@@ -38,15 +38,6 @@ func (e *Engine) DetectJavaInstallations() []string {
 		results = append(results, real+" ("+v+")")
 	}
 
-	if jh := os.Getenv("JAVA_HOME"); jh != "" {
-		add(filepath.Join(jh, "bin", javaExe()))
-	}
-
-	pathDirs := filepath.SplitList(os.Getenv("PATH"))
-	for _, dir := range pathDirs {
-		add(filepath.Join(dir, javaExe()))
-	}
-
 	if runtime.GOOS == "windows" {
 		for _, p := range scanWindowsJava() {
 			add(p)

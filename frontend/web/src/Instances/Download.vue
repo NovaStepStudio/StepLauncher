@@ -14,10 +14,14 @@ import {
 import { CLOSE_OVERLAYS_EVENT, idleOptions } from '@/Common/Stores/Idle';
 import { useOverlayEscape } from '@/Common/Composables/useOverlayEscape';
 import { registerDownload, clearDownload as clearCentralDownload } from '@/Downloads/Store';
-import { EventsOn } from '@wailsjs/runtime/runtime';
-import { FetchVersionManifest, GetDownloadStatus, PauseDownload, ResumeDownload, GetModLoaderVersions } from '@wailsjs/go/main/App';
-import type { downloader, modloader } from '@wailsjs/go/models';
-import { downloads, loadDetails, detailOf, addVersion, cancelDownload, installInstanceModLoader, registerLoaderSession, loaderDlOf } from './Store';
+import { Events } from '@wailsio/runtime';
+import { FetchVersionManifest, GetDownloadStatus, PauseDownload, ResumeDownload } from '@wailsjs/StepLauncher/internal/Services/Download/downloadservice';
+import { GetModLoaderVersions } from '@wailsjs/StepLauncher/internal/Services/ModLoader/modloaderservice';
+import type { DownloadProgress } from '@wailsjs/StepLauncher/internal/Core/Downloader/models';
+import type { LoaderVersion } from '@wailsjs/StepLauncher/internal/Core/ModLoader/models';
+import { downloads, loadDetails, detailOf, addVersion, cancelDownload, scheduleLoaderInstall, cancelPendingLoader, isLoaderSessionOf, loaderDlOf } from './Store';
+import { isOffline, CONNECTIVITY_ONLINE_EVENT } from '@/Common/Stores/Connectivity';
+import OfflineBadge from '@/Common/Components/OfflineBadge.vue';
 
 import iconVanilla from '../../assets/icons/minecraft.png';
 import iconFabric from '../../assets/icons/fabric.png';
@@ -26,9 +30,7 @@ import iconNeoForge from '../../assets/icons/neoforge.png';
 import iconQuilt from '../../assets/icons/quilt.png';
 import iconLegacyFabric from '../../assets/icons/legacyfabric.png';
 
-type DownloadProgress = downloader.DownloadProgress;
 type VersionEntry = { id: string; type: string; releaseTime: string };
-type LoaderVersion = modloader.LoaderVersion;
 
 const props = defineProps<{
     name: string;
@@ -73,7 +75,6 @@ const errorMessage = ref('');
 
 const pendingLoaderInstall = ref(false);
 const loaderPhase = ref<'idle' | 'running' | 'done' | 'error'>('idle');
-const loaderSession = ref('');
 const loaderStatus = ref('');
 const loaderProgress = ref(0);
 const loaderTotal = ref(0);
@@ -268,6 +269,11 @@ function isLatest(id: string, type: string): boolean {
 
 async function loadManifest() {
     if (manifestLoaded.value) return;
+    if (isOffline.value) {
+        manifestError.value = 'Sin conexión a internet. Conéctate para ver las versiones disponibles.';
+        loadingManifest.value = false;
+        return;
+    }
     loadingManifest.value = true;
     manifestError.value = '';
     try {
@@ -413,7 +419,6 @@ function resetRun() {
     finalSummary.value = null;
     pendingLoaderInstall.value = false;
     loaderPhase.value = 'idle';
-    loaderSession.value = '';
     loaderStatus.value = '';
     loaderProgress.value = 0;
     loaderTotal.value = 0;
@@ -458,15 +463,21 @@ function handleGameCompleted() {
         files: pr?.filesDownloaded ?? 0,
         mb: pr?.mbDownloaded ?? 0,
     };
-    if (pendingLoaderInstall.value) {
-        startLoaderInstall();
-    } else {
+    // El modloader pendiente lo arranca el Store (runPendingLoader) al ver la
+    // descarga completada, aunque este modal esté cerrado; aquí solo se espera
+    // que los eventos modloader_* actualicen la vista.
+    if (!pendingLoaderInstall.value) {
         phase.value = 'done';
     }
 }
 
 async function onInstall() {
     if (!selectedVersion.value || phase.value !== 'setup') return;
+    if (isOffline.value) {
+        phase.value = 'error';
+        errorMessage.value = 'Sin conexión a internet. No se puede descargar sin conexión.';
+        return;
+    }
     resetRun();
     phase.value = 'installing';
     errorMessage.value = '';
@@ -486,41 +497,17 @@ async function onInstall() {
     try {
         const st = await GetDownloadStatus(dlId.value);
         applyProgress(st as DownloadProgress);
-    } catch { }
+    } catch (_e) {}
     if (selectedLoader.value !== 'vanilla') {
         pendingLoaderInstall.value = true;
-    }
-}
-
-async function startLoaderInstall() {
-    loaderPhase.value = 'running';
-    loaderStatus.value = 'Preparando la instalación del loader…';
-    loaderLogLine('Preparando la instalación del ModLoader…');
-    try {
-        const res = await installInstanceModLoader(
+        // El Store guarda el loader pendiente para arrancar su instalación al
+        // completar la descarga, aunque este modal se cierre a mitad.
+        scheduleLoaderInstall(
             props.name,
             selectedLoader.value,
             effectiveLoaderVersion.value,
             selectedVersion.value
         );
-        if (!res.ok || !res.sessionId) {
-            loaderPhase.value = 'error';
-            phase.value = 'error';
-            errorMessage.value = res.error ?? 'No se pudo iniciar la instalación del modloader.';
-            return;
-        }
-        loaderSession.value = res.sessionId;
-        registerLoaderSession(
-            props.name,
-            res.sessionId,
-            selectedLoader.value,
-            effectiveLoaderVersion.value,
-            selectedVersion.value
-        );
-    } catch (e: any) {
-        loaderPhase.value = 'error';
-        phase.value = 'error';
-        errorMessage.value = `Fallo al instalar el loader: ${riskText(e)}`;
     }
 }
 
@@ -563,10 +550,11 @@ async function onResume() {
 
 async function onCancel() {
     pendingLoaderInstall.value = false;
+    cancelPendingLoader(props.name);
     if (dlId.value) {
         try {
             await cancelDownload(props.name);
-        } catch { }
+        } catch (_e) {}
     }
     resetRun();
     phase.value = 'setup';
@@ -615,7 +603,7 @@ async function syncFromBackend() {
             resetRun();
             phase.value = 'setup';
         }
-    } catch { }
+    } catch (_e) {}
 }
 
 watch(
@@ -717,6 +705,7 @@ function onDownloadError(raw: unknown) {
     const evt = parseDownloadEvent(raw);
     if (!evt || !dlId.value || evt.id !== dlId.value) return;
     pendingLoaderInstall.value = false;
+    cancelPendingLoader(props.name);
     clearCentralDownload(dlId.value);
     phase.value = 'error';
     errorMessage.value = evt.data?.error ?? 'Error desconocido durante la descarga.';
@@ -725,7 +714,10 @@ function onDownloadError(raw: unknown) {
 function onModLoaderEvent(raw: unknown) {
     const e = parseModLoaderEvent(raw);
     if (!e || !e.type) return;
-    if (loaderSession.value && e.sessionId && e.sessionId !== loaderSession.value) return;
+    // Solo se muestran los eventos de la instalación de ESTA instancia: las
+    // demás las arranca el Store (runPendingLoader) aunque este modal esté
+    // abierto, y sus sesiones no deben interferir en la vista.
+    if (e.sessionId && !isLoaderSessionOf(props.name, e.sessionId)) return;
     loaderPhase.value = 'running';
     switch (e.type) {
         case 'modloader_resolving':
@@ -757,22 +749,34 @@ function onModLoaderEvent(raw: unknown) {
     }
 }
 
+let onlineHandler: (() => void) | null = null;
+
 onMounted(() => {
     window.addEventListener(CLOSE_OVERLAYS_EVENT, onCloseOverlays);
+    onlineHandler = () => {
+        if (manifestError.value && !isOffline.value) {
+            manifestLoaded.value = false;
+            loadManifest();
+        }
+        if (selectedVersion.value) refreshCompat(selectedVersion.value);
+    };
+    window.addEventListener(CONNECTIVITY_ONLINE_EVENT, onlineHandler);
     eventOffs = [
-        EventsOn('download_progress', onDownloadProgress),
-        EventsOn('download_state', onDownloadState),
-        EventsOn('download_error', onDownloadError),
-        EventsOn('modloader_resolving', onModLoaderEvent),
-        EventsOn('modloader_downloading', onModLoaderEvent),
-        EventsOn('modloader_installing', onModLoaderEvent),
-        EventsOn('modloader_installed', onModLoaderEvent),
-        EventsOn('modloader_error', onModLoaderEvent),
+        Events.On('download_progress', ({ data: raw }: any) => onDownloadProgress(raw)),
+        Events.On('download_state', ({ data: raw }: any) => onDownloadState(raw)),
+        Events.On('download_error', ({ data: raw }: any) => onDownloadError(raw)),
+        Events.On('modloader_resolving', ({ data: raw }: any) => onModLoaderEvent(raw)),
+        Events.On('modloader_downloading', ({ data: raw }: any) => onModLoaderEvent(raw)),
+        Events.On('modloader_installing', ({ data: raw }: any) => onModLoaderEvent(raw)),
+        Events.On('modloader_installed', ({ data: raw }: any) => onModLoaderEvent(raw)),
+        Events.On('modloader_error', ({ data: raw }: any) => onModLoaderEvent(raw)),
     ];
 });
 
 onUnmounted(() => {
     window.removeEventListener(CLOSE_OVERLAYS_EVENT, onCloseOverlays);
+    if (onlineHandler) window.removeEventListener(CONNECTIVITY_ONLINE_EVENT, onlineHandler);
+    onlineHandler = null;
     eventOffs.forEach((off) => off());
     eventOffs = [];
     if (doneResetTimer !== null) {
@@ -1060,7 +1064,7 @@ onUnmounted(() => {
 
                                     <div v-if="(progress?.sections ?? []).length" class="InstDl_DetailBlock">
                                         <div class="InstDl_DetailTitle">
-                                            Progreso por elemento<em>{{ progress!.sectionsCompleted.length }}/{{ progress!.sections.length }}</em>
+                                            Progreso por elemento<em>{{ (progress!.sectionsCompleted ?? []).length }}/{{ (progress!.sections ?? []).length }}</em>
                                         </div>
                                         <div class="InstDl_DetailList">
                                             <div
@@ -1087,7 +1091,7 @@ onUnmounted(() => {
                                     <div v-if="(progress?.activeFiles ?? []).length" class="InstDl_DetailBlock">
                                         <div class="InstDl_DetailTitle">Descargando ahora</div>
                                         <div class="InstDl_DetailList">
-                                            <div v-for="f in progress!.activeFiles.slice(0, 4)" :key="f.name" class="InstDl_DetailFile">
+                                            <div v-for="f in (progress!.activeFiles ?? []).slice(0, 4)" :key="f.name" class="InstDl_DetailFile">
                                                 <div class="InstDl_DetailFileHead">
                                                     <span class="name">{{ f.name }}</span>
                                                     <em>{{ fmt(clampPct(f.percent), 0) }}%</em>
@@ -1199,14 +1203,19 @@ onUnmounted(() => {
                     <div class="InstDl_Footer">
                         <template v-if="phase === 'setup'">
                             <button class="SsBtn" @click="close">Cancelar</button>
-                            <button
-                                class="SsBtn SsBtnPrimary"
-                                :disabled="!installReady"
-                                @click="onInstall"
-                            >
-                                <IconDownload stroke="2" />
-                                {{ selectedLoader === 'vanilla' ? 'Instalar' : `Instalar con ${selectedLoader}` }}
-                            </button>
+                            <span class="offline-wrap" style="position: relative; display: inline-flex;">
+                                <button
+                                    class="SsBtn SsBtnPrimary"
+                                    :class="{ offline: isOffline }"
+                                    :disabled="!installReady || isOffline"
+                                    :title="isOffline ? 'Sin conexión — Instalar requiere internet y no está disponible sin conexión.' : undefined"
+                                    @click="onInstall"
+                                >
+                                    <IconDownload stroke="2" />
+                                    {{ selectedLoader === 'vanilla' ? 'Instalar' : `Instalar con ${selectedLoader}` }}
+                                </button>
+                                <OfflineBadge v-if="isOffline" placement="inside" tooltip="top" message="Sin conexión — Instalar requiere internet y no está disponible sin conexión." />
+                            </span>
                         </template>
 
                         <template v-else-if="phase === 'installing'">

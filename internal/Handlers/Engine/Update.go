@@ -17,14 +17,27 @@ import (
 )
 
 const (
-	updateRepo        = "NovaStepStudio/StepLauncher"
-	updateAPILatest   = "https://api.github.com/repos/" + updateRepo + "/releases/latest"
-	updaterAssetName  = "StepLauncher-Updater.exe"
-	updaterTempDir    = "StepLauncher-Updater"
-	updateMaxBodySize = 4 * 1024 * 1024
+	updateRepo             = "NovaStepStudio/StepLauncher"
+	updateWorkerReleases   = "https://steplauncher.stepnicka012.workers.dev/updates/steplauncher/releases"
+	updateWorkerPrerelease = "https://steplauncher.stepnicka012.workers.dev/updates/steplauncher/prereleases"
+	updaterAssetName       = "StepLauncher-Updater.exe"
+	updaterTempDir         = "StepLauncher-Updater"
+	updateMaxBodySize      = 4 * 1024 * 1024
 )
 
 var updateHTTPClient = &http.Client{Timeout: 25 * time.Second}
+
+type workerRelease struct {
+	TagName     string `json:"tag_name"`
+	Name        string `json:"name"`
+	PublishedAt string `json:"published_at"`
+	HTMLURL     string `json:"html_url"`
+	Body        string `json:"body"`
+	Assets      []struct {
+		Name               string `json:"name"`
+		BrowserDownloadURL string `json:"browser_download_url"`
+	} `json:"assets"`
+}
 
 type UpdateInfo struct {
 	HasUpdate      bool   `json:"hasUpdate"`
@@ -73,48 +86,76 @@ func (e *Engine) checkUpdate() *UpdateInfo {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, updateAPILatest, nil)
+	// Usa el Worker de Cloudflare en lugar de GitHub directo para evitar rate limit.
+	// El Worker cachea y sirve el JSON de releases (array) sin necesidad de token.
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, updateWorkerReleases, nil)
 	if err != nil {
 		info.Error = err.Error()
 		return info
 	}
-	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "StepLauncher/"+engineconfig.AppVersion)
 
 	resp, err := updateHTTPClient.Do(req)
 	if err != nil {
-		info.Error = "no se pudo conectar con GitHub: " + err.Error()
+		info.Error = "no se pudo conectar con el servidor de actualizaciones: " + err.Error()
 		return info
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		info.Error = fmt.Sprintf("GitHub respondió %s", resp.Status)
+		info.Error = fmt.Sprintf("servidor de actualizaciones respondió %s", resp.Status)
 		return info
 	}
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, updateMaxBodySize))
 	if err != nil {
-		info.Error = "no se pudo leer la respuesta de GitHub: " + err.Error()
+		info.Error = "no se pudo leer la respuesta del servidor: " + err.Error()
 		return info
 	}
 
-	var rel struct {
-		TagName     string `json:"tag_name"`
-		Name        string `json:"name"`
-		PublishedAt string `json:"published_at"`
-		HTMLURL     string `json:"html_url"`
-		Body        string `json:"body"`
-		Assets      []struct {
-			Name               string `json:"name"`
-			BrowserDownloadURL string `json:"browser_download_url"`
-		} `json:"assets"`
+	// El Worker devuelve un array de releases; busca la más nueva > current.
+	var releases []workerRelease
+	if err := json.Unmarshal(body, &releases); err != nil {
+		// Fallback: si el Worker devolviera un objeto único (latest), soportarlo
+		var single workerRelease
+		if err2 := json.Unmarshal(body, &single); err2 == nil && single.TagName != "" {
+			releases = []workerRelease{single}
+		} else {
+			info.Error = "respuesta del servidor inválida: " + err.Error()
+			return info
+		}
 	}
-	if err := json.Unmarshal(body, &rel); err != nil {
-		info.Error = "respuesta de GitHub inválida: " + err.Error()
+
+	if len(releases) == 0 {
+		info.Error = "no hay releases disponibles"
 		return info
 	}
 
+	// Encuentra la release más nueva que sea > currentVersion
+	var best *workerRelease
+	bestVer := ""
+	for i := range releases {
+		r := &releases[i]
+		ver := strings.TrimPrefix(strings.TrimSpace(r.TagName), "v")
+		if ver == "" {
+			continue
+		}
+		if compareVersions(ver, info.CurrentVersion) <= 0 {
+			continue
+		}
+		if best == nil || compareVersions(ver, bestVer) > 0 {
+			best = r
+			bestVer = ver
+		}
+	}
+	if best == nil {
+		// No hay versión más nueva -> up-to-date, usa la current como latest para mostrar
+		info.LatestVersion = info.CurrentVersion
+		return info
+	}
+
+	rel := best
 	info.LatestVersion = strings.TrimPrefix(strings.TrimSpace(rel.TagName), "v")
 	info.ReleaseURL = rel.HTMLURL
 	if info.ReleaseURL == "" {

@@ -7,7 +7,7 @@
     display: flex;
     align-items: center;
     gap: 0.55rem;
-    width: 100%;
+    width: calc(100% - 4rem);
     margin: 0 auto;
     padding: 0.7rem 2rem;
     background: #0005;
@@ -125,5 +125,32 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
+    }
+}
+
+.SsMusicThumb {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 0.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    span {
+        width: 0.9rem;
+        height: 0.9rem;
+        border-radius: 50%;
+        background: var(--progress-color);
+        opacity: 0.55;
     }
 }

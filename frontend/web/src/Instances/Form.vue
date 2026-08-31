@@ -4,8 +4,9 @@ import { IconX, IconPhotoPlus } from '@tabler/icons-vue';
 import { createInstance, updateMetadata, detailOf } from './Store';
 import { loadLocal } from '@/Common/Stores/Ui';
 import { useOverlayEscape } from '@/Common/Composables/useOverlayEscape';
-
-const goApp = () => (window as any)?.go?.main?.App;
+import { PickInstanceAssetFile, ImportInstanceAsset } from '@wailsjs/StepLauncher/internal/Services/Instance/instanceservice';
+import { isOffline } from '@/Common/Stores/Connectivity';
+import OfflineBadge from '@/Common/Components/OfflineBadge.vue';
 
 const props = defineProps<{
     visible: boolean;
@@ -28,9 +29,15 @@ const name = ref('');
 const title = ref('');
 const description = ref('');
 const favorite = ref(false);
+const tags = ref<string[]>([]);
+const tagInput = ref('');
 
 const iconUrl = ref('');
 const bannerUrl = ref('');
+
+const MAX_DESC = 512;
+const MAX_TAGS = 8;
+const MAX_TAG_LEN = 24;
 
 watch(
     () => props.visible,
@@ -40,6 +47,8 @@ watch(
         title.value = '';
         description.value = '';
         favorite.value = false;
+        tags.value = [];
+        tagInput.value = '';
         iconUrl.value = '';
         bannerUrl.value = '';
         msg.value = '';
@@ -49,12 +58,37 @@ watch(
             title.value = d?.meta.title ?? '';
             description.value = d?.meta.description ?? '';
             favorite.value = !!d?.meta.favorite;
+            tags.value = [...(d?.meta.tags ?? [])];
             if (d?.meta.icon) void loadLocal(d.meta.icon).then((u) => (iconUrl.value = u));
             if (d?.meta.banner) void loadLocal(d.meta.banner).then((u) => (bannerUrl.value = u));
         }
     },
     { immediate: true }
 );
+
+function addTag() {
+    const t = tagInput.value.trim().replace(/\s+/g, '-').slice(0, MAX_TAG_LEN);
+    if (!t) {
+        tagInput.value = '';
+        return;
+    }
+    if (tags.value.length >= MAX_TAGS) {
+        msg.value = `Máximo ${MAX_TAGS} etiquetas por instancia.`;
+        msgOk.value = false;
+        tagInput.value = '';
+        return;
+    }
+    if (tags.value.some((x) => x.toLowerCase() === t.toLowerCase())) {
+        tagInput.value = '';
+        return;
+    }
+    tags.value.push(t);
+    tagInput.value = '';
+}
+
+function removeTag(i: number) {
+    tags.value.splice(i, 1);
+}
 
 function cleanName(value: string): boolean {
     if (!value.trim()) {
@@ -72,6 +106,11 @@ function cleanName(value: string): boolean {
 
 async function submit() {
     if (busy.value) return;
+    if (!isEdit.value && isOffline.value) {
+        msg.value = 'Sin conexión — No se puede crear una instancia sin internet.';
+        msgOk.value = false;
+        return;
+    }
     busy.value = true;
     msg.value = '';
     msgOk.value = true;
@@ -80,6 +119,7 @@ async function submit() {
             title: title.value.trim(),
             description: description.value.trim(),
             favorite: favorite.value,
+            tags: [...tags.value],
         });
         busy.value = false;
         if (err) {
@@ -101,6 +141,7 @@ async function submit() {
         title: title.value.trim() || undefined,
         description: description.value.trim() || undefined,
         favorite: favorite.value || undefined,
+        tags: tags.value.length ? [...tags.value] : undefined,
     });
     busy.value = false;
     if (err) {
@@ -119,12 +160,12 @@ async function pickAsset(kind: 'icon' | 'banner') {
     msg.value = '';
     msgOk.value = true;
     try {
-        const picked = await goApp()?.PickInstanceAssetFile?.();
+        const picked = await PickInstanceAssetFile();
         if (!picked) {
             busy.value = false;
             return;
         }
-        const rel = await goApp()?.ImportInstanceAsset?.(props.editing, kind, picked);
+        const rel = await ImportInstanceAsset(props.editing, kind, picked);
         if (!rel) {
             msg.value = 'No se pudo importar la imagen.';
             msgOk.value = false;
@@ -185,9 +226,43 @@ useOverlayEscape(close, { isActive: () => props.visible, priority: 2 });
                         </label>
 
                         <label class="InstForm_Field">
-                            <span>Descripción</span>
-                            <textarea class="SsIn InstForm_Textarea" v-model="description" rows="3" placeholder="¿De qué va esta instancia?" />
+                            <span class="InstForm_FieldHead">
+                                Descripción
+                                <em class="InstForm_Count">{{ description.length }}/{{ MAX_DESC }}</em>
+                            </span>
+                            <textarea
+                                class="SsIn InstForm_Textarea"
+                                v-model="description"
+                                rows="3"
+                                maxlength="512"
+                                placeholder="¿De qué va esta instancia?"
+                            />
                         </label>
+
+                        <div class="InstForm_Field">
+                            <span class="InstForm_FieldHead">
+                                Etiquetas
+                                <em class="InstForm_Count">{{ tags.length }}/{{ MAX_TAGS }}</em>
+                            </span>
+                            <div class="InstForm_Tags">
+                                <span v-for="(t, i) in tags" :key="t" class="InstForm_Tag">
+                                    {{ t }}
+                                    <button type="button" class="InstForm_TagDel" title="Quitar etiqueta" @click="removeTag(i)">
+                                        <IconX stroke="2" />
+                                    </button>
+                                </span>
+                                <input
+                                    class="SsIn InstForm_TagInput"
+                                    v-model="tagInput"
+                                    placeholder="Añadir etiqueta (Intro)"
+                                    :maxlength="MAX_TAG_LEN"
+                                    autocomplete="off"
+                                    spellcheck="false"
+                                    @keydown.enter.prevent="addTag"
+                                    @keydown.backspace="tags.length && !tagInput ? removeTag(tags.length - 1) : null"
+                                />
+                            </div>
+                        </div>
 
                         <template v-if="isEdit">
                             <div class="InstForm_Assets">
@@ -228,9 +303,18 @@ useOverlayEscape(close, { isActive: () => props.visible, priority: 2 });
 
                     <div class="InstForm_Footer">
                         <button class="SsBtn" :disabled="busy" @click="close">Cancelar</button>
-                        <button class="SsBtn SsBtnPrimary InstForm_Submit" :disabled="busy || (!isEdit && !name.trim())" @click="submit">
-                            {{ busy ? 'Guardando…' : (isEdit ? 'Guardar cambios' : 'Crear instancia') }}
-                        </button>
+                        <span class="offline-wrap" style="position: relative; display: inline-flex;">
+                            <button
+                                class="SsBtn SsBtnPrimary InstForm_Submit"
+                                :class="{ offline: !isEdit && isOffline }"
+                                :disabled="busy || (!isEdit && !name.trim()) || (!isEdit && isOffline)"
+                                :title="!isEdit && isOffline ? 'Sin conexión — Crear instancia requiere internet y no está disponible sin conexión.' : undefined"
+                                @click="submit"
+                            >
+                                {{ busy ? 'Guardando…' : (isEdit ? 'Guardar cambios' : 'Crear instancia') }}
+                            </button>
+                            <OfflineBadge v-if="!isEdit && isOffline" placement="inside" tooltip="bottom" message="Sin conexión — Crear instancia requiere internet y no está disponible sin conexión." />
+                        </span>
                     </div>
                 </div>
             </div>

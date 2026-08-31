@@ -2,7 +2,6 @@ package Handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/binary"
 	"fmt"
 	"image"
@@ -12,38 +11,29 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 const maxBackgroundWidth = 1920
 const maxBackgroundHeight = 1080
 
-func (a *App) SetContext(ctx context.Context) {
-	a.ctx = ctx
-}
-
 func (a *App) PickBackgroundFile(kind string) (string, error) {
-	if a.ctx == nil {
-		return "", fmt.Errorf("contexto no disponible")
+	if a.runtime == nil {
+		return "", fmt.Errorf("runtime no disponible")
 	}
-	var filters []runtime.FileFilter
+	var filters []FileFilter
 	switch kind {
 	case "image":
-		filters = []runtime.FileFilter{
+		filters = []FileFilter{
 			{DisplayName: "Imagenes (*.png, *.jpg, *.jpeg, *.webp, *.gif, *.bmp)", Pattern: "*.png;*.jpg;*.jpeg;*.webp;*.gif;*.bmp"},
 		}
 	case "video":
-		filters = []runtime.FileFilter{
+		filters = []FileFilter{
 			{DisplayName: "Videos (*.mp4, *.gif, *.webm)", Pattern: "*.mp4;*.gif;*.webm"},
 		}
 	default:
 		return "", fmt.Errorf("tipo de fondo no soportado")
 	}
-	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title:   "Seleccionar fondo",
-		Filters: filters,
-	})
+	path, err := a.runtime.OpenFileDialog("Seleccionar fondo", filters)
 	if err != nil {
 		return "", err
 	}

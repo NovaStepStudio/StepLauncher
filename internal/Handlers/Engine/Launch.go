@@ -100,7 +100,7 @@ func (e *Engine) buildBaseLaunchConfig(cfg launcher.LaunchConfig) launcher.Launc
 	case "official":
 		adv.UseOfficialJava = true
 	case "system":
-		adv.UseSystemJava = true
+		adv.JavaExec = ec.JavaCustomPath
 	case "custom":
 		adv.JavaExec = ec.JavaCustomPath
 	}
@@ -118,6 +118,7 @@ func (e *Engine) buildBaseLaunchConfig(cfg launcher.LaunchConfig) launcher.Launc
 		adv.CustomResolution = true
 	}
 	adv.Fullscreen = ec.Fullscreen
+	adv.VerifyBeforeLaunch = ec.VerifyBeforeLaunch
 
 	hwAccel := ec.HardwareAcceleration
 	if !ec.HardwareEnabled {

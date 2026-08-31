@@ -424,6 +424,7 @@ func (m *Manager) runDownload(dl *Download) {
 		m.setError(dl, fmt.Errorf("version json: %w", err))
 		return
 	}
+	NormalizeVersion(&ver)
 	log("Fetched version JSON for %s", dl.Version)
 
 	verDir := filepath.Join(m.cfg.WorkDir, "versions", dl.Version)

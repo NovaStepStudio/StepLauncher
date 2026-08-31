@@ -12,7 +12,7 @@ type LaunchConfig struct {
 	LauncherName    string
 	LauncherVersion string
 	LogDir          string
-	LogFn           func(string, ...interface{})
+	LogFn           func(string, ...interface{}) `json:"-"`
 	Advanced        *AdvancedConfig
 	Profile         string
 }

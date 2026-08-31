@@ -1,0 +1,497 @@
+@use '../../Common/Styles/Components' as *;
+
+// BibliotecaView — grid de cards 2x2 + subpanel detalle
+
+.MusicSection {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--background-modal-primary);
+}
+
+// --- Header grid ---
+.MusicBibHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1rem 0.75rem;
+    border-bottom: var(--border-style);
+    background: transparent;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.MusicBibHeader_Left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    h3 {
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: calc(0.96rem * var(--font-size-primary, 1));
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+        svg { width: 1.1rem; height: 1.1rem; opacity: 0.7; }
+    }
+    p { margin: 0; font-size: calc(0.66rem * var(--font-size-secundary, 1)); opacity: 0.55; }
+}
+.MusicBibHeader_Actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    .MusicSearch.is-small {
+        min-width: 200px;
+        padding: 0.35rem 0.6rem;
+        input { font-size: calc(0.68rem * var(--font-size-secundary, 1)); }
+    }
+}
+
+// --- Grid de cards ---
+.MusicBibCards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.85rem;
+    padding: 1rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    align-content: start;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text-primary) 14%, transparent) transparent;
+    &::-webkit-scrollbar { width: 6px; height: 6px; }
+    &::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text-primary) 14%, transparent); border-radius: 999px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+
+    .PlCard.is-add {
+        border-style: dashed;
+        background: transparent;
+        color: color-mix(in srgb, var(--text-primary) 85%, transparent 15%);
+        border-radius: .5rem;
+        .PlCard_Cover.is-add {
+            margin: .5rem;
+            background: color-mix(in srgb, var(--control-bg) 60%, transparent);
+            border: 1px dashed color-mix(in srgb, var(--text-primary) 12%, transparent);
+            min-height: 2rem;
+            aspect-ratio: 1 / 1;
+            border-radius: .5rem;
+            display: flex; justify-content: center; align-items: center;
+        }
+        &:hover { background: color-mix(in srgb, var(--control-bg) 45%, transparent); }
+    }
+}
+
+.MusicBibEmpty {
+    margin: 1rem;
+    padding: 1.4rem;
+    border-radius: 0.85rem;
+    background: color-mix(in srgb, var(--control-bg) 40%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--text-primary) 10%, transparent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+    b { color: var(--text-primary); font-size: calc(0.88rem * var(--font-size-primary, 1)); }
+    p { margin: 0; font-size: calc(0.7rem * var(--font-size-secundary, 1)); opacity: 0.6; max-width: 28rem; line-height: 1.4; }
+}
+.MusicBibEmptyIcon {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 0.65rem;
+    background: var(--control-bg);
+    border: var(--border-style);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-secondary);
+}
+
+// --- Detalle subpanel ---
+.MusicBibDetail {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: transparent;
+}
+
+.MusicBibBack {
+    align-self: flex-start;
+    margin: 0.75rem 1rem 0;
+    padding: 0.4rem 0.7rem;
+    border-radius: 0.5rem;
+    border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    font-size: calc(0.72rem * var(--font-size-secundary, 1));
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    transition: var(--transition);
+    &:hover { background: var(--control-bg-soft); color: var(--text-primary); transform: translateX(-1px); }
+}
+
+.MusicBibDetail_Hero {
+    position: relative;
+    margin: 0.7rem 1rem 0;
+    padding: 1rem;
+    border-radius: 0.95rem;
+    background: var(--cover-overlay, linear-gradient(135deg, color-mix(in srgb, var(--color-tag) 16%, var(--background-modal-primary)), color-mix(in srgb, var(--progress-color) 12%, var(--background-modal-primary) 88%)));
+    border: 1px solid color-mix(in srgb, var(--cover-muted, var(--color-tag)) 18%, transparent);
+    display: flex;
+    gap: 1rem;
+    overflow: hidden;
+    flex-shrink: 0;
+    align-items: center;
+    min-height: 11rem;
+    transition: background 0.5s ease, border-color 0.5s ease, min-height 0.25s ease, padding 0.25s ease;
+    &.is-collapsed {
+        min-height: 3.2rem;
+        padding: 0.55rem 0.75rem;
+        align-items: center;
+        gap: 0.6rem;
+    }
+}
+
+.MusicBibHero_Toggle {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 0.35rem;
+    border: 1px solid color-mix(in srgb, var(--text-primary) 10%, transparent);
+    background: color-mix(in srgb, var(--control-bg) 80%, transparent);
+    backdrop-filter: blur(8px);
+    color: var(--text-secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 3;
+    transition: var(--transition);
+    &:hover { background: var(--control-bg); color: var(--text-primary); }
+}
+
+.MusicBibDetail_CollapsedInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex: 1;
+    min-width: 0;
+    b { font-size: calc(0.82rem * var(--font-size-primary, 1)); font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    span:nth-of-type(2) { font-size: calc(0.64rem * var(--font-size-secundary, 1)); opacity: 0.5; white-space: nowrap; }
+    .small { padding: 0.25rem 0.5rem; font-size: 0.66rem; }
+    .mini { width: 2rem; height: 2rem; border-radius: 0.4rem; background: var(--control-bg-dark); border: var(--border-style); display:flex; justify-content:center; align-items:center; overflow:hidden; flex-shrink:0; img{width:100%;height:100%;object-fit:cover;} }
+}
+
+.MusicBibDetail_Bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(28px) saturate(1.25) brightness(0.92);
+    opacity: 0.32;
+    transform: scale(1.12);
+    pointer-events: none;
+    mask-image: linear-gradient(to right, black 40%, transparent 92%);
+    -webkit-mask-image: linear-gradient(to right, black 40%, transparent 92%);
+}
+
+.MusicBibDetail_Glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.MusicBibDetail_Cover {
+    width: 8.5rem;
+    height: 8.5rem;
+    border-radius: 0.85rem;
+    background: var(--control-bg-dark);
+    border: var(--border-style);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    color: var(--text-secondary);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+    img { width: 100%; height: 100%; object-fit: cover; }
+    &.hasGrid { padding: 0; background: var(--control-bg); }
+}
+
+.MusicBibCoverGrid.is-large {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 2px;
+    width: 100%;
+    height: 100%;
+    padding: 2px;
+    background: var(--control-bg);
+}
+.MusicBibCoverCell {
+    border-radius: 0.35rem;
+    overflow: hidden;
+    background: var(--control-bg-dark);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-secondary);
+    img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.MusicBibDetail_Info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    position: relative;
+    z-index: 1;
+    h2 {
+        margin: 0;
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(1.25rem * var(--font-size-primary, 1));
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: -0.015em;
+        line-height: 1.1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.MusicBibDetail_Kicker {
+    font-size: calc(0.62rem * var(--font-size-secundary, 1));
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.5;
+    font-weight: 700;
+}
+
+.MusicBibDetail_Meta {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    opacity: 0.6;
+    span { display: inline-flex; align-items: center; gap: 0.25rem; svg { width: 0.85rem; height: 0.85rem; } &.is-fav { color: var(--color-warning); opacity: 1; } &.is-pin { color: var(--progress-color); opacity: 1; } }
+}
+
+.MusicBibDetail_ColorHint {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    opacity: 0.55;
+    .dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--text-primary) 12%, transparent); flex-shrink: 0; }
+}
+
+.MusicBibDetail_Actions {
+    display: flex;
+    gap: 0.45rem;
+    margin-top: 0.3rem;
+    flex-wrap: wrap;
+    .SsBtn { font-size: calc(0.72rem * var(--font-size-secundary, 1)); padding: 0.45rem 0.7rem; }
+    .SsBtnDanger {
+        background: color-mix(in srgb, var(--color-error) 8%, transparent) !important;
+        border-color: color-mix(in srgb, var(--color-error) 18%, transparent) !important;
+        color: var(--color-error) !important;
+        &:hover { background: color-mix(in srgb, var(--color-error) 14%, transparent) !important; }
+    }
+    .spinning { animation: spin 1s linear infinite; }
+}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+// Toolbar y filas en detalle
+.MusicToolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 1rem;
+    border-bottom: var(--border-style);
+    border-top: var(--border-style);
+    margin-top: 0.7rem;
+    background: transparent;
+    flex-shrink: 0;
+    &.is-detail { margin-top: 0.85rem; }
+}
+
+.MusicSearch {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.65rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
+    color: var(--text-secondary);
+    input { flex: 1; background: none; border: none; outline: none; color: var(--text-primary); font-size: calc(0.72rem * var(--font-size-secundary, 1)); &::placeholder { opacity: 0.45; } }
+    &:focus-within { border-color: color-mix(in srgb, var(--progress-color) 30%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--progress-color) 10%, transparent); }
+}
+
+.MusicCount { font-size: calc(0.64rem * var(--font-size-secundary, 1)); opacity: 0.5; white-space: nowrap; }
+
+.MusicRows {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.75rem 1rem 0.6rem;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text-primary) 14%, transparent) transparent;
+    &::-webkit-scrollbar { width: 6px; height: 6px; }
+    &::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text-primary) 14%, transparent); border-radius: 999px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+    &.is-detail { padding-top: 0.6rem; }
+}
+
+.MusicRow {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: 0.6rem;
+    border: 1px solid transparent;
+    background: color-mix(in srgb, var(--control-bg) 45%, transparent);
+    transition: var(--transition);
+    cursor: pointer;
+    &:hover { background: var(--control-bg); border-color: color-mix(in srgb, var(--text-primary) 7%, transparent); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+    &.missing { opacity: 0.6; border-style: dashed; }
+    &.active { background: color-mix(in srgb, var(--progress-color) 10%, var(--control-bg)); border-color: color-mix(in srgb, var(--progress-color) 16%, transparent); }
+}
+
+.MusicRow_Cover {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 0.45rem;
+    background: var(--control-bg-dark);
+    border: var(--border-style);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    color: var(--text-secondary);
+    position: relative;
+    img { width: 100%; height: 100%; object-fit: cover; }
+    &.is-loading, &.is-skeleton { background: color-mix(in srgb, var(--control-bg) 70%, transparent); }
+    &.playing::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: color-mix(in srgb, var(--progress-color) 22%, transparent);
+        border-radius: inherit;
+    }
+}
+
+.MusicRow.is-skeleton {
+    pointer-events: none;
+    opacity: 0.9;
+    .MusicRow_Cover.is-skeleton { position: relative; overflow: hidden; }
+    .MusicRow_Title.skeleton, .MusicRow_Sub.skeleton, .MusicRow_Dur.skeleton {
+        background: linear-gradient(90deg, color-mix(in srgb, var(--control-bg) 60%, transparent) 25%, color-mix(in srgb, var(--control-bg) 85%, transparent) 50%, color-mix(in srgb, var(--control-bg) 60%, transparent) 75%);
+        background-size: 200% 100%;
+        animation: bibShimmer 1.2s linear infinite;
+        border-radius: 0.25rem;
+        color: transparent;
+    }
+    .MusicRow_Title.skeleton { width: 9rem; height: 0.78rem; }
+    .MusicRow_Sub.skeleton { width: 6rem; height: 0.6rem; margin-top: 0.25rem; }
+    .MusicRow_Dur.skeleton { width: 2rem; height: 0.6rem; }
+}
+
+.PlCard.is-skeleton {
+    pointer-events: none;
+    opacity: 0.9;
+    .PlCard_Title.skeleton, .PlCard_Sub.skeleton {
+        background: linear-gradient(90deg, color-mix(in srgb, var(--control-bg) 60%, transparent) 25%, color-mix(in srgb, var(--control-bg) 85%, transparent) 50%, color-mix(in srgb, var(--control-bg) 60%, transparent) 75%);
+        background-size: 200% 100%;
+        animation: bibShimmer 1.2s linear infinite;
+        border-radius: 0.25rem;
+        color: transparent;
+        display: inline-block;
+    }
+    .PlCard_Title.skeleton { width: 6rem; height: 0.82rem; }
+    .PlCard_Sub.skeleton { width: 4.5rem; height: 0.6rem; margin-top: 0.2rem; }
+}
+.MusicToolbar_Sort .SsSel {
+    max-width: 170px;
+    font-size: 0.68rem;
+}
+
+.MusicRow_Shimmer, .PlCard_Shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--text-primary) 7%, transparent) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: bibShimmer 1.15s linear infinite;
+}
+
+.MusicLoadingHint {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    justify-content: center;
+    padding: 0.6rem;
+    font-size: calc(0.68rem * var(--font-size-secundary, 1));
+    opacity: 0.6;
+    .spinning { animation: spin 1s linear infinite; }
+}
+
+@keyframes bibShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.MusicRow_Info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.08rem; }
+.MusicRow_Title { font-size: calc(0.74rem * var(--font-size-primary, 1)); font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.MusicRow_Sub { font-size: calc(0.62rem * var(--font-size-secundary, 1)); opacity: 0.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.MusicRow_Dur { font-size: calc(0.64rem * var(--font-size-secundary, 1)); opacity: 0.45; font-variant-numeric: tabular-nums; min-width: 2rem; text-align: right; flex-shrink: 0; }
+.MusicRow_Play {
+    width: 1.8rem; height: 1.8rem; border-radius: 0.45rem; border: var(--border-style); background: var(--control-bg); color: var(--text-secondary);
+    display: flex; justify-content: center; align-items: center; cursor: pointer; flex-shrink: 0; transition: var(--transition);
+    &:hover { background: var(--background-button-primary); color: var(--text-primary); border-color: transparent; }
+    &.on { background: var(--progress-color); color: white; border-color: transparent; }
+}
+
+.MusicEmpty { text-align: center; padding: 0.8rem; }
+.MusicEmpty_Desc { font-size: calc(0.7rem * var(--font-size-secundary, 1)); opacity: 0.6; margin: 0; }
+.MusicFooter {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.6rem 1rem; border-top: var(--border-style); background: color-mix(in srgb, var(--background-modal-primary) 98%, white 2%); flex-shrink: 0; flex-wrap: wrap;
+}
+.MusicFooter_Info { font-size: calc(0.64rem * var(--font-size-secundary, 1)); opacity: 0.55; b { color: var(--text-primary); } }
+.MusicPages { display: flex; gap: 0.2rem; align-items: center; }
+.MusicPgBtn {
+    min-width: 1.8rem; height: 1.8rem; border-radius: 0.4rem; border: 1px solid var(--control-border); background: var(--control-bg); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600; display: flex; justify-content: center; align-items: center; cursor: pointer;
+    &.on { background: var(--background-button-primary); color: var(--text-primary); border-color: transparent; }
+    &:disabled { opacity: 0.35; cursor: not-allowed; }
+}
+.MusicPgGap { opacity: 0.4; padding: 0 0.12rem; }
+
+@media (max-width: 700px) {
+    .MusicBibDetail_Hero { flex-direction: column; text-align: center; align-items: center; }
+    .MusicBibDetail_Info h2 { white-space: normal; }
+    .MusicBibDetail_Meta { justify-content: center; }
+    .MusicBibDetail_Actions { justify-content: center; }
+}

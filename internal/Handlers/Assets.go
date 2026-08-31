@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	assets "StepLauncher/internal/Core/Assets"
-
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 func (a *App) GetLauncherAssets() assets.Assets {
@@ -86,14 +84,11 @@ func (a *App) DeleteFontFile(name string) error {
 }
 
 func (a *App) PickFontFile() (string, error) {
-	if a.ctx == nil {
-		return "", fmt.Errorf("contexto no disponible")
+	if a.runtime == nil {
+		return "", fmt.Errorf("runtime no disponible")
 	}
-	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "Seleccionar tipografía",
-		Filters: []runtime.FileFilter{
-			{DisplayName: "Tipografías (*.ttf, *.otf, *.woff, *.woff2)", Pattern: "*.ttf;*.otf;*.woff;*.woff2"},
-		},
+	return a.runtime.OpenFileDialog("Seleccionar tipografía", []FileFilter{
+		{DisplayName: "Tipografías (*.ttf, *.otf, *.woff, *.woff2)", Pattern: "*.ttf;*.otf;*.woff;*.woff2"},
 	})
 }
 
