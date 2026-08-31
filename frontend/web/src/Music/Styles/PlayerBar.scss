@@ -14,8 +14,8 @@
     box-shadow: 0 -4px 16px rgba(0,0,0,0.12);
     position: relative;
     z-index: 3;
-    overflow: hidden;
-    isolation: isolate;
+    overflow: visible;
+    isolation: auto;
     &::after {
         content: '';
         position: absolute;
@@ -213,11 +213,12 @@
     position: relative;
     display: flex;
     align-items: center;
+    z-index: 31;
 }
 
 .MusicBar_VolMenu {
     position: absolute;
-    bottom: calc(100% + 10px);
+    bottom: calc(100% + 14px);
     right: 0;
     display: flex;
     align-items: center;
@@ -226,10 +227,11 @@
     border-radius: 0.6rem;
     background: var(--background-modal-primary);
     border: var(--border-modal-style);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.28);
     backdrop-filter: blur(12px);
-    z-index: 20;
+    z-index: 30;
     min-width: 180px;
+    pointer-events: auto;
 }
 
 .MusicBar_VolIcon {
