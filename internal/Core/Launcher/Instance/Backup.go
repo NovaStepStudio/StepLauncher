@@ -180,6 +180,9 @@ func (m *InstanceManager) maybeAutoBackup(name string, cfg *InstanceLaunchConfig
 			return
 		}
 		now := time.Now().Format(time.RFC3339)
+		lock := m.persistenceLock(name)
+		lock.Lock()
+		defer lock.Unlock()
 		if cur, rErr := m.readConfig(name); rErr == nil {
 			cur.LastBackupAt = now
 			if wErr := m.writeConfig(name, cur); wErr != nil {

@@ -137,6 +137,10 @@ export function ListPlaylists(): $CancellablePromise<playlists$0.Playlist[] | nu
     return $Call.ByID(2680807671);
 }
 
+export function PickCustomCoverFile(): $CancellablePromise<string> {
+    return $Call.ByID(3308263775);
+}
+
 export function PickMusicFolder(): $CancellablePromise<string> {
     return $Call.ByID(3939493244);
 }

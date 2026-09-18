@@ -261,12 +261,15 @@ func addAssetIndex(tasks *[]DownloadTask, ver *VersionJSON, cfg Config, filter D
 		return
 	}
 	indexDest := filepath.Join(cfg.WorkDir, "assets", "indexes", ver.AssetIndex.ID+".json")
+	// El índice es solo el manifiesto de objetos: se agrupa dentro de "assets"
+	// para que la UI muestre un único bloque Assets completo en vez de dos filas
+	// separadas (índice + objetos).
 	*tasks = append(*tasks, DownloadTask{
 		URL:     ver.AssetIndex.URL,
 		Dest:    indexDest,
 		SHA1:    ver.AssetIndex.SHA1,
 		Size:    0,
-		Section: "asset_index",
+		Section: "assets",
 	})
 }
 

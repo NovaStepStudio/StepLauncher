@@ -57,18 +57,22 @@ type InstanceManager struct {
 
 	// Impide backups concurrentes de la misma instancia.
 	backingUp map[string]bool
+
+	persistenceMu    sync.Mutex
+	persistenceLocks map[string]*sync.Mutex
 }
 
 func NewManager(instancesDir, sharedDir string) *InstanceManager {
 	return &InstanceManager{
-		instancesDir:    instancesDir,
-		sharedDir:       sharedDir,
-		separateGameDir: true,
-		downloads:       make(map[string]*instanceDownload),
-		verifying:       make(map[string]bool),
-		verifyCancel:    make(map[string]context.CancelFunc),
-		verifyProgress:  make(map[string]*InstanceVerifyProgress),
-		backingUp:       make(map[string]bool),
+		instancesDir:     instancesDir,
+		sharedDir:        sharedDir,
+		separateGameDir:  true,
+		downloads:        make(map[string]*instanceDownload),
+		verifying:        make(map[string]bool),
+		verifyCancel:     make(map[string]context.CancelFunc),
+		verifyProgress:   make(map[string]*InstanceVerifyProgress),
+		backingUp:        make(map[string]bool),
+		persistenceLocks: make(map[string]*sync.Mutex),
 	}
 }
 
@@ -392,6 +396,9 @@ func (m *InstanceManager) UpdateMetadata(name string, req UpdateMetadataReq) (*I
 	if err := m.assertUsable(name); err != nil {
 		return nil, err
 	}
+	lock := m.persistenceLock(name)
+	lock.Lock()
+	defer lock.Unlock()
 	meta, err := m.readMetadata(name)
 	if err != nil {
 		return nil, err
@@ -436,6 +443,9 @@ func (m *InstanceManager) UpdateConfig(name string, cfg *InstanceLaunchConfig) (
 	if err := m.assertUsable(name); err != nil {
 		return nil, err
 	}
+	lock := m.persistenceLock(name)
+	lock.Lock()
+	defer lock.Unlock()
 	existing, err := m.readConfig(name)
 	if err != nil {
 		return nil, fmt.Errorf("instance %s not found", name)
@@ -536,6 +546,9 @@ func (m *InstanceManager) scanVersionsFromDisk(name string) []string {
 }
 
 func (m *InstanceManager) RemoveVersion(name, version string) error {
+	lock := m.persistenceLock(name)
+	lock.Lock()
+	defer lock.Unlock()
 	meta, err := m.readMetadata(name)
 	if err != nil {
 		return err

@@ -58,32 +58,33 @@ type GameEvent struct {
 }
 
 func NewGameEventData(inst *GameInstance) *GameEventData {
+	snapshot := inst.Snapshot()
 	d := &GameEventData{
-		ID:               inst.ID,
-		PID:              inst.PID,
-		Version:          inst.Version,
-		InstanceID:       inst.InstanceID,
-		PlayerName:       inst.PlayerName,
-		Status:           string(inst.GetStatus()),
-		ExitCode:         inst.GetExitCode(),
-		CrashLog:         inst.CrashLog,
-		CrashLogText:     inst.CrashLogContent,
-		GameOutputText:   inst.GameOutput,
-		CrashReason:      inst.CrashReason,
-		CrashCategory:    inst.CrashCategory,
-		LauncherLogPath:  inst.LauncherLogPath,
-		MinecraftLogPath: inst.LogPath,
-		JvmLogPath:       inst.CrashLog,
+		ID:               snapshot.ID,
+		PID:              snapshot.PID,
+		Version:          snapshot.Version,
+		InstanceID:       snapshot.InstanceID,
+		PlayerName:       snapshot.PlayerName,
+		Status:           string(snapshot.Status),
+		ExitCode:         snapshot.ExitCode,
+		CrashLog:         snapshot.CrashLog,
+		CrashLogText:     snapshot.CrashLogContent,
+		GameOutputText:   snapshot.GameOutput,
+		CrashReason:      snapshot.CrashReason,
+		CrashCategory:    snapshot.CrashCategory,
+		LauncherLogPath:  snapshot.LauncherLogPath,
+		MinecraftLogPath: snapshot.LogPath,
+		JvmLogPath:       snapshot.CrashLog,
 		Timestamp:        time.Now().UTC().Format(time.RFC3339),
 	}
-	if inst.PreInfo != nil {
-		d.LaunchInfo = gamelog.FormatPreLaunchInfo(*inst.PreInfo)
-		d.JavaExec = inst.PreInfo.JavaExec
-		d.MaxRAM = inst.PreInfo.MaxRAM
-		d.VanillaVersion = inst.PreInfo.VanillaVersionID
+	if snapshot.PreInfo != nil {
+		d.LaunchInfo = gamelog.FormatPreLaunchInfo(*snapshot.PreInfo)
+		d.JavaExec = snapshot.PreInfo.JavaExec
+		d.MaxRAM = snapshot.PreInfo.MaxRAM
+		d.VanillaVersion = snapshot.PreInfo.VanillaVersionID
 	}
-	if !inst.StartTime.IsZero() {
-		d.UptimeMs = time.Since(inst.StartTime).Milliseconds()
+	if !snapshot.StartTime.IsZero() {
+		d.UptimeMs = time.Since(snapshot.StartTime).Milliseconds()
 	}
 	return d
 }

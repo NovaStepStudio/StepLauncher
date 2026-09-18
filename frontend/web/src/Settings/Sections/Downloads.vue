@@ -49,7 +49,7 @@ async function saveMbps() {
                     <div class="SsStep">
                         <button class="SsStepBtn" :disabled="concurrentDownloads <= 1" @click="concurrentDownloads--; saveDownloads()">−</button>
                         <span class="SsStepVal">{{ concurrentDownloads }}</span>
-                        <button class="SsStepBtn" :disabled="concurrentDownloads >= 16" @click="concurrentDownloads++; saveDownloads()">+</button>
+                        <button class="SsStepBtn" :disabled="concurrentDownloads >= 8" @click="concurrentDownloads++; saveDownloads()">+</button>
                     </div>
                 </div>
             </div>

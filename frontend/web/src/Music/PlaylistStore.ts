@@ -25,6 +25,11 @@ export async function loadPlaylists(): Promise<void> {
         const { ListPlaylists } = await import('@wailsjs/StepLauncher/internal/Services/Music/musicservice');
         const list = await ListPlaylists();
         playlists.value = Array.isArray(list) ? (list as Playlist[]) : [];
+        // Sincronizar menú del tray (muestra máx 5) tras cargar
+        try {
+            const sys: any = await import('@wailsjs/StepLauncher/internal/Services/System/systemservice');
+            if (typeof sys.RefreshTray === 'function') await sys.RefreshTray().catch(() => {});
+        } catch {}
     } catch {
         playlists.value = [];
     } finally {

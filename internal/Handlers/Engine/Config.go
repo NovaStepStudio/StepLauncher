@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"StepLauncher/internal/Core/Downloader"
 	"StepLauncher/internal/Core/Platform"
 	engineconfig "StepLauncher/internal/Handlers/Engine/engineconfig"
 )
@@ -59,12 +60,42 @@ func (e *Engine) SetConcurrentDownloads(n int) {
 	cfg := e.config.Get()
 	cfg.ConcurrentDownloads = n
 	e.config.UpdateConfig(cfg)
+	if e.downloader != nil {
+		e.downloader.SetMaxConcurrency(n)
+	}
+	if e.sharedDl != nil {
+		e.sharedDl.SetMaxConcurrency(n)
+	}
 }
 
 func (e *Engine) SetMaxMbps(mbps float64) {
 	cfg := e.config.Get()
 	cfg.MaxMbps = mbps
 	e.config.UpdateConfig(cfg)
+	e.applyNetworkConfig(cfg)
+}
+
+func (e *Engine) applyNetworkConfig(cfg engineconfig.Config) {
+	client, err := downloader.NewConfiguredHTTPClient(
+		cfg.MaxMbps,
+		cfg.ProxyEnabled,
+		cfg.ProxyHost,
+		cfg.ProxyPort,
+		cfg.ProxyUser,
+		cfg.ProxyPass,
+	)
+	if err != nil {
+		if e.log != nil {
+			e.log.Warn("No se pudo aplicar la configuración de red: %v", err)
+		}
+		return
+	}
+	if e.downloader != nil {
+		e.downloader.SetHTTPClient(client)
+	}
+	if e.sharedDl != nil {
+		e.sharedDl.SetHTTPClient(client)
+	}
 }
 
 func (e *Engine) SetVerifyIntegrity(v bool) {

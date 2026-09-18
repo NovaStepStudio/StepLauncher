@@ -1,0 +1,157 @@
+name: Build Prerelease Draft
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Sufijo de versión dev (ej: 2.5.0-beta.2). Vacío = v0.0.0-dev.<run_number>"
+        required: false
+        default: ""
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  APP_NAME: steplauncher
+
+jobs:
+  prerelease:
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            name: windows-amd64
+            os: windows
+            arch: amd64
+            build_task: "windows:build"
+            package_task: "windows:package"
+
+          - platform: ubuntu-latest
+            name: linux-amd64
+            os: linux
+            arch: amd64
+            build_task: "linux:build"
+            package_task: "linux:package"
+
+          - platform: macos-latest
+            name: macos-aarch64
+            os: darwin
+            arch: arm64
+            build_task: "darwin:build"
+            package_task: "darwin:package"
+
+          - platform: macos-latest
+            name: macos-x86_64
+            os: darwin
+            arch: amd64
+            build_task: "darwin:build"
+            package_task: "darwin:package"
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go 1.26.4
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.4"
+          cache: true
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar Wails CLI v3
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+
+      - name: Instalar dependencias Linux
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libgtk-4-dev libwebkitgtk-6.0-dev libayatana-appindicator3-dev librsvg2-dev patchelf pkg-config
+          sudo apt-get install -y libfuse2 2>/dev/null || sudo apt-get install -y libfuse2t64 2>/dev/null || true
+
+      - name: Instalar dependencias Windows (NSIS)
+        if: matrix.os == 'windows'
+        run: |
+          choco install nsis -y
+          makensis -VERSION
+
+      - name: Instalar dependencias frontend
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Build ${{ matrix.name }}
+        shell: bash
+        run: task ${{ matrix.build_task }} ARCH=${{ matrix.arch }}
+
+      - name: Package ${{ matrix.name }}
+        shell: bash
+        run: task ${{ matrix.package_task }} ARCH=${{ matrix.arch }} || echo "package opcional falló"
+        continue-on-error: true
+
+      - name: Renombrar artefactos
+        shell: bash
+        run: |
+          VERSION="${{ inputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION="v0.0.0-dev.${{ github.run_number }}"
+          fi
+          # Asegurar prefijo v
+          [[ "$VERSION" == v* ]] || VERSION="v$VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION"
+          mkdir -p dist-release
+          [ -f "bin/steplauncher" ] && cp bin/steplauncher "dist-release/steplauncher-${VERSION}-${{ matrix.name }}" || true
+          [ -f "bin/steplauncher.exe" ] && cp bin/steplauncher.exe "dist-release/steplauncher-${VERSION}-${{ matrix.name }}.exe" || true
+          for f in bin/*installer*.exe bin/*.deb bin/*.rpm bin/*.AppImage bin/*.dmg; do [ -f "$f" ] && cp "$f" dist-release/ || true; done
+          if [ -d "bin/steplauncher.app" ]; then (cd bin && tar -czf "../dist-release/steplauncher-${VERSION}-${{ matrix.name }}.app.tar.gz" steplauncher.app); fi
+          ls -lh dist-release/ || echo "vacío"
+
+      - name: Upload artefacto prerelease
+        uses: actions/upload-artifact@v4
+        with:
+          name: prerelease-${{ matrix.name }}-${{ github.sha }}
+          path: dist-release/*
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Publicar en Draft Prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: "StepLauncher ${{ env.VERSION }} (DEV #${{ github.run_number }})"
+          body: |
+            🧪 **Versión de desarrollo**
+            Build automático desde `${{ github.ref_name }}` — run #${{ github.run_number }}.
+
+            > ⚠️ Esta es una prerelease de pruebas. No es una versión estable.
+
+            ## Cambios
+            Ver los commits para más detalles.
+
+            ## Artefactos
+            - Windows: `.exe` + instalador NSIS
+            - Linux: bin + `.deb`/`.rpm`/`.AppImage`
+            - macOS: `.app.tar.gz` + `.dmg` (Apple Silicon e Intel)
+          draft: true
+          prerelease: true
+          files: dist-release/*
+          fail_on_unmatched_files: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

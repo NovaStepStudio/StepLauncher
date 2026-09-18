@@ -91,3 +91,13 @@ func (a *App) RemoveMusic(name string) error {
 	a.logf("[Music] Audio de fondo eliminado: %s", name)
 	return nil
 }
+
+// PickCustomCoverFile abre el diálogo para elegir una imagen de carátula custom (PNG/JPG/WEBP)
+func (a *App) PickCustomCoverFile() (string, error) {
+	if a.runtime == nil {
+		return "", fmt.Errorf("runtime no disponible")
+	}
+	return a.runtime.OpenFileDialog("Seleccionar carátula", []FileFilter{
+		{DisplayName: "Imágenes (*.png, *.jpg, *.jpeg, *.webp)", Pattern: "*.png;*.jpg;*.jpeg;*.webp"},
+	})
+}

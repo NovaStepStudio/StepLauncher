@@ -557,15 +557,6 @@ async function importPl() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel"><IconEye :size="12" stroke="2" style="margin-right:4px;" /> Mostrar carátulas en filas</span>
-                    <span class="SsDesc">Ocultar mejora rendimiento con 1k+ pistas.</span>
-                </div>
-                <div class="SsCtrl">
-                    <label class="SsTg"><input type="checkbox" v-model="showCovers" @change="() => save()" /><span class="SsTgS"></span></label>
-                </div>
-            </div>
-            <div class="SsRow">
-                <div class="SsInfo">
                     <span class="SsLabel"><IconList :size="12" stroke="2" style="margin-right:4px;" /> Pistas por página</span>
                     <span class="SsDesc">Para no cargar 1k filas de golpe.</span>
                 </div>

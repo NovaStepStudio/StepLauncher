@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"StepLauncher/internal/Core/Downloader"
@@ -63,6 +64,17 @@ func (m *InstanceManager) lockPath(name string) (string, error) {
 		return "", err
 	}
 	return filepath.Join(m.instancesDir, name, lockFile), nil
+}
+
+func (m *InstanceManager) persistenceLock(name string) *sync.Mutex {
+	m.persistenceMu.Lock()
+	defer m.persistenceMu.Unlock()
+	lock := m.persistenceLocks[name]
+	if lock == nil {
+		lock = &sync.Mutex{}
+		m.persistenceLocks[name] = lock
+	}
+	return lock
 }
 
 func (m *InstanceManager) readMetadata(name string) (*InstanceMetadata, error) {
@@ -177,6 +189,9 @@ func (m *InstanceManager) releaseLock(name string) {
 }
 
 func (m *InstanceManager) addVersionToMetadata(name, version string) error {
+	lock := m.persistenceLock(name)
+	lock.Lock()
+	defer lock.Unlock()
 	meta, err := m.readMetadata(name)
 	if err != nil {
 		return err
@@ -215,6 +230,9 @@ func (m *InstanceManager) addVersionToMetadata(name, version string) error {
 // instaladores dejan el directorio sin su json durante un instante, o con
 // nombres que no coinciden exactamente con el contenido del manifest).
 func (m *InstanceManager) syncVersionsFromDisk(name string) error {
+	lock := m.persistenceLock(name)
+	lock.Lock()
+	defer lock.Unlock()
 	instPath, err := m.instancePath(name)
 	if err != nil {
 		return err

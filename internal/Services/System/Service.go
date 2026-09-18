@@ -233,7 +233,7 @@ func (s *SystemService) ServiceShutdown() error {
 
 func (s *SystemService) ServiceStartup(ctx context.Context, options application.ServiceOptions) error {
 	s.ctx = ctx
-	s.tray = tray.New(s.app, s.engine)
+	s.tray = tray.New(s.app, s.engine, s.handler)
 	s.handler.SetRuntimeBridge(&runtimeBridge{app: s.app})
 	s.handler.SetEventCallback(func(eventType string, data []byte) {
 		s.app.Event.Emit(eventType, string(data))
@@ -242,6 +242,36 @@ func (s *SystemService) ServiceStartup(ctx context.Context, options application.
 	s.handler.Startup()
 	s.tray.Setup(appIcon)
 	return nil
+}
+
+// UpdateTrayLibraryState sincroniza el estado de la biblioteca musical con el tray
+// para que los controles reproducir/pausar/siguiente/anterior reflejen correctamente
+// habilitados/deshabilitados y etiqueta. Es invocado desde el frontend (PlayerStore).
+func (s *SystemService) UpdateTrayLibraryState(playing, hasNext, hasPrev, hasQueue bool) {
+	if s.tray != nil {
+		s.tray.UpdateLibraryState(playing, hasNext, hasPrev, hasQueue)
+	}
+}
+
+// RefreshTray fuerza la reconstrucción del menú del tray (p. ej. tras crear/borrar playlist).
+func (s *SystemService) RefreshTray() {
+	if s.tray != nil {
+		s.tray.Refresh()
+	}
+}
+
+// ReloadWindow recarga la interfaz de la ventana principal (equivalente a F5).
+func (s *SystemService) ReloadWindow() {
+	if win, ok := s.app.Window.Get("main"); ok && win != nil {
+		win.Reload()
+	}
+}
+
+// OpenHomepage abre la página principal del launcher en el navegador externo.
+func (s *SystemService) OpenHomepage() {
+	if s.app != nil {
+		_ = s.app.Browser.OpenURL("https://steplauncher.pages.dev")
+	}
 }
 
 func (s *SystemService) SetDirectoryMode(mode string, customPath string) error {

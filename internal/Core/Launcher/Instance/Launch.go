@@ -219,6 +219,9 @@ func (m *InstanceManager) LaunchInstance(name string, auth launcher.LaunchConfig
 
 	go func() {
 		<-instance.Done()
+		lock := m.persistenceLock(name)
+		lock.Lock()
+		defer lock.Unlock()
 		now := time.Now()
 		secs := int(now.Sub(started).Seconds())
 		meta.PlayTime += int64(secs)

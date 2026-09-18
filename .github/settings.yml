@@ -1,0 +1,15 @@
+# Configuracion del repositorio para GitHub (compatible con probot/settings)
+# Si instalas https://github.com/apps/settings esta config sincroniza homepage, descripcion y topics.
+# GitHub usa homepage para mostrar el link de la web en la tarjeta About del repo.
+
+repository:
+  name: StepLauncher
+  description: "El launcher no premium para Minecraft: Java Edition - Wails v3 + Go + Vue 3 - NovaStepStudio"
+  homepage: https://steplauncher.pages.dev
+  topics: minecraft, minecraft-launcher, wails, wails-v3, go, vue, vue3, launcher, nova-step-studio, steplauncher
+  has_issues: true
+  has_projects: true
+  has_wiki: false
+  has_pages: false
+  has_discussions: false
+  default_branch: main

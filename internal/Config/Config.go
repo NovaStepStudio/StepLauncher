@@ -358,7 +358,7 @@ func Default() Config {
 				Position:     "bottom-center",
 				CoverStyle:   "disc",
 				DiscRotation: true,
-				Volume:       0.8,
+				Volume:       1,
 			},
 			FontPrimary:        "Lexend",
 			FontSecondary:      "Inter",
@@ -568,7 +568,7 @@ func (m *Manager) sanitize() {
 		music.CoverStyle = "disc"
 	}
 	if music.Volume < 0 || music.Volume > 1 {
-		music.Volume = 0.8
+		music.Volume = 1
 	}
 	mp := &c.MusicPanel
 	if mp.CoverStyle != "disc" && mp.CoverStyle != "huge" {

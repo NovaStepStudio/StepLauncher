@@ -120,23 +120,44 @@ func NewManager(cfg Config) *Manager {
 	}
 }
 
+func (m *Manager) SetMaxConcurrency(n int) {
+	if n <= 0 {
+		n = 8
+	}
+	if n > 64 {
+		n = 64
+	}
+	m.mu.Lock()
+	m.cfg.MaxConcurrency = n
+	queue := m.queue
+	m.mu.Unlock()
+	queue.SetMaxConcurrent(n)
+}
+
+func (m *Manager) GetMaxConcurrency() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.cfg.MaxConcurrency
+}
+
 func (m *Manager) Start(version string, filter DownloadFilter, maxRetries int, maxConcurrency int, skipVerify bool, stallTimeout int, maxStallRetries int) *Download {
 	m.mu.Lock()
 	m.nextID++
 	id := fmt.Sprintf("%s%d", m.cfg.IDPrefix, m.nextID)
+	defaults := m.cfg
 	m.mu.Unlock()
 
 	if maxRetries <= 0 {
-		maxRetries = m.cfg.MaxRetries
+		maxRetries = defaults.MaxRetries
 	}
 	if maxConcurrency <= 0 {
-		maxConcurrency = m.cfg.MaxConcurrency
+		maxConcurrency = defaults.MaxConcurrency
 	}
 	if stallTimeout <= 0 {
-		stallTimeout = m.cfg.StallTimeout
+		stallTimeout = defaults.StallTimeout
 	}
 	if maxStallRetries <= 0 {
-		maxStallRetries = m.cfg.MaxStallReDownload
+		maxStallRetries = defaults.MaxStallReDownload
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
@@ -206,7 +227,24 @@ func (m *Manager) Get(id string) *Download {
 }
 
 func (m *Manager) HTTPClient() *http.Client {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.cfg.HTTPClient
+}
+
+func (m *Manager) SetHTTPClient(client *http.Client) {
+	if client == nil {
+		client = DefaultHTTPClient()
+	}
+	m.mu.Lock()
+	m.cfg.HTTPClient = client
+	m.mu.Unlock()
+}
+
+func (m *Manager) configSnapshot() Config {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.cfg
 }
 
 func (m *Manager) Pause(id string) error {
@@ -401,8 +439,9 @@ func (m *Manager) runDownload(dl *Download) {
 	log("Starting download of Minecraft %s", dl.Version)
 	m.emitProgress(dl)
 
+	cfg := m.configSnapshot()
 	var manifest Manifest
-	if err := FetchJSON(m.cfg, "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json", "manifest", &manifest); err != nil {
+	if err := FetchJSON(cfg, "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json", "manifest", &manifest); err != nil {
 		m.setError(dl, fmt.Errorf("manifest: %w", err))
 		return
 	}
@@ -420,14 +459,14 @@ func (m *Manager) runDownload(dl *Download) {
 	}
 
 	var ver VersionJSON
-	if err := FetchJSON(m.cfg, verURL, "version/"+dl.Version, &ver); err != nil {
+	if err := FetchJSON(cfg, verURL, "version/"+dl.Version, &ver); err != nil {
 		m.setError(dl, fmt.Errorf("version json: %w", err))
 		return
 	}
 	NormalizeVersion(&ver)
 	log("Fetched version JSON for %s", dl.Version)
 
-	verDir := filepath.Join(m.cfg.WorkDir, "versions", dl.Version)
+	verDir := filepath.Join(cfg.WorkDir, "versions", dl.Version)
 	if dl.Filter.InstanceVersionDir != "" {
 		verDir = dl.Filter.InstanceVersionDir
 	}
@@ -441,7 +480,7 @@ func (m *Manager) runDownload(dl *Download) {
 		log("WARN: saving version json: %v", err)
 	}
 
-	allTasks, err := BuildTasks(m.cfg, &ver, dl.Version, dl.Filter)
+	allTasks, err := BuildTasks(cfg, &ver, dl.Version, dl.Filter)
 	if err != nil {
 		m.setError(dl, fmt.Errorf("build tasks: %w", err))
 		return
@@ -713,7 +752,7 @@ func (m *Manager) processTask(dl *Download, task DownloadTask, nativeMu *sync.Mu
 		return
 	}
 
-	err := DownloadFile(dl.ctx, task, m.cfg.HTTPClient, dl.maxRetries, func(done, total int64) {
+	err := DownloadFile(dl.ctx, task, m.HTTPClient(), dl.maxRetries, func(done, total int64) {
 		dl.mu.Lock()
 		prev := dl.fileBytes[task.Dest]
 		dl.fileBytes[task.Dest] = done

@@ -70,13 +70,36 @@ func fetchJSONWithCache(cfg Config, url, cacheKey string, out interface{}) error
 
 	resp, err := client.Get(url)
 	if err != nil {
-		if found && expired {
+		if IsProxyProtocolError(err) {
 			if cfg.LogFn != nil {
-				cfg.LogFn("[Cache] WARN: using expired cache for %s/%s (remote unavailable: %v)", category, subkey, err)
+				cfg.LogFn("[Network] WARN: posible proxy mal configurado (SOCKS vs HTTP) al pedir %s: %v", url, err)
 			}
-			return nil
+			// Reintento directo sin proxy
+			direct := DefaultHTTPClient()
+			if resp2, err2 := direct.Get(url); err2 == nil {
+				resp = resp2
+				err = nil
+			} else {
+				if IsProxyProtocolError(err) {
+					err = WrapProxyError(err, "", 0)
+				}
+				if found && expired {
+					if cfg.LogFn != nil {
+						cfg.LogFn("[Cache] WARN: using expired cache for %s/%s (proxy error, remote unavailable: %v)", category, subkey, err)
+					}
+					return nil
+				}
+				return fmt.Errorf("fetch %s: %w (revisa Ajustes > Red > Proxy: si usas Clash/V2Ray, el puerto HTTP suele ser 7890, no el SOCKS 7891)", url, err)
+			}
+		} else {
+			if found && expired {
+				if cfg.LogFn != nil {
+					cfg.LogFn("[Cache] WARN: using expired cache for %s/%s (remote unavailable: %v)", category, subkey, err)
+				}
+				return nil
+			}
+			return err
 		}
-		return err
 	}
 	defer resp.Body.Close()
 
@@ -126,12 +149,30 @@ func fetchJSONFlat(cfg Config, url, cacheKey string, out interface{}) error {
 	}
 	resp, err := client.Get(url)
 	if err != nil {
-		if data, _, cachedErr := readCached(path); cachedErr == nil {
-			if jsonErr := json.Unmarshal(data, out); jsonErr == nil {
-				return nil
+		if IsProxyProtocolError(err) {
+			if cfg.LogFn != nil {
+				cfg.LogFn("[Network] WARN: posible proxy mal configurado al pedir %s: %v", url, err)
 			}
+			direct := DefaultHTTPClient()
+			if resp2, err2 := direct.Get(url); err2 == nil {
+				resp = resp2
+				err = nil
+			} else {
+				if data, _, cachedErr := readCached(path); cachedErr == nil {
+					if jsonErr := json.Unmarshal(data, out); jsonErr == nil {
+						return nil
+					}
+				}
+				return fmt.Errorf("fetch %s: %w (revisa Ajustes > Red > Proxy)", url, WrapProxyError(err, "", 0))
+			}
+		} else {
+			if data, _, cachedErr := readCached(path); cachedErr == nil {
+				if jsonErr := json.Unmarshal(data, out); jsonErr == nil {
+					return nil
+				}
+			}
+			return err
 		}
-		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {

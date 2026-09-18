@@ -993,6 +993,25 @@ $pc: var(--progress-color, var(--background-button-primary));
     text-overflow: ellipsis;
 }
 
+.InstallationModal_DetailRowHint {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.25rem;
+    padding: 0.3rem 0.4rem;
+    border-radius: 0.35rem;
+    background: color-mix(in srgb, var(--color-warning) 8%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--color-warning) 30%, transparent);
+    font-size: 0.58rem;
+    line-height: 1.4;
+    color: var(--color-warning);
+
+    svg {
+        flex-shrink: 0;
+        color: var(--color-warning);
+    }
+}
+
 .InstallationModal_DetailBar {
     height: 0.28rem;
     border-radius: 0.3rem;

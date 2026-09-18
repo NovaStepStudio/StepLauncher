@@ -29,7 +29,7 @@ export const MAX_MUSIC_BYTES = 15 * 1024 * 1024; // 15 MB
 export const musicList = ref<MusicSlot[]>([]);
 export const currentIndex = ref(-1);
 export const playing = ref(false);
-export const volume = ref(0.8);
+export const volume = ref(1);
 export const currentTime = ref(0);
 export const loadError = ref('');
 export const metaCache = ref<Record<string, TrackMeta>>({});
@@ -560,6 +560,20 @@ export function stopMusic() {
     updateMediaSession();
 }
 
+export function pauseBackground(): void {
+    if (!playing.value) return;
+    wantsPlay = false;
+    if (retryTimer !== null) {
+        window.clearTimeout(retryTimer);
+        retryTimer = null;
+    }
+    if (audio) {
+        try { audio.pause(); } catch (_e) {}
+    }
+    playing.value = false;
+    updateMediaSession();
+}
+
 // Lee el archivo seleccionado con el diálogo nativo y lo valida con el MISMO
 // motor que reproduce la música (el <audio> nativo): extensión soportada,
 // <= 15 MB y duración <= 10 minutos medida sobre un data URI real. Así lo que
@@ -695,6 +709,16 @@ watch(
 
 // El system tray (ítem "Pausar / Reproducir") alterna la música de fondo: el
 // backend emite este evento al hacer clic en el menú del área de notificaciones.
+// Deprecated: el tray ahora controla solo la biblioteca; se mantiene por compatibilidad.
 Events.On('music_tray_toggle', () => {
     void togglePlay();
+});
+
+// Pausar solo la música de fondo al iniciar Minecraft; la biblioteca sigue sonando.
+// La biblioteca usa su propio audio (PlayerStore) y no se ve afectada.
+Events.On('game_starting', () => {
+    pauseBackground();
+});
+Events.On('game_started', () => {
+    pauseBackground();
 });

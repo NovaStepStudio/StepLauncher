@@ -176,7 +176,7 @@ function normalizePersonalization(p: any, cur: any): Personalization {
             position: 'bottom-center',
             coverStyle: ['square', 'background'].includes(musicIn.coverStyle) ? musicIn.coverStyle : 'disc',
             discRotation: bool(musicIn.discRotation, true),
-            volume: num(musicIn.volume, num(cur?.backgroundMusic?.volume, 0.8)),
+            volume: num(musicIn.volume, num(cur?.backgroundMusic?.volume, 1)),
         },
         fontPrimary: str(p?.fontPrimary, str(cur?.fontPrimary, 'Lexend')),
         fontSecondary: str(p?.fontSecondary, str(cur?.fontSecondary, 'Inter')),

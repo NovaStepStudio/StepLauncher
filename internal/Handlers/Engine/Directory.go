@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"StepLauncher/internal/Core/Downloader"
 	engineconfig "StepLauncher/internal/Handlers/Engine/engineconfig"
 )
 
@@ -82,12 +83,28 @@ func (e *Engine) hasActiveSessions() bool {
 		}
 	}
 	for _, d := range e.ListDownloads() {
-		switch d.State {
-		case "pending", "downloading", "verifying", "redownloading":
+		if isActiveDownloadState(d.State) {
 			return true
 		}
 	}
+	if e.sharedDl != nil {
+		for _, d := range e.sharedDl.List() {
+			info := e.sharedDl.GetInfo(d.ID)
+			if info != nil && isActiveDownloadState(info.State) {
+				return true
+			}
+		}
+	}
 	return false
+}
+
+func isActiveDownloadState(state downloader.DownloadState) bool {
+	switch state {
+	case downloader.StatePending, downloader.StateDownloading, downloader.StatePaused, downloader.StateVerifying, downloader.StateReDownload:
+		return true
+	default:
+		return false
+	}
 }
 
 func (e *Engine) applyDirectoryMode() {

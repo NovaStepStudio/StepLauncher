@@ -1,42 +1,51 @@
 package tray
 
 import (
+	"fmt"
 	"sort"
 
 	"StepLauncher/internal/Core/Launcher"
+	"StepLauncher/internal/Handlers"
 	engine "StepLauncher/internal/Handlers/Engine"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// Eventos que el tray emite al frontend para alternar la música, lanzar
-// versiones o instancias, abrir vistas y sincronizar la cuenta seleccionada;
-// los escuchan Common/Stores/Music.ts, Launcher/Store.ts, Instances/Store.ts,
-// Accounts/Store.ts y App.vue.
+// Eventos que el tray emite al frontend.
 const (
-	musicToggleEvent     = "music_tray_toggle"
-	launchVersionEvent   = "tray_launch_version"
-	launchInstanceEvent  = "tray_launch_instance"
-	openSettingsEvent    = "tray_open_settings"
-	openInstancesEvent   = "tray_open_instances"
-	openDownloadsEvent   = "tray_open_downloads"
-	accountSelectedEvent = "tray_account_selected"
+	musicToggleEvent      = "music_tray_toggle" // compat: fondo (deprecated, usar biblioteca)
+	libraryPlayPauseEvent = "library_tray_play_pause"
+	libraryNextEvent      = "library_tray_next"
+	libraryPrevEvent      = "library_tray_prev"
+	openMusicEvent        = "tray_open_music"
+	selectPlaylistEvent   = "tray_select_playlist"
+	launchVersionEvent    = "tray_launch_version"
+	launchInstanceEvent   = "tray_launch_instance"
+	openSettingsEvent     = "tray_open_settings"
+	openInstancesEvent    = "tray_open_instances"
+	openDownloadsEvent    = "tray_open_downloads"
+	accountSelectedEvent  = "tray_account_selected"
 )
 
 // Tray gestiona el icono del área de notificaciones: su menú con las últimas
-// sesiones e instancias jugadas, la cuenta activa y las acciones rápidas.
+// sesiones e instancias jugadas, la cuenta activa, los controles de la música
+// de biblioteca, playlists y las acciones rápidas.
 type Tray struct {
-	app         *application.App
-	engine      *engine.Engine
-	sysTray     *application.SystemTray
-	menu        *application.Menu
-	musicItem   *application.MenuItem
-	musicPaused bool
+	app              *application.App
+	engine           *engine.Engine
+	handler          *Handlers.App
+	sysTray          *application.SystemTray
+	menu             *application.Menu
+	libraryPlaying   bool
+	libraryHasQueue  bool
+	libraryHasNext   bool
+	libraryHasPrev   bool
+	musicPaused      bool // compat fondo
 }
 
 // New crea el gestor del tray sin mostrarlo; Setup lo registra en el sistema.
-func New(app *application.App, engine *engine.Engine) *Tray {
-	return &Tray{app: app, engine: engine}
+func New(app *application.App, eng *engine.Engine, handler *Handlers.App) *Tray {
+	return &Tray{app: app, engine: eng, handler: handler}
 }
 
 // Setup crea el icono del área de notificaciones con su menú de acciones
@@ -86,9 +95,21 @@ func (t *Tray) OnEngineEvent(eventType string) {
 	}
 }
 
+// UpdateLibraryState actualiza el estado de la cola de biblioteca que reporta el frontend
+// y refresca el menú para reflejar habilitados/deshabilitados y etiqueta play/pause.
+// Es invocado por SystemService.UpdateTrayLibraryState (binding JS -> Go).
+func (t *Tray) UpdateLibraryState(playing, hasNext, hasPrev, hasQueue bool) {
+	t.libraryPlaying = playing
+	t.libraryHasNext = hasNext
+	t.libraryHasPrev = hasPrev
+	t.libraryHasQueue = hasQueue
+	t.refresh()
+}
+
 // buildMenu construye el menú del tray: últimas versiones jugadas (máx. 5),
-// últimas instancias jugadas (máx. 5), cuenta activa (máx. 5) y las acciones
-// rápidas (música, ventana, ajustes, instancias, descargas, GitHub y salir).
+// últimas instancias jugadas (máx. 5), cuenta activa (máx. 5), controles de
+// biblioteca (panel, playlists máx 5, play/pause/next/prev), y las acciones
+// rápidas (ventana, ajustes, instancias, descargas, recargar, página principal, GitHub y salir).
 func (t *Tray) buildMenu() *application.Menu {
 	t.menu = application.NewMenu()
 
@@ -100,8 +121,9 @@ func (t *Tray) buildMenu() *application.Menu {
 		versionsMenu.Add("Sin sesiones aún").SetEnabled(false)
 	} else {
 		for _, v := range versions {
-			versionsMenu.Add("Jugar " + v).OnClick(func(*application.Context) {
-				t.launchVersion(v)
+			vCopy := v
+			versionsMenu.Add("Jugar " + vCopy).OnClick(func(*application.Context) {
+				t.launchVersion(vCopy)
 			})
 		}
 	}
@@ -114,8 +136,9 @@ func (t *Tray) buildMenu() *application.Menu {
 		instancesMenu.Add("Sin instancias aún").SetEnabled(false)
 	} else {
 		for _, name := range instances {
-			instancesMenu.Add("Jugar " + name).OnClick(func(*application.Context) {
-				t.launchInstance(name)
+			n := name
+			instancesMenu.Add("Jugar " + n).OnClick(func(*application.Context) {
+				t.launchInstance(n)
 			})
 		}
 	}
@@ -129,31 +152,84 @@ func (t *Tray) buildMenu() *application.Menu {
 	} else {
 		selectedID := t.selectedAccountID()
 		for _, acc := range accounts {
-			label := acc.Username
+			accCopy := acc
+			label := accCopy.Username
 			if label == "" {
-				label = acc.Name
+				label = accCopy.Name
 			}
-			accountsMenu.AddRadio(label, acc.ID == selectedID).OnClick(func(*application.Context) {
-				t.selectAccount(acc.ID)
+			accountsMenu.AddRadio(label, accCopy.ID == selectedID).OnClick(func(*application.Context) {
+				t.selectAccount(accCopy.ID)
 			})
 		}
 	}
 
 	t.menu.AddSeparator()
 
-	// Música: botón que alterna la reproducción y cambia su etiqueta según el
-	// estado; el menú se actualiza con Update() tras cada cambio.
-	musicLabel := "Pausar Música"
-	if t.musicPaused {
-		musicLabel = "Reproducir Música"
-	}
-	t.musicItem = t.menu.Add(musicLabel)
-	t.musicItem.OnClick(func(*application.Context) {
-		t.musicPaused = !t.musicPaused
-		t.app.Event.Emit(musicToggleEvent, "")
-		t.setMusicLabel(t.musicPaused)
-		t.menu.Update()
+	// --- Música de Biblioteca ---
+	// Botón para abrir el panel de Música directamente
+	t.menu.Add("Abrir Panel de Música").OnClick(func(*application.Context) {
+		t.showMainWindow()
+		t.app.Event.Emit(openMusicEvent, "")
 	})
+
+	// Playlists (máx 5) - muestra las playlists disponibles para seleccionar
+	playlistsMenu := t.menu.AddSubmenu("Playlists")
+	playlists := t.recentPlaylists(5)
+	if len(playlists) == 0 {
+		playlistsMenu.Add("Sin playlists").SetEnabled(false)
+	} else {
+		for _, pl := range playlists {
+			plCopy := pl
+			label := plCopy.Title
+			if label == "" {
+				label = "Sin título"
+			}
+			if plCopy.TrackCount > 0 {
+				label = fmt.Sprintf("%s (%d)", label, plCopy.TrackCount)
+			}
+			// Limitar longitud para menú
+			if len(label) > 36 {
+				label = label[:33] + "..."
+			}
+			playlistsMenu.Add(label).OnClick(func(*application.Context) {
+				t.selectPlaylist(plCopy.ID)
+			})
+		}
+	}
+
+	// Controles de biblioteca: reproducir/pausar/siguiente/anterior
+	// Solo afectan a la música de biblioteca, no al fondo.
+	if t.libraryHasQueue {
+		lab := "Pausar Biblioteca"
+		if !t.libraryPlaying {
+			lab = "Reproducir Biblioteca"
+		}
+		t.menu.Add(lab).OnClick(func(*application.Context) {
+			t.app.Event.Emit(libraryPlayPauseEvent, "")
+		})
+	} else {
+		t.menu.Add("Reproducir Biblioteca").SetEnabled(false)
+	}
+
+	prevItem := t.menu.Add("Anterior")
+	if !t.libraryHasPrev {
+		prevItem.SetEnabled(false)
+	} else {
+		prevItem.OnClick(func(*application.Context) {
+			t.app.Event.Emit(libraryPrevEvent, "")
+		})
+	}
+
+	nextItem := t.menu.Add("Siguiente")
+	if !t.libraryHasNext {
+		nextItem.SetEnabled(false)
+	} else {
+		nextItem.OnClick(func(*application.Context) {
+			t.app.Event.Emit(libraryNextEvent, "")
+		})
+	}
+
+	t.menu.AddSeparator()
 
 	t.menu.Add("Mostrar / Ocultar Launcher").OnClick(func(*application.Context) {
 		t.toggleMainWindow()
@@ -180,6 +256,16 @@ func (t *Tray) buildMenu() *application.Menu {
 	})
 
 	t.menu.AddSeparator()
+
+	t.menu.Add("Recargar Interfaz").OnClick(func(*application.Context) {
+		if win := t.mainWindow(); win != nil {
+			win.Reload()
+		}
+	})
+
+	t.menu.Add("Página Principal").OnClick(func(*application.Context) {
+		_ = t.app.Browser.OpenURL("https://steplauncher.pages.dev")
+	})
 
 	t.menu.Add("GitHub").OnClick(func(*application.Context) {
 		_ = t.app.Browser.OpenURL("https://github.com/NovaStepStudio/StepLauncher")
@@ -214,18 +300,12 @@ func (t *Tray) selectAccount(id string) {
 	t.refresh()
 }
 
-// setMusicLabel guarda el estado de pausa y ajusta la etiqueta del item de
-// música según corresponda.
-func (t *Tray) setMusicLabel(paused bool) {
-	t.musicPaused = paused
-	if t.musicItem == nil {
-		return
-	}
-	if paused {
-		t.musicItem.SetLabel("Reproducir Música")
-	} else {
-		t.musicItem.SetLabel("Pausar Música")
-	}
+// selectPlaylist emite el evento para que el frontend cargue la playlist elegida
+// en la cola de biblioteca (máx 5). La biblioteca decide si iniciar reproducción.
+func (t *Tray) selectPlaylist(id string) {
+	t.showMainWindow()
+	t.app.Event.Emit(selectPlaylistEvent, id)
+	t.app.Event.Emit(openMusicEvent, "")
 }
 
 // mainWindow devuelve la ventana principal del launcher, o nil si no existe.
@@ -326,6 +406,49 @@ func (t *Tray) recentAccounts(limit int) []engine.AccountInfo {
 	return list
 }
 
+// recentPlaylists devuelve las playlists disponibles hasta `limit` (máx 5).
+func (t *Tray) recentPlaylists(limit int) []struct {
+	ID         string
+	Title      string
+	TrackCount int
+} {
+	if t.handler == nil || limit <= 0 {
+		return nil
+	}
+	list := t.handler.ListPlaylists()
+	if len(list) == 0 {
+		return nil
+	}
+	// Ordenar por favoritas/pinned primero, luego por más recientes (UpdatedAt)
+	sort.Slice(list, func(i, j int) bool {
+		if list[i].Pinned != list[j].Pinned {
+			return list[i].Pinned
+		}
+		if list[i].Favorite != list[j].Favorite {
+			return list[i].Favorite
+		}
+		return list[i].UpdatedAt > list[j].UpdatedAt
+	})
+	n := limit
+	if len(list) < n {
+		n = len(list)
+	}
+	out := make([]struct {
+		ID         string
+		Title      string
+		TrackCount int
+	}, 0, n)
+	for i := 0; i < n; i++ {
+		pl := list[i]
+		out = append(out, struct {
+			ID         string
+			Title      string
+			TrackCount int
+		}{ID: pl.ID, Title: pl.Title, TrackCount: pl.TrackCount})
+	}
+	return out
+}
+
 // selectedAccountID devuelve el id de la cuenta activa, o "" si no hay.
 func (t *Tray) selectedAccountID() string {
 	if t.engine == nil {
@@ -352,4 +475,9 @@ func (t *Tray) refresh() {
 	}
 	t.menu = t.buildMenu()
 	t.sysTray.SetMenu(t.menu)
+}
+
+// Refresh es la versión exportada de refresh para uso desde SystemService.
+func (t *Tray) Refresh() {
+	t.refresh()
 }

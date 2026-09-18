@@ -34,7 +34,11 @@ func (m *InstanceManager) AddVersion(name string, req AddVersionReq) (*downloade
 	if req.MaxRetries != nil {
 		maxRetries = *req.MaxRetries
 	}
-	maxConcurrency := 24
+	// Si el frontend no especifica concurrencia, se deja en 0 para que el
+	// Manager use su MaxConcurrency configurado (respeta el ajuste
+	// "Archivos a la vez" del usuario). Antes era 24 fijo y no respetaba la
+	// configuración del launcher.
+	maxConcurrency := 0
 	if req.MaxConcurrency != nil {
 		maxConcurrency = *req.MaxConcurrency
 	}

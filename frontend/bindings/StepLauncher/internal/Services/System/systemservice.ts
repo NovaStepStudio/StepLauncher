@@ -81,6 +81,13 @@ export function NewsRefreshIndex(): $CancellablePromise<void> {
     return $Call.ByID(4104902204);
 }
 
+/**
+ * OpenHomepage abre la página principal del launcher en el navegador externo.
+ */
+export function OpenHomepage(): $CancellablePromise<void> {
+    return $Call.ByID(3863758818);
+}
+
 export function OpenPath(path: string): $CancellablePromise<void> {
     return $Call.ByID(3697010533, path);
 }
@@ -97,6 +104,20 @@ export function ReadLocalFile(rel: string): $CancellablePromise<string | null> {
     return $Call.ByID(1613660043, rel);
 }
 
+/**
+ * RefreshTray fuerza la reconstrucción del menú del tray (p. ej. tras crear/borrar playlist).
+ */
+export function RefreshTray(): $CancellablePromise<void> {
+    return $Call.ByID(3580314685);
+}
+
+/**
+ * ReloadWindow recarga la interfaz de la ventana principal (equivalente a F5).
+ */
+export function ReloadWindow(): $CancellablePromise<void> {
+    return $Call.ByID(1150960667);
+}
+
 export function RestartApp(): $CancellablePromise<void> {
     return $Call.ByID(147233424);
 }
@@ -111,6 +132,15 @@ export function SetFirstLaunchDone(): $CancellablePromise<void> {
 
 export function UpdateEngineConfig(cfg: engineconfig$0.Config): $CancellablePromise<void> {
     return $Call.ByID(1025301179, cfg);
+}
+
+/**
+ * UpdateTrayLibraryState sincroniza el estado de la biblioteca musical con el tray
+ * para que los controles reproducir/pausar/siguiente/anterior reflejen correctamente
+ * habilitados/deshabilitados y etiqueta. Es invocado desde el frontend (PlayerStore).
+ */
+export function UpdateTrayLibraryState(playing: boolean, hasNext: boolean, hasPrev: boolean, hasQueue: boolean): $CancellablePromise<void> {
+    return $Call.ByID(263804387, playing, hasNext, hasPrev, hasQueue);
 }
 
 export function WailsCheckForUpdate(): $CancellablePromise<void> {

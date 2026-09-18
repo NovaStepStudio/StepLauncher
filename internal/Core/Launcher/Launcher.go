@@ -7,11 +7,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -467,6 +470,71 @@ if l.ver.Arguments != nil {
 
 	gcFlags := helpers.GCFlags(adv.GCPreset)
 	override = append(override, gcFlags...)
+
+	// Proxy para Minecraft: soporta HTTP (http.proxyHost) y SOCKS (socksProxyHost).
+	// Detecta SOCKS por prefijo socks:// en ProxyHost; si no hay prefijo, se asume HTTP.
+	if strings.TrimSpace(adv.ProxyHost) != "" && adv.ProxyPort > 0 {
+		host := strings.TrimSpace(adv.ProxyHost)
+		port := adv.ProxyPort
+		lower := strings.ToLower(host)
+		isSocks := strings.HasPrefix(lower, "socks5://") || strings.HasPrefix(lower, "socks5h://") || strings.HasPrefix(lower, "socks://") || strings.HasPrefix(lower, "socks4://")
+		cleanHost := host
+		if strings.Contains(host, "://") {
+			if u, err := url.Parse(host); err == nil && u.Host != "" {
+				cleanHost = u.Host
+				if h, p, err := net.SplitHostPort(cleanHost); err == nil {
+					cleanHost = h
+					if pp, err := strconv.Atoi(p); err == nil && pp != 0 {
+						port = pp
+					}
+				}
+				// Credenciales en URL tienen prioridad si no hay en adv
+				if u.User != nil && adv.ProxyUser == "" {
+					adv.ProxyUser = u.User.Username()
+					if pw, ok := u.User.Password(); ok {
+						adv.ProxyPass = pw
+					}
+				}
+			} else if isSocks {
+				for _, pref := range []string{"socks5h://", "socks5://", "socks4://", "socks://"} {
+					if strings.HasPrefix(lower, pref) {
+						cleanHost = host[len(pref):]
+						break
+					}
+				}
+			}
+		}
+		if h, p, err := net.SplitHostPort(cleanHost); err == nil {
+			cleanHost = h
+			if pp, err := strconv.Atoi(p); err == nil && pp != 0 {
+				port = pp
+			}
+		}
+		cleanHost = strings.TrimSpace(cleanHost)
+		if cleanHost != "" {
+			if isSocks {
+				override = append(override, "-DsocksProxyHost="+cleanHost)
+				override = append(override, "-DsocksProxyPort="+strconv.Itoa(port))
+				if adv.ProxyUser != "" {
+					override = append(override, "-Djava.net.socks.username="+adv.ProxyUser)
+					if adv.ProxyPass != "" {
+						override = append(override, "-Djava.net.socks.password="+adv.ProxyPass)
+					}
+				}
+			} else {
+				override = append(override, "-Dhttp.proxyHost="+cleanHost)
+				override = append(override, "-Dhttp.proxyPort="+strconv.Itoa(port))
+				override = append(override, "-Dhttps.proxyHost="+cleanHost)
+				override = append(override, "-Dhttps.proxyPort="+strconv.Itoa(port))
+				if adv.ProxyUser != "" {
+					override = append(override, "-Dhttp.proxyUser="+adv.ProxyUser)
+					override = append(override, "-Dhttp.proxyPassword="+adv.ProxyPass)
+					override = append(override, "-Dhttps.proxyUser="+adv.ProxyUser)
+					override = append(override, "-Dhttps.proxyPassword="+adv.ProxyPass)
+				}
+			}
+		}
+	}
 
 	if helpers.DetectJavaMajorVersion(javaPath) >= 17 {
 		override = append(override, "--enable-native-access=ALL-UNNAMED")

@@ -6,11 +6,17 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync/atomic"
 	"time"
+
+	"golang.org/x/net/proxy"
 )
 
 const (
@@ -35,9 +41,177 @@ var (
 
 func DefaultHTTPClient() *http.Client {
 	return &http.Client{
-		Transport: DefaultTransport,
+		Transport: DefaultTransport.Clone(),
 		Timeout:   90 * time.Second,
 	}
+}
+
+func NewConfiguredHTTPClient(maxMbps float64, proxyEnabled bool, proxyHost string, proxyPort int, proxyUser, proxyPass string) (*http.Client, error) {
+	transport := DefaultTransport.Clone()
+	if proxyEnabled {
+		host := strings.TrimSpace(proxyHost)
+		if host == "" {
+			return nil, fmt.Errorf("el host del proxy es obligatorio")
+		}
+		if proxyPort < 1 || proxyPort > 65535 {
+			return nil, fmt.Errorf("el puerto del proxy es inválido")
+		}
+
+		// Permitir que el usuario escriba el esquema en el host (ej. "socks5://127.0.0.1" o "http://proxy.local").
+		// Si no hay esquema, se asume HTTP. Si es SOCKS, se configura un DialContext vía x/net/proxy.
+		lowerHost := strings.ToLower(host)
+		isSocks := strings.HasPrefix(lowerHost, "socks5://") || strings.HasPrefix(lowerHost, "socks5h://") || strings.HasPrefix(lowerHost, "socks4://") || strings.HasPrefix(lowerHost, "socks://")
+		if strings.Contains(host, "://") {
+			if u, err := url.Parse(host); err == nil && u.Host != "" {
+				scheme := strings.ToLower(u.Scheme)
+				if scheme == "socks5" || scheme == "socks5h" || scheme == "socks" || scheme == "socks4" || scheme == "socks4a" {
+					isSocks = true
+					host = u.Host
+					// Si la URL trae puerto, tiene prioridad sobre proxyPort
+					if h, p, err := net.SplitHostPort(host); err == nil {
+						host = h
+						if pp, err := strconv.Atoi(p); err == nil && pp != 0 {
+							proxyPort = pp
+						}
+					}
+					// Credenciales en la URL tienen prioridad
+					if u.User != nil {
+						proxyUser = u.User.Username()
+						if pw, ok := u.User.Password(); ok {
+							proxyPass = pw
+						}
+					}
+				} else if scheme == "http" || scheme == "https" {
+					isSocks = false
+					host = u.Host
+					if h, p, err := net.SplitHostPort(host); err == nil {
+						host = h
+						if pp, err := strconv.Atoi(p); err == nil && pp != 0 {
+							proxyPort = pp
+						}
+					}
+					if u.User != nil {
+						proxyUser = u.User.Username()
+						if pw, ok := u.User.Password(); ok {
+							proxyPass = pw
+						}
+					}
+				}
+			} else if isSocks {
+				// Fallback: quitar prefijo manual si url.Parse falló
+				for _, pref := range []string{"socks5h://", "socks5://", "socks4://", "socks://"} {
+					if strings.HasPrefix(lowerHost, pref) {
+						host = host[len(pref):]
+						break
+					}
+				}
+			}
+		}
+
+		// Host puede venir como "127.0.0.1:7891" sin esquema; separarlo
+		if !isSocks {
+			if h, p, err := net.SplitHostPort(host); err == nil {
+				// Solo aplicar si el host original no era una IP con puerto y el usuario no dejó el puerto separado
+				// Si proxyHost contenía puerto y proxyPort coincide con el default 8080, se respeta el puerto del host
+				if proxyPort == 8080 || proxyPort == 0 {
+					if pp, err := strconv.Atoi(p); err == nil {
+						host = h
+						proxyPort = pp
+					}
+				}
+			}
+		} else {
+			// Para SOCKS, también limpiar posible ":puerto" en host
+			if h, p, err := net.SplitHostPort(host); err == nil {
+				host = h
+				if pp, err := strconv.Atoi(p); err == nil && pp != 0 {
+					proxyPort = pp
+				}
+			}
+		}
+
+		host = strings.TrimSpace(host)
+		if host == "" {
+			return nil, fmt.Errorf("el host del proxy es obligatorio")
+		}
+
+		if isSocks {
+			// SOCKS5: el http.Transport no usa ProxyURL, sino un DialContext que hace el handshake SOCKS
+			proxyAddr := net.JoinHostPort(host, strconv.Itoa(proxyPort))
+			var auth *proxy.Auth
+			if proxyUser != "" {
+				auth = &proxy.Auth{User: proxyUser, Password: proxyPass}
+			}
+			socksDialer, err := proxy.SOCKS5("tcp", proxyAddr, auth, proxy.Direct)
+			if err != nil {
+				return nil, fmt.Errorf("proxy SOCKS5 %s: %w", proxyAddr, err)
+			}
+			// DialContext que respeta el context de la request
+			transport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+				// Si el contexto ya está cancelado, retornar rápido
+				select {
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				default:
+				}
+				// proxy.Dialer no soporta context, se usa Dial con timeout implícito del Transport
+				// y se comprueba el contexto antes y después
+				conn, err := socksDialer.Dial(network, addr)
+				if err != nil {
+					// Envolver error para que el caller pueda detectar mala configuración
+					if isProxyProtocolError(err) {
+						return nil, fmt.Errorf("%w (verifica que %s:%d sea un proxy SOCKS5 válido)", err, host, proxyPort)
+					}
+					return nil, err
+				}
+				return conn, nil
+			}
+			transport.Proxy = nil
+		} else {
+			proxyURL := &url.URL{Scheme: "http", Host: net.JoinHostPort(host, strconv.Itoa(proxyPort))}
+			if proxyUser != "" {
+				proxyURL.User = url.UserPassword(proxyUser, proxyPass)
+			}
+			transport.Proxy = http.ProxyURL(proxyURL)
+		}
+	}
+
+	var roundTripper http.RoundTripper = transport
+	if maxMbps > 0 {
+		roundTripper = NewTransport(transport, maxMbps, 0)
+	}
+	return &http.Client{Transport: roundTripper, Timeout: 90 * time.Second}, nil
+}
+
+// isProxyProtocolError detecta el error típico de confundir un proxy SOCKS con uno HTTP
+// (o viceversa), que se manifiesta como "malformed HTTP status code" con bytes binarios.
+func isProxyProtocolError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "malformed HTTP status code") ||
+		strings.Contains(msg, "malformed HTTP response") ||
+		strings.Contains(msg, "HTTP/1.x transport connection broken") ||
+		strings.Contains(msg, `"\x00`) ||
+		strings.Contains(msg, "proxyconnect tcp")
+}
+
+// IsProxyProtocolError es la versión exportada para que otros paquetes puedan detectar
+// si un error de fetch se debe a una mala configuración del proxy.
+func IsProxyProtocolError(err error) bool {
+	return isProxyProtocolError(err)
+}
+
+// WrapProxyError decora un error de red con una pista accionable sobre el proxy.
+func WrapProxyError(err error, host string, port int) error {
+	if err == nil {
+		return nil
+	}
+	if isProxyProtocolError(err) {
+		return fmt.Errorf("%w — el proxy %s:%d parece no ser HTTP (¿es SOCKS? Prueba con socks5://%s:%d o usa el puerto HTTP de tu proxy, ej. Clash usa 7890 para HTTP y 7891 para SOCKS; o desactívalo en Ajustes > Red)", err, host, port, host, port)
+	}
+	return err
 }
 
 func DownloadFile(ctx context.Context, task DownloadTask, client *http.Client, maxRetries int, onProgress func(int64, int64), stallTimeoutMs int, maxStallRetries int) error {

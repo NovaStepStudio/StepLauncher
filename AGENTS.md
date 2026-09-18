@@ -1,4 +1,4 @@
-# Guía Maestra para Agentes de IA - StepLauncher
+# Guía para Agentes de IA - StepLauncher
 
 StepLauncher es un launcher de Minecraft construido sobre **Wails v3** (backend en Go) y **Vue 3 + TS** (frontend). Debido a su tamaño (más de 80 archivos acoplados), esta guía establece las directivas y el flujo maestro de desarrollo.
 

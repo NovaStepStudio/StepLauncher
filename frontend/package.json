@@ -3,6 +3,15 @@
   "version": "2.3.1",
   "private": true,
   "type": "module",
+  "homepage": "https://steplauncher.pages.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NovaStepStudio/StepLauncher.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NovaStepStudio/StepLauncher/issues"
+  },
+  "author": "NovaStepStudio <https://steplauncher.pages.dev>",
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",

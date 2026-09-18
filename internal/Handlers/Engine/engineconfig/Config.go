@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 )
 
 const (
@@ -83,6 +84,7 @@ func (c Config) SeparateGameDirValue() bool {
 }
 
 type Manager struct {
+	mu         sync.RWMutex
 	cfg        Config
 	configPath string
 	bootstrap  Bootstrap
@@ -126,20 +128,27 @@ func NewManager() *Manager {
 }
 
 func (m *Manager) Load() error {
-	m.cfg = DefaultConfig()
-	m.bootstrap = LoadBootstrap()
+	cfg := DefaultConfig()
+	bootstrap := LoadBootstrap()
 
-	if m.cfg.WorkDir == "" {
-		m.cfg.WorkDir = m.bootstrap.ResolveWorkDir()
+	if cfg.WorkDir == "" {
+		cfg.WorkDir = bootstrap.ResolveWorkDir()
 	}
-	if m.cfg.CacheDir == "" {
-		m.cfg.CacheDir = filepath.Join(m.cfg.WorkDir, "cache")
+	if cfg.CacheDir == "" {
+		cfg.CacheDir = filepath.Join(cfg.WorkDir, "cache")
 	}
-	if m.cfg.LogDir == "" {
-		m.cfg.LogDir = filepath.Join(m.cfg.WorkDir, "logs")
+	if cfg.LogDir == "" {
+		cfg.LogDir = filepath.Join(cfg.WorkDir, "logs")
 	}
 
-	return m.ensureDirs()
+	if err := ensureDirs(cfg); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	m.cfg = cfg
+	m.bootstrap = bootstrap
+	m.mu.Unlock()
+	return nil
 }
 
 func (m *Manager) LoadFile(path string) error {
@@ -151,25 +160,31 @@ func (m *Manager) LoadFile(path string) error {
 	if err := json.Unmarshal(data, &fileCfg); err != nil {
 		return err
 	}
+	bootstrap := LoadBootstrap()
+
+	if fileCfg.WorkDir == "" {
+		fileCfg.WorkDir = bootstrap.ResolveWorkDir()
+	}
+	if fileCfg.CacheDir == "" {
+		fileCfg.CacheDir = filepath.Join(fileCfg.WorkDir, "cache")
+	}
+	if fileCfg.LogDir == "" {
+		fileCfg.LogDir = filepath.Join(fileCfg.WorkDir, "logs")
+	}
+
+	if err := ensureDirs(fileCfg); err != nil {
+		return err
+	}
+	m.mu.Lock()
 	m.cfg = fileCfg
 	m.configPath = path
-	m.bootstrap = LoadBootstrap()
-
-	if m.cfg.WorkDir == "" {
-		m.cfg.WorkDir = m.bootstrap.ResolveWorkDir()
-	}
-	if m.cfg.CacheDir == "" {
-		m.cfg.CacheDir = filepath.Join(m.cfg.WorkDir, "cache")
-	}
-	if m.cfg.LogDir == "" {
-		m.cfg.LogDir = filepath.Join(m.cfg.WorkDir, "logs")
-	}
-
-	return m.ensureDirs()
+	m.bootstrap = bootstrap
+	m.mu.Unlock()
+	return nil
 }
 
-func (m *Manager) ensureDirs() error {
-	dirs := []string{m.cfg.LogDir, m.cfg.WorkDir, m.cfg.CacheDir}
+func ensureDirs(cfg Config) error {
+	dirs := []string{cfg.LogDir, cfg.WorkDir, cfg.CacheDir}
 	for _, d := range dirs {
 		if d != "" {
 			if err := os.MkdirAll(d, 0755); err != nil {
@@ -180,25 +195,39 @@ func (m *Manager) ensureDirs() error {
 	return nil
 }
 
-func (m *Manager) Get() Config     { return m.cfg }
-func (m *Manager) RootDir() string { return m.cfg.WorkDir }
+func (m *Manager) Get() Config {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.cfg
+}
+
+func (m *Manager) RootDir() string { return m.Get().WorkDir }
 
 // Bootstrap devuelve la preferencia de directorio cargada.
-func (m *Manager) Bootstrap() Bootstrap { return m.bootstrap }
+func (m *Manager) Bootstrap() Bootstrap {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.bootstrap
+}
 
 // SetBootstrap actualiza la preferencia de directorio en memoria y la persiste.
 func (m *Manager) SetBootstrap(b Bootstrap) error {
 	if err := SaveBootstrap(b); err != nil {
 		return err
 	}
+	m.mu.Lock()
 	m.bootstrap = b
+	m.mu.Unlock()
 	return nil
 }
 
 func (m *Manager) UpdateConfig(cfg Config) {
+	m.mu.Lock()
 	m.cfg = cfg
-	if m.configPath != "" {
+	configPath := m.configPath
+	m.mu.Unlock()
+	if configPath != "" {
 		data, _ := json.MarshalIndent(cfg, "", "  ")
-		os.WriteFile(m.configPath, data, 0644)
+		_ = os.WriteFile(configPath, data, 0644)
 	}
 }

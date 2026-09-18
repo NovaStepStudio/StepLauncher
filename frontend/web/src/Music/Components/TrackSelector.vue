@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
-import { IconSearch, IconCheck, IconMusic, IconSelectAll, IconX, IconLayoutGrid, IconList, IconLoader2, IconPhoto } from '@tabler/icons-vue';
+import { IconSearch, IconCheck, IconMusic, IconSelectAll, IconX, IconLoader2, IconPhoto, IconFilter, IconAdjustments } from '@tabler/icons-vue';
 import type { LocalTrack } from '../LocalStore';
 import { totalTracks as globalTotal } from '../LocalStore';
 
-// Nota: Cover thumb baja resolución (128x128) se usa siempre, no raw
+// Nota: Cover thumb baja resolución (128x128) se usa siempre, no raw — solo filas (lista)
 
 const props = defineProps<{
     modelValue: string[];
@@ -19,11 +19,12 @@ const emit = defineEmits<{
 const query = ref('');
 const page = ref(1);
 const pageSize = 20;
-const gridMode = ref(false);
 const isLoading = ref(false);
 const internalTracks = ref<LocalTrack[]>([]);
 const totalServer = ref(0);
 const hasFetched = ref(false);
+// Filtros mejorados: modo de visualización solo filas y filtro por selección
+const filterMode = ref<'all' | 'selected' | 'unselected'>('all');
 
 let debounceTimer: any = null;
 
@@ -95,7 +96,12 @@ watch(globalTotal, () => {
     if (hasFetched.value && totalServer.value < globalTotal.value) void fetchPage();
 });
 
-const displayTracks = computed(() => internalTracks.value);
+const displayTracks = computed(() => {
+    const base = internalTracks.value;
+    if (filterMode.value === 'selected') return base.filter((t) => selectedSet.value.has(t.path));
+    if (filterMode.value === 'unselected') return base.filter((t) => !selectedSet.value.has(t.path));
+    return base;
+});
 const totalPages = computed(() => Math.max(1, Math.ceil(totalServer.value / pageSize)));
 const filteredCount = computed(() => totalServer.value);
 const hasTracks = computed(() => totalServer.value > 0 || props.tracks.length > 0 || isLoading.value);
@@ -178,20 +184,25 @@ const selectedCount = computed(() => props.modelValue.length);
             <span class="TrackSelector_Badge">{{ selectedCount }} seleccionadas · {{ filteredCount }} coinciden</span>
         </div>
 
-        <div class="TrackSelector_Toolbar">
-            <label class="TrackSelector_Search">
-                <IconSearch stroke="2" />
-                <input v-model="query" type="text" placeholder="Buscar por título, artista o archivo…" spellcheck="false" />
-                <button v-if="query" class="TrackSelector_Clear" @click="query=''"><IconX stroke="2" /></button>
+        <div class="TrackSelector_Toolbar is-improved">
+            <label class="TrackSelector_Search is-improved">
+                <span class="TrackSelector_SearchIcon"><IconSearch :size="16" stroke="2" /></span>
+                <input v-model="query" type="text" placeholder="Buscar en tu biblioteca — título, artista o archivo" spellcheck="false" />
+                <button v-if="query" class="TrackSelector_Clear" @click="query=''" title="Limpiar búsqueda"><IconX :size="14" stroke="2" /></button>
                 <IconLoader2 v-if="isLoading" class="TrackSelector_Spinner spinning" :size="14" stroke="2" />
             </label>
-            <div class="TrackSelector_Actions">
-                <button class="SsBtn SsBtnSmall" :disabled="!displayTracks.length" @click="selectAllMatching"><IconSelectAll stroke="2" /> Todos filtrados</button>
+            <div class="TrackSelector_Filters">
+                <span class="TrackSelector_FilterLabel"><IconFilter :size="12" stroke="2" /> Filtrar:</span>
+                <button class="TrackSelector_FilterChip" :class="{ on: filterMode==='all' }" @click="filterMode='all'">Todas</button>
+                <button class="TrackSelector_FilterChip" :class="{ on: filterMode==='selected' }" @click="filterMode='selected'">Seleccionadas <em v-if="selectedCount">({{ selectedCount }})</em></button>
+                <button class="TrackSelector_FilterChip" :class="{ on: filterMode==='unselected' }" @click="filterMode='unselected'">Sin seleccionar</button>
+            </div>
+            <div class="TrackSelector_Actions is-improved">
+                <button class="SsBtn SsBtnSmall SsBtnPrimary" :disabled="!displayTracks.length" @click="selectAllMatching"><IconSelectAll :size="14" stroke="2" /> Todos filtrados</button>
                 <button class="SsBtn SsBtnSmall" :disabled="selectedCount===0" @click="clearFiltered">Quitar visibles</button>
-                <button class="SsBtn SsBtnSmall SsBtnGhost" :disabled="selectedCount===0" @click="clearAll">Limpiar</button>
+                <button class="SsBtn SsBtnSmall SsBtnGhost" :disabled="selectedCount===0" @click="clearAll">Limpiar todo</button>
                 <span class="TrackSelector_Divider"></span>
-                <button class="TrackSelector_ViewBtn" :class="{ on: !gridMode }" title="Vista lista" @click="gridMode=false"><IconList :size="14" stroke="2" /></button>
-                <button class="TrackSelector_ViewBtn" :class="{ on: gridMode }" title="Vista grilla 2x2" @click="gridMode=true"><IconLayoutGrid :size="14" stroke="2" /></button>
+                <span class="TrackSelector_Hint"><IconAdjustments :size="12" stroke="2" /> Solo filas</span>
             </div>
         </div>
 
@@ -226,7 +237,7 @@ const selectedCount = computed(() => props.modelValue.length);
             <p>Sin resultados para “{{ query }}”.</p>
         </div>
 
-        <div v-else class="TrackSelector_List" :class="{ 'is-grid': gridMode, 'is-loading': isLoading }">
+        <div v-else class="TrackSelector_List is-rowsOnly" :class="{ 'is-loading': isLoading }">
             <div v-if="isLoading" class="TrackSelector_Overlay"><IconLoader2 :size="16" stroke="2" class="spinning" /> Cargando carátulas en baja resolución…</div>
             <label v-for="t in displayTracks" :key="t.path" class="TrackSelector_Row" :class="{ selected: isSelected(t.path) }">
                 <input type="checkbox" :checked="isSelected(t.path)" @change="toggle(t.path)" />

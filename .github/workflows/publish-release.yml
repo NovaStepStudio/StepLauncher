@@ -1,0 +1,56 @@
+name: Publish Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag a publicar (ej: v2.5.0)"
+        required: true
+      publish:
+        description: "¿Publicar la release? (yes/no)"
+        required: true
+        default: "yes"
+
+env:
+  GH_REPO: ${{ github.repository }}
+
+jobs:
+  publish:
+    name: Publish release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Validar input
+        if: github.event.inputs.publish != 'yes'
+        run: |
+          echo "Publicación cancelada por el usuario (publish != yes)."
+          exit 0
+
+      - name: Publicar release (quitar draft)
+        if: github.event.inputs.publish == 'yes'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "→ Publicando ${{ github.event.inputs.tag }} ..."
+          gh release edit "${{ github.event.inputs.tag }}" --draft=false
+          echo "✓ Draft → Published"
+
+      - name: Verificar que la release es pública
+        if: github.event.inputs.publish == 'yes'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          is_draft=$(gh release view "${{ github.event.inputs.tag }}" --json isDraft -q '.isDraft')
+          if [ "$is_draft" != "false" ]; then
+            echo "❌ La release sigue en draft"
+            exit 1
+          fi
+          echo "✅ Release ${{ github.event.inputs.tag }} ahora es pública."
+
+      - name: Mostrar notas de la release
+        if: github.event.inputs.publish == 'yes'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view "${{ github.event.inputs.tag }}" --json name,tagName,isDraft,isPrerelease,url -q '"\(.name) (\(.tagName)) — draft=\(.isDraft) prerelease=\(.isPrerelease)\n\(.url)"'

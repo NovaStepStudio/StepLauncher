@@ -195,6 +195,13 @@ func (s *MusicService) PickPlaylistFile() (string, error) {
 	return s.handler.PickPlaylistFile()
 }
 
+func (s *MusicService) PickCustomCoverFile() (string, error) {
+	if s.handler == nil {
+		return "", errors.New("handler no disponible")
+	}
+	return s.handler.PickCustomCoverFile()
+}
+
 func (s *MusicService) RefreshCachedCover(trackPath string) error {
 	if s.handler == nil {
 		return errors.New("handler no disponible")

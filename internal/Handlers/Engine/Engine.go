@@ -205,15 +205,16 @@ func NewEngine(opts ...Option) (*Engine, error) {
 	runtime.GOMAXPROCS(cfg.MaxCores)
 
 	dlManager := downloader.NewManager(downloader.Config{
-		WorkDir:      cfg.WorkDir,
-		CacheDir:     filepath.Join(cfg.WorkDir, "cache"),
-		CacheManager: cacheMgr,
-		IDPrefix:     "ver-",
-		MaxRAM:       cfg.MaxRAMMB,
-		LogFn:        func(f string, a ...interface{}) { log.Info(f, a...) },
-		BroadcastFn:  broadcastFn,
-		MaxMbps:      cfg.MaxMbps,
-		MinMbps:      cfg.MinMbps,
+		WorkDir:        cfg.WorkDir,
+		CacheDir:       filepath.Join(cfg.WorkDir, "cache"),
+		CacheManager:   cacheMgr,
+		IDPrefix:       "ver-",
+		MaxRAM:         cfg.MaxRAMMB,
+		MaxConcurrency: cfg.ConcurrentDownloads,
+		LogFn:          func(f string, a ...interface{}) { log.Info(f, a...) },
+		BroadcastFn:    broadcastFn,
+		MaxMbps:        cfg.MaxMbps,
+		MinMbps:        cfg.MinMbps,
 	})
 	e.downloader = dlManager
 	httpClient := dlManager.HTTPClient()
@@ -295,18 +296,20 @@ func NewEngine(opts ...Option) (*Engine, error) {
 	e.launcher = launchMgr
 
 	sharedDlMgr := downloader.NewManager(downloader.Config{
-		WorkDir:      filepath.Join(cfg.WorkDir, cfg.SharedDir),
-		CacheDir:     cfg.CacheDir,
-		CacheManager: cacheMgr,
-		IDPrefix:     "inst-",
-		MaxRAM:       cfg.MaxRAMMB,
-		LogFn:        func(f string, a ...interface{}) { log.Info(f, a...) },
-		BroadcastFn:  broadcastFn,
-		HTTPClient:   httpClient,
-		MaxMbps:      cfg.MaxMbps,
-		MinMbps:      cfg.MinMbps,
+		WorkDir:        filepath.Join(cfg.WorkDir, cfg.SharedDir),
+		CacheDir:       cfg.CacheDir,
+		CacheManager:   cacheMgr,
+		IDPrefix:       "inst-",
+		MaxRAM:         cfg.MaxRAMMB,
+		MaxConcurrency: cfg.ConcurrentDownloads,
+		LogFn:          func(f string, a ...interface{}) { log.Info(f, a...) },
+		BroadcastFn:    broadcastFn,
+		HTTPClient:     httpClient,
+		MaxMbps:        cfg.MaxMbps,
+		MinMbps:        cfg.MinMbps,
 	})
 	e.sharedDl = sharedDlMgr
+	e.applyNetworkConfig(cfg)
 
 	instancesDir := filepath.Join(cfg.WorkDir, cfg.InstancesDir)
 	sharedDir := filepath.Join(cfg.WorkDir, cfg.SharedDir)

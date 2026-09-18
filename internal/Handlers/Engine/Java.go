@@ -185,11 +185,11 @@ func minecraftFromConfig(cfg engineconfig.Config) MinecraftConfig {
 		Fullscreen:           cfg.Fullscreen,
 		JavaArgs:             cfg.JavaArgs,
 		GameArgs:             cfg.GameArgs,
-OfflineMode:         cfg.OfflineMode,
-		CompatMode:          cfg.CompatMode,
-		DetailedLogs:        cfg.DetailedLogs,
-		ConcurrentDownloads: cfg.ConcurrentDownloads,
-		SeparateGameDir:     cfg.SeparateGameDir,
+		OfflineMode:          cfg.OfflineMode,
+		CompatMode:           cfg.CompatMode,
+		DetailedLogs:         cfg.DetailedLogs,
+		ConcurrentDownloads:  cfg.ConcurrentDownloads,
+		SeparateGameDir:      cfg.SeparateGameDir,
 	}
 }
 
@@ -233,6 +233,7 @@ func (e *Engine) UpdateMinecraftConfig(mc MinecraftConfig) {
 	}
 	cfg := configFromMinecraft(mc, e.config.Get())
 	e.config.UpdateConfig(cfg)
+	e.applyNetworkConfig(cfg)
 	e.applySeparateGameDir(mc.SeparateGameDirValue())
 }
 

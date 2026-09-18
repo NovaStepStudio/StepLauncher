@@ -52,22 +52,22 @@ type IntegritySkipped struct {
 }
 
 type IntegrityProgress struct {
-	State          IntegrityState     `json:"state"`
-	Phase          string             `json:"phase"`
-	Scope          string             `json:"scope"`
-	CurrentVersion string             `json:"currentVersion"`
-	CurrentFile    string             `json:"currentFile"`
-	TasksTotal     int                `json:"tasksTotal"`
-	TasksDone      int                `json:"tasksDone"`
-	FilesMissing   int                `json:"filesMissing"`
-	FilesRestored  int                `json:"filesRestored"`
-	FilesCorrupt   int                `json:"filesCorrupt"`
-	FilesSkipped   int                `json:"filesSkipped"`
-	VersionsScanned int               `json:"versionsScanned"`
-	Percent        int                `json:"percent"`
-	StartedAt      string             `json:"startedAt,omitempty"`
-	FinishedAt     string             `json:"finishedAt,omitempty"`
-	Skipped        []IntegritySkipped `json:"skipped,omitempty"`
+	State           IntegrityState     `json:"state"`
+	Phase           string             `json:"phase"`
+	Scope           string             `json:"scope"`
+	CurrentVersion  string             `json:"currentVersion"`
+	CurrentFile     string             `json:"currentFile"`
+	TasksTotal      int                `json:"tasksTotal"`
+	TasksDone       int                `json:"tasksDone"`
+	FilesMissing    int                `json:"filesMissing"`
+	FilesRestored   int                `json:"filesRestored"`
+	FilesCorrupt    int                `json:"filesCorrupt"`
+	FilesSkipped    int                `json:"filesSkipped"`
+	VersionsScanned int                `json:"versionsScanned"`
+	Percent         int                `json:"percent"`
+	StartedAt       string             `json:"startedAt,omitempty"`
+	FinishedAt      string             `json:"finishedAt,omitempty"`
+	Skipped         []IntegritySkipped `json:"skipped,omitempty"`
 }
 
 type integrityTask struct {
@@ -144,7 +144,9 @@ func (e *Engine) IntegrityStatus() IntegrityProgress {
 	}
 	ir.mu.Lock()
 	defer ir.mu.Unlock()
-	return ir.prog
+	progress := ir.prog
+	progress.Skipped = append([]IntegritySkipped(nil), ir.prog.Skipped...)
+	return progress
 }
 
 func (e *Engine) runIntegrity(ctx context.Context, scope string) {

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"StepLauncher/internal/Core/Downloader"
 )
@@ -82,16 +83,68 @@ func (e *Engine) GetVersions(versionType string) ([]VersionInfo, error) {
 	if found {
 		return cached, nil
 	}
+	// También intentar fallback a caché expirado si la red falla (igual que FetchVersionManifest)
+	const fullCacheKey = "full"
+	var fullCached downloader.Manifest
+	foundFull, expiredFull, _ := e.cache.GetWithFallback("manifest", fullCacheKey, &fullCached)
 
 	client := e.downloader.HTTPClient()
 	resp, err := client.Get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch manifest: %w", err)
+		// Detectar mala configuración del proxy (SOCKS vs HTTP) y dar pista accionable
+		if downloader.IsProxyProtocolError(err) {
+			cfg := e.config.Get()
+			if cfg.ProxyEnabled {
+				err = downloader.WrapProxyError(err, cfg.ProxyHost, cfg.ProxyPort)
+			} else {
+				err = fmt.Errorf("%w — parece que un proxy del sistema interceptó la conexión. Desactiva el proxy en Ajustes > Red o verifica su puerto", err)
+			}
+			// Fallback a caché expirado si existe
+			if foundFull && expiredFull {
+				e.log.Info("[Cache] WARN: usando manifest expirado tras error de proxy: %v", err)
+				return filterManifestByType(&fullCached, versionType, cacheKey)
+			}
+			// Último intento: reintentar sin proxy (útil si el proxy está mal configurado pero hay internet directo)
+			if cfg.ProxyEnabled {
+				e.log.Info("[Network] Reintentando manifest sin proxy tras error de protocolo: %v", err)
+				direct := downloader.DefaultHTTPClient()
+				if resp2, err2 := direct.Get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"); err2 == nil {
+					resp = resp2
+					err = nil
+				} else {
+					if foundFull && expiredFull {
+						e.log.Info("[Cache] WARN: usando manifest expirado tras fallo directo: %v", err2)
+						return filterManifestByType(&fullCached, versionType, cacheKey)
+					}
+				}
+			}
+			if err != nil {
+				return nil, fmt.Errorf("failed to fetch manifest: %w", err)
+			}
+		} else {
+			if foundFull && expiredFull {
+				e.log.Info("[Cache] WARN: usando manifest expirado (red no disponible: %v)", err)
+				return filterManifestByType(&fullCached, versionType, cacheKey)
+			}
+			return nil, fmt.Errorf("failed to fetch manifest: %w", err)
+		}
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		if foundFull && expiredFull && (resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500) {
+			e.log.Info("[Cache] WARN: usando manifest expirado (HTTP %d)", resp.StatusCode)
+			return filterManifestByType(&fullCached, versionType, cacheKey)
+		}
+		return nil, fmt.Errorf("failed to fetch manifest: HTTP %d", resp.StatusCode)
+	}
+
 	var m versionManifest
 	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		// Si el body es binario por proxy mal configurado, el error de decode también debe sugerir proxy
+		if strings.Contains(err.Error(), "invalid character") && downloader.IsProxyProtocolError(fmt.Errorf("%v", err)) {
+			// no es fiable, solo envolver genérico
+		}
 		return nil, fmt.Errorf("failed to decode manifest: %w", err)
 	}
 
@@ -109,6 +162,22 @@ func (e *Engine) GetVersions(versionType string) ([]VersionInfo, error) {
 	}
 
 	e.cache.Set("manifest", cacheKey, result)
+	return result, nil
+}
+
+// filterManifestByType convierte un Manifest completo cacheado al filtro por tipo solicitado
+func filterManifestByType(m *downloader.Manifest, versionType, cacheKey string) ([]VersionInfo, error) {
+	var result []VersionInfo
+	for _, v := range m.Versions {
+		if v.Type == versionType {
+			result = append(result, VersionInfo{
+				ID: v.ID, Type: v.Type, URL: v.URL, ReleaseTime: v.ReleaseTime,
+			})
+		}
+	}
+	if len(result) == 0 {
+		return nil, fmt.Errorf("no versions found for type '%s' (caché expirado vacío)", versionType)
+	}
 	return result, nil
 }
 
@@ -134,11 +203,42 @@ func (e *Engine) FetchVersionManifest() (*downloader.Manifest, error) {
 	client := e.downloader.HTTPClient()
 	resp, err := client.Get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
 	if err != nil {
-		if found && expired {
-			e.log.Info("[Cache] WARN: usando manifest expirado (red no disponible: %v)", err)
-			return &m, nil
+		// Envolver error de proxy con pista accionable
+		if downloader.IsProxyProtocolError(err) {
+			cfg := e.config.Get()
+			if cfg.ProxyEnabled {
+				err = downloader.WrapProxyError(err, cfg.ProxyHost, cfg.ProxyPort)
+			} else {
+				err = fmt.Errorf("%w — un proxy del sistema puede estar interceptando. Revisa Ajustes > Red", err)
+			}
+			if found && expired {
+				e.log.Info("[Cache] WARN: usando manifest expirado tras error de proxy: %v", err)
+				return &m, nil
+			}
+			// Reintento directo sin proxy
+			if e.config.Get().ProxyEnabled {
+				e.log.Info("[Network] Reintentando manifest sin proxy tras error de protocolo")
+				direct := downloader.DefaultHTTPClient()
+				if resp2, err2 := direct.Get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"); err2 == nil {
+					resp = resp2
+					err = nil
+				} else {
+					if found && expired {
+						e.log.Info("[Cache] WARN: usando manifest expirado tras fallo directo: %v", err2)
+						return &m, nil
+					}
+					return nil, fmt.Errorf("fetch manifest: %w", err)
+				}
+			} else {
+				return nil, fmt.Errorf("fetch manifest: %w", err)
+			}
+		} else {
+			if found && expired {
+				e.log.Info("[Cache] WARN: usando manifest expirado (red no disponible: %v)", err)
+				return &m, nil
+			}
+			return nil, fmt.Errorf("fetch manifest: %w", err)
 		}
-		return nil, fmt.Errorf("fetch manifest: %w", err)
 	}
 	defer resp.Body.Close()
 

@@ -73,8 +73,8 @@ async function saveProxy() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Usar proxy solo para Minecraft</span>
-                    <span class="SsDesc">Si tu internet necesita proxy, el juego lo usará. No afecta al launcher, solo al juego.</span>
+                    <span class="SsLabel">Usar proxy para Minecraft y descargas</span>
+                    <span class="SsDesc">Si tu red necesita proxy, el juego y el launcher lo usarán para Mojang. Soporta HTTP y SOCKS5.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="proxyEnabled" @change="saveProxy"><span class="SsTgS"></span></label>
@@ -84,10 +84,10 @@ async function saveProxy() {
                 <div class="SsRow">
                     <div class="SsInfo">
                         <span class="SsLabel">Dirección del proxy</span>
-                        <span class="SsDesc">Host y puerto que te dio tu red.</span>
+                        <span class="SsDesc">Host y puerto. Para SOCKS5 escribe socks5://127.0.0.1 (Clash: HTTP 7890, SOCKS 7891).</span>
                     </div>
                     <div class="SsGrid">
-                        <input class="SsIn" v-model="proxyHost" placeholder="Ej: 192.168.1.10" @change="saveProxy">
+                        <input class="SsIn" v-model="proxyHost" placeholder="Ej: 127.0.0.1 o socks5://127.0.0.1" @change="saveProxy">
                         <input class="SsIn" type="number" v-model.number="proxyPort" placeholder="8080" @change="saveProxy">
                     </div>
                 </div>
@@ -104,7 +104,7 @@ async function saveProxy() {
             </template>
             <div v-if="proxyEnabled" class="SsTip">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <span>Solo cambia esto si sabes lo que es un proxy. Si no, déjalo apagado.</span>
+                <span>Error "malformed HTTP status" = puerto equivocado. Si usas Clash/V2Ray, el HTTP suele ser 7890 y el SOCKS 7891. Prueba con socks5:// delante del host si tu proxy es SOCKS.</span>
             </div>
         </div>
 

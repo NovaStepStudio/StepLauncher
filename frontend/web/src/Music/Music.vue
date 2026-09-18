@@ -115,6 +115,8 @@ async function eagerLoad(): Promise<void> {
 
 // --- Carga perezosa: NO se ejecuta nada hasta que el usuario entra al panel ---
 let _musicInitialized = false;
+const isPanelLoading = ref(false);
+const panelLoadError = ref('');
 async function initializeMusicPanel(): Promise<void> {
     if (_musicInitialized) {
         // Reapertura: refrescar por si se cambió la carpeta en Ajustes
@@ -123,10 +125,18 @@ async function initializeMusicPanel(): Promise<void> {
         return;
     }
     _musicInitialized = true;
+    isPanelLoading.value = true;
+    panelLoadError.value = '';
     try { ensureMusicStoreInitialized(); } catch (_e) {}
     try { ensurePlayerStoreInitialized(); } catch (_e) {}
     void loadPlaylists();
-    await loadLocalLibrary().then(() => void eagerLoad());
+    try {
+        await loadLocalLibrary().then(() => void eagerLoad());
+    } catch (e: any) {
+        panelLoadError.value = e?.message ?? 'No se pudo cargar la biblioteca';
+    } finally {
+        isPanelLoading.value = false;
+    }
 }
 
 onMounted(async () => {
@@ -210,9 +220,6 @@ async function handleCreatePlaylist(data: { title: string; favorite: boolean; pi
                 </div>
             </div>
             <div class="MusicHead_Actions">
-                <button class="SsBtn" :title="menuCollapsed ? 'Mostrar menú lateral' : 'Ocultar menú lateral'" @click="menuCollapsed = !menuCollapsed">
-                    <component :is="menuCollapsed ? IconLayoutSidebarLeftExpand : IconLayoutSidebarLeftCollapse" :size="14" stroke="2" />
-                </button>
                 <button class="SsBtn SsBtnPrimary" title="Nueva lista de reproducción con selector visual" @click="showPlaylistForm = true">
                     <IconFolderPlus :size="14" stroke="2" /> Nueva lista de reproducción
                 </button>
@@ -224,6 +231,12 @@ async function handleCreatePlaylist(data: { title: string; favorite: boolean; pi
 
         <div class="MusicLayout" :class="{ 'is-menu-collapsed': menuCollapsed }">
             <aside class="MusicMenu" :class="{ collapsed: menuCollapsed }">
+                <div class="MusicMenu_Toggle">
+                    <button class="MusicMenu_CollapseBtn" :class="{ collapsed: menuCollapsed }" :title="menuCollapsed ? 'Mostrar barra lateral' : 'Ocultar barra lateral'" @click="menuCollapsed = !menuCollapsed">
+                        <component :is="menuCollapsed ? IconLayoutSidebarLeftExpand : IconLayoutSidebarLeftCollapse" :size="18" stroke="2" />
+                        <span v-if="!menuCollapsed" class="MusicMenu_CollapseLabel">Ocultar menú</span>
+                    </button>
+                </div>
                 <nav class="MusicMenu_Nav">
                     <button v-for="s in sections" :key="s.id" class="MusicMenu_Item" :class="{ active: section===s.id }" @click="section=s.id" :title="menuCollapsed ? s.label : undefined">
                         <component :is="s.icon" :size="16" stroke="2" />
@@ -240,11 +253,21 @@ async function handleCreatePlaylist(data: { title: string; favorite: boolean; pi
             </aside>
 
             <main class="MusicMain">
+                <div v-if="isPanelLoading" class="MusicPanel_LoadingOverlay">
+                    <span class="MusicPanel_Spinner"></span>
+                    <h4>Cargando tu biblioteca musical</h4>
+                    <p>Preparando tus pistas y carátulas… Esto puede tardar unos segundos la primera vez.</p>
+                    <span v-if="isScanning" class="MusicPanel_ScanDetail">Escaneando {{ scanProgress.discovered ? `${scanProgress.processed || 0}/${scanProgress.discovered}` : `${scanProgress.current || 0}` }} archivos… {{ scanProgress.currentFile ? scanProgress.currentFile.split(/[\\/]/).pop() : '' }}</span>
+                    <span v-else class="MusicPanel_ScanDetail">Leyendo índice local…</span>
+                    <p v-if="panelLoadError" class="MusicPanel_Error">{{ panelLoadError }}</p>
+                </div>
+                <template v-else>
                 <MenuView v-if="section==='menu'" :cover-url="displayCover" :cover-bg-style="coverBgStyle" @open-biblioteca="section='biblioteca'" @open-ahora="section='ahora'" />
                 <MusicView v-else-if="section==='musica'" />
                 <LibraryView v-else-if="section==='biblioteca'" @create-playlist="showPlaylistForm = true" />
                 <NowPlayingView v-else-if="section==='ahora'" />
                 <QueueView v-else />
+                </template>
             </main>
         </div>
 
@@ -286,4 +309,59 @@ async function handleCreatePlaylist(data: { title: string; favorite: boolean; pi
 <style scoped lang="scss">
 @use './Styles/Music.scss';
 @use './Styles/Library.scss';
+
+.MusicPanel_LoadingOverlay {
+    flex: 1;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    background: var(--background-modal-primary);
+}
+
+.MusicPanel_Spinner {
+    width: 38px;
+    height: 38px;
+    border: 3px solid color-mix(in srgb, var(--background-button-primary) 20%, transparent);
+    border-top-color: var(--background-button-primary);
+    border-radius: 50%;
+    animation: MusicPanelSpin 0.7s linear infinite;
+}
+
+.MusicPanel_LoadingOverlay h4 {
+    margin: 0;
+    font-size: 0.96rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.MusicPanel_LoadingOverlay > p {
+    margin: 0;
+    max-width: 28rem;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    opacity: 0.62;
+    color: var(--text-secondary);
+}
+
+.MusicPanel_ScanDetail {
+    font-size: 0.72rem;
+    opacity: 0.75;
+    color: var(--background-button-primary);
+    font-weight: 600;
+}
+
+.MusicPanel_Error {
+    color: var(--color-error) !important;
+    opacity: 1 !important;
+    font-weight: 600;
+}
+
+@keyframes MusicPanelSpin {
+    to { transform: rotate(360deg); }
+}
 </style>

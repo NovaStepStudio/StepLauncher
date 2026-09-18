@@ -1,0 +1,291 @@
+name: Build Release Draft
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versión a publicar (ej: v2.5.0). Vacío = usa el tag o 2.5.0"
+        required: false
+        default: ""
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  APP_NAME: steplauncher
+
+jobs:
+  # ───────────────────────────────────────────────────────────────
+  # Build matrix: genera binarios nativos por plataforma
+  # ───────────────────────────────────────────────────────────────
+  build:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.platform }}
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Windows x64 — exe + instalador NSIS
+          - platform: windows-latest
+            name: windows-amd64
+            os: windows
+            arch: amd64
+            build_task: "windows:build"
+            package_task: "windows:package"
+
+          # Linux x64 — bin + AppImage/DEB/RPM/AUR
+          - platform: ubuntu-latest
+            name: linux-amd64
+            os: linux
+            arch: amd64
+            build_task: "linux:build"
+            package_task: "linux:package"
+
+          # macOS Apple Silicon
+          - platform: macos-latest
+            name: macos-aarch64
+            os: darwin
+            arch: arm64
+            build_task: "darwin:build"
+            package_task: "darwin:package"
+
+          # macOS Intel
+          - platform: macos-latest
+            name: macos-x86_64
+            os: darwin
+            arch: amd64
+            build_task: "darwin:build"
+            package_task: "darwin:package"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go 1.26.4
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.4"
+          cache: true
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Task es el runner de Wails v3 (Taskfile.yml)
+      - name: Setup Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar Wails CLI v3
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+
+      - name: Verificar herramientas
+        run: |
+          wails3 version || echo "wails3 instalado via go install"
+          task --version
+          go version
+          bun --version
+
+      # ── Dependencias por plataforma ──
+      - name: Instalar dependencias Linux
+        if: matrix.os == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libgtk-4-dev libwebkitgtk-6.0-dev libayatana-appindicator3-dev librsvg2-dev patchelf pkg-config
+
+          # FUSE para AppImage (si está disponible)
+          sudo apt-get install -y libfuse2 2>/dev/null || sudo apt-get install -y libfuse2t64 2>/dev/null || echo "FUSE no disponible, AppImage puede requerirlo"
+
+      - name: Instalar dependencias Windows (NSIS)
+        if: matrix.os == 'windows'
+        run: |
+          choco install nsis -y
+          makensis -VERSION
+
+      # ── Frontend ──
+      - name: Instalar dependencias frontend (bun)
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      # ── Build + Package ──
+      # El Taskfile se encarga de: generate:bindings → build:frontend → generate:icons → go build
+      # package además genera instaladores (.exe NSIS, .deb/.rpm/.AppImage, .app/.dmg)
+      - name: Build ${{ matrix.name }}
+        shell: bash
+        run: |
+          echo "→ Building ${{ matrix.name }} (ARCH=${{ matrix.arch }})"
+          task ${{ matrix.build_task }} ARCH=${{ matrix.arch }}
+
+      - name: Package ${{ matrix.name }}
+        shell: bash
+        # Windows y Linux generan paquetes; macOS .app es el package
+        # Si falla el empaquetado, al menos conservamos el binario
+        run: |
+          echo "→ Packaging ${{ matrix.name }}"
+          task ${{ matrix.package_task }} ARCH=${{ matrix.arch }} || echo "Package opcional falló, continuando con binario"
+        continue-on-error: true
+
+      # macOS DMG (solo en macOS, requiere .app ya empaquetado)
+      - name: Crear DMG (macOS)
+        if: matrix.os == 'darwin'
+        shell: bash
+        run: |
+          task darwin:package:dmg ARCH=${{ matrix.arch }} || echo "DMG opcional falló (requiere macOS nativo)"
+        continue-on-error: true
+
+      - name: Listar artefactos
+        shell: bash
+        run: |
+          echo "=== bin/ ==="
+          ls -lh bin/ 2>&1 || echo "sin bin/"
+          echo "=== build/ ==="
+          ls -lh build/windows/nsis/*.exe 2>&1 | head -n 20 || true
+          ls -lh build/linux/*.desktop 2>&1 | head -n 20 || true
+          echo "=== frontend/dist ==="
+          ls -lh frontend/dist/ 2>&1 | head -n 20 || true
+
+      # ── Renombrado versionado para release ──
+      - name: Renombrar artefactos con versión y plataforma
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          if [ -z "$VERSION" ] || [[ "$VERSION" == "main" ]] || [[ "$VERSION" == "develop" ]]; then
+            VERSION="${{ inputs.version }}"
+          fi
+          if [ -z "$VERSION" ]; then
+            VERSION="v2.5.0-${{ matrix.name }}"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Usando VERSION=$VERSION"
+
+          mkdir -p dist-release
+
+          # Binario principal
+          if [ -f "bin/steplauncher" ]; then
+            cp bin/steplauncher "dist-release/steplauncher-${VERSION}-${{ matrix.name }}"
+            echo "✓ binario linux/macos"
+          fi
+          if [ -f "bin/steplauncher.exe" ]; then
+            cp bin/steplauncher.exe "dist-release/steplauncher-${VERSION}-${{ matrix.name }}.exe"
+            echo "✓ binario windows"
+          fi
+
+          # Instaladores Windows
+          for f in bin/*installer*.exe bin/*Installer*.exe; do
+            [ -f "$f" ] || continue
+            cp "$f" "dist-release/"
+            echo "✓ $f"
+          done
+
+          # Paquetes Linux
+          for f in bin/*.deb bin/*.rpm bin/*.AppImage bin/*.pkg.tar.zst; do
+            [ -f "$f" ] || continue
+            cp "$f" "dist-release/"
+            echo "✓ $f"
+          done
+
+          # macOS .app (comprimir)
+          if [ -d "bin/steplauncher.app" ]; then
+            (cd bin && tar -czf "../dist-release/steplauncher-${VERSION}-${{ matrix.name }}.app.tar.gz" steplauncher.app)
+            echo "✓ .app tar.gz"
+          fi
+          if [ -d "bin/Steplauncher.app" ]; then
+            (cd bin && tar -czf "../dist-release/steplauncher-${VERSION}-${{ matrix.name }}.app.tar.gz" Steplauncher.app)
+            echo "✓ .app tar.gz (alt)"
+          fi
+          for f in bin/*.dmg; do
+            [ -f "$f" ] || continue
+            cp "$f" "dist-release/"
+            echo "✓ $f"
+          done
+
+          # Si no hubo renombrado, copiar todo bin/ tal cual
+          if [ -z "$(ls -A dist-release 2>/dev/null)" ]; then
+            echo "⚠ dist-release vacío, copiando bin/* directo"
+            cp -r bin/* dist-release/ 2>/dev/null || true
+          fi
+
+          echo "=== dist-release/ ==="
+          ls -lh dist-release/
+
+      - name: Upload artefacto ${{ matrix.name }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: steplauncher-${{ matrix.name }}-${{ github.sha }}
+          path: dist-release/*
+          if-no-files-found: warn
+          retention-days: 7
+
+      # ── Subida directa al draft release (por job) ──
+      # Cada plataforma sube a la misma tag; GitHub fusiona los assets.
+      # Se usa softprops/action-gh-release que es idempotente con draft.
+      - name: Publicar en Draft Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-release/*
+          draft: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ───────────────────────────────────────────────────────────────
+  # Job agregador opcional: crea/actualiza draft con notas
+  # (por si el workflow se lanza manualmente sin tag)
+  # ───────────────────────────────────────────────────────────────
+  draft:
+    name: Crear Draft Release (manual)
+    if: github.event_name == 'workflow_dispatch' && !startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Descargar todos los artefactos
+        uses: actions/download-artifact@v4
+        with:
+          path: all-dist
+          merge-multiple: true
+
+      - name: Listar artefactos agregados
+        run: ls -lhR all-dist | head -n 100
+
+      - name: Crear draft prerelease manual
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version != '' && inputs.version || format('v0.0.0-dev.{0}', github.run_number) }}
+          name: "StepLauncher ${{ inputs.version != '' && inputs.version || format('DEV #{0}', github.run_number) }}"
+          body: |
+            🛠️ **Build de desarrollo**
+            Compilación manual desde `${{ github.ref_name }}` — run #${{ github.run_number }}.
+
+            Incluye binarios para **Windows**, **Linux** y **macOS** (Apple Silicon + Intel).
+
+            > Generado automáticamente por `release.yml` (workflow_dispatch).
+
+            ## Artefactos
+            - `steplauncher-*.exe` — Windows (exe + instalador NSIS)
+            - `steplauncher-*` — Linux (bin + .deb/.rpm/.AppImage)
+            - `steplauncher-*.app.tar.gz` / `*.dmg` — macOS
+          draft: true
+          prerelease: true
+          files: all-dist/*
+          fail_on_unmatched_files: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

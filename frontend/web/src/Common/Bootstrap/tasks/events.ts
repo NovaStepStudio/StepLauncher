@@ -50,6 +50,13 @@ export const eventsTask: BootstrapTask = {
                 installOpen.value = true;
             });
         });
+        Events.On('tray_open_music', () => {
+            import('@/Common/Overlays/Store').then(({ openHeavyPanel }) => openHeavyPanel('music'));
+        });
+        // Compat: recargar interfaz pedida desde el tray también puede llegar como evento
+        Events.On('tray_reload', () => {
+            try { window.location.reload(); } catch (_e) {}
+        });
         // Cuentas
         Events.On('account_login', async () => {
             const { loadAccounts } = await import('@/Accounts/Store');

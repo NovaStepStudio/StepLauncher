@@ -36,14 +36,15 @@ type GameResp struct {
 }
 
 func gameToResp(g *launcher.GameInstance) GameResp {
+	snapshot := g.Snapshot()
 	r := GameResp{
-		ID: g.ID, PID: g.PID, Version: g.Version,
-		Status: g.GetStatus(), ExitCode: g.ExitCode,
-		LogPath: g.LogPath, CrashLog: g.CrashLog,
-		CrashReason: g.CrashReason, CrashCategory: g.CrashCategory,
+		ID: snapshot.ID, PID: snapshot.PID, Version: snapshot.Version,
+		Status: snapshot.Status, ExitCode: snapshot.ExitCode,
+		LogPath: snapshot.LogPath, CrashLog: snapshot.CrashLog,
+		CrashReason: snapshot.CrashReason, CrashCategory: snapshot.CrashCategory,
 	}
-	if !g.StartTime.IsZero() {
-		r.StartTime = g.StartTime.Format("2006-01-02 15:04:05")
+	if !snapshot.StartTime.IsZero() {
+		r.StartTime = snapshot.StartTime.Format("2006-01-02 15:04:05")
 	}
 	return r
 }
@@ -73,10 +74,14 @@ func (e *Engine) LaunchMinecraft(cfg LaunchConfig) (*GameResp, error) {
 // separadores ASCII y con datos sensibles redactados) del juego indicado.
 func (e *Engine) GetGameLaunchInfo(id string) string {
 	g := e.launcher.Get(id)
-	if g == nil || g.PreInfo == nil {
+	if g == nil {
 		return ""
 	}
-	return gamelog.FormatPreLaunchInfo(*g.PreInfo)
+	snapshot := g.Snapshot()
+	if snapshot.PreInfo == nil {
+		return ""
+	}
+	return gamelog.FormatPreLaunchInfo(*snapshot.PreInfo)
 }
 
 // OpenPath abre una ruta (archivo o carpeta) en el explorador del sistema.
@@ -119,6 +124,15 @@ func (e *Engine) buildBaseLaunchConfig(cfg launcher.LaunchConfig) launcher.Launc
 	}
 	adv.Fullscreen = ec.Fullscreen
 	adv.VerifyBeforeLaunch = ec.VerifyBeforeLaunch
+
+	// Propagar proxy global a la config de lanzamiento (el proxy afecta tanto
+	// a descargas como a la JVM del juego vía -Dhttp.proxyHost / -DsocksProxyHost)
+	if ec.ProxyEnabled && strings.TrimSpace(ec.ProxyHost) != "" {
+		adv.ProxyHost = strings.TrimSpace(ec.ProxyHost)
+		adv.ProxyPort = ec.ProxyPort
+		adv.ProxyUser = ec.ProxyUser
+		adv.ProxyPass = ec.ProxyPass
+	}
 
 	hwAccel := ec.HardwareAcceleration
 	if !ec.HardwareEnabled {

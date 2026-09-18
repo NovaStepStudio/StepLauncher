@@ -1,0 +1,72 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+    authors:
+      - github-actions
+      - dependabot[bot]
+      - renovate[bot]
+
+  categories:
+    - title: Breaking Changes
+      labels:
+        - type:breaking
+
+    - title: Nuevas Funcionalidades
+      labels:
+        - type:feature
+        - type:enhancement
+
+    - title: Core / Engine
+      labels:
+        - area:core
+        - area:engine
+
+    - title: Interfaz de Usuario
+      labels:
+        - area:ui
+        - area:frontend
+
+    - title: Internacionalización
+      labels:
+        - area:i18n
+
+    - title: Corrección de Errores
+      labels:
+        - type:bug
+        - type:unconfirmed-bug
+        - type:patch
+        - type:fix
+
+    - title: Rendimiento
+      labels:
+        - type:perf
+
+    - title: Música / Playlist
+      labels:
+        - area:music
+
+    - title: Lanzamiento / Instancias
+      labels:
+        - area:launcher
+        - area:instance
+        - area:modloader
+
+    - title: Tests
+      labels:
+        - type:test
+
+    - title: Documentación
+      labels:
+        - type:docs
+
+    - title: Mantenimiento
+      labels:
+        - type:chore
+        - type:refactor
+        - area:deps
+        - area:ci
+
+    - title: Otros Cambios
+      labels:
+        - "*"

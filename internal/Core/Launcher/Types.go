@@ -19,16 +19,16 @@ const (
 )
 
 type GameInstance struct {
-	mu            sync.RWMutex
-	ID            string
-	PID           int
-	Version       string
-	InstanceID    string
-	InstanceName  string
-	PlayerName    string
-	StartTime     time.Time
-	Status        GameStatus
-	ExitCode      int
+	mu              sync.RWMutex
+	ID              string
+	PID             int
+	Version         string
+	InstanceID      string
+	InstanceName    string
+	PlayerName      string
+	StartTime       time.Time
+	Status          GameStatus
+	ExitCode        int
 	LogPath         string
 	CrashLog        string
 	CrashLogContent string
@@ -37,10 +37,54 @@ type GameInstance struct {
 	CrashCategory   string
 	PreInfo         *gamelog.PreLaunchInfo
 	LauncherLogPath string
-	cmd           *exec.Cmd
-	done          chan struct{}
-	eventBuf      []GameEvent
-	eventBufMu    sync.RWMutex
+	cmd             *exec.Cmd
+	done            chan struct{}
+	eventBuf        []GameEvent
+	eventBufMu      sync.RWMutex
+}
+
+type GameSnapshot struct {
+	ID              string
+	PID             int
+	Version         string
+	InstanceID      string
+	InstanceName    string
+	PlayerName      string
+	StartTime       time.Time
+	Status          GameStatus
+	ExitCode        int
+	LogPath         string
+	CrashLog        string
+	CrashLogContent string
+	GameOutput      string
+	CrashReason     string
+	CrashCategory   string
+	PreInfo         *gamelog.PreLaunchInfo
+	LauncherLogPath string
+}
+
+func (g *GameInstance) Snapshot() GameSnapshot {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return GameSnapshot{
+		ID:              g.ID,
+		PID:             g.PID,
+		Version:         g.Version,
+		InstanceID:      g.InstanceID,
+		InstanceName:    g.InstanceName,
+		PlayerName:      g.PlayerName,
+		StartTime:       g.StartTime,
+		Status:          g.Status,
+		ExitCode:        g.ExitCode,
+		LogPath:         g.LogPath,
+		CrashLog:        g.CrashLog,
+		CrashLogContent: g.CrashLogContent,
+		GameOutput:      g.GameOutput,
+		CrashReason:     g.CrashReason,
+		CrashCategory:   g.CrashCategory,
+		PreInfo:         g.PreInfo,
+		LauncherLogPath: g.LauncherLogPath,
+	}
 }
 
 func (g *GameInstance) IsRunning() bool {

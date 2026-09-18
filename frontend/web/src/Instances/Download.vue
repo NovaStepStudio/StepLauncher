@@ -157,7 +157,9 @@ const SECTION_LABELS: Record<string, string> = {
     libraries: 'Librerías',
     natives: 'Nativas',
     assets: 'Assets',
-    asset_index: 'Índice assets',
+    // asset_index ya no es sección propia: se agrupa dentro de Assets (backend
+    // la emite como "assets"). Se mantiene alias por compatibilidad.
+    asset_index: 'Assets',
     java: 'Java',
     extracting_natives: 'Nativas',
 };
@@ -1084,6 +1086,10 @@ onUnmounted(() => {
                                                     ></div>
                                                 </div>
                                                 <span class="InstDl_DetailRowMeta">{{ s.doneFiles }}/{{ s.totalFiles }} archivos · {{ fmtMb(s.mbDownloaded) }}/{{ fmtMb(s.mbTotal) }}</span>
+                                                <span v-if="s.name === 'java'" class="InstDl_DetailRowHint">
+                                                    <IconAlertTriangle :size="11" stroke="2" />
+                                                    Java se descarga al final: espera a que terminen Cliente, Librerías y Assets. Es el más pesado.
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -1091,7 +1097,7 @@ onUnmounted(() => {
                                     <div v-if="(progress?.activeFiles ?? []).length" class="InstDl_DetailBlock">
                                         <div class="InstDl_DetailTitle">Descargando ahora</div>
                                         <div class="InstDl_DetailList">
-                                            <div v-for="f in (progress!.activeFiles ?? []).slice(0, 4)" :key="f.name" class="InstDl_DetailFile">
+                                            <div v-for="f in (progress!.activeFiles ?? []).slice(0, 8)" :key="f.name" class="InstDl_DetailFile">
                                                 <div class="InstDl_DetailFileHead">
                                                     <span class="name">{{ f.name }}</span>
                                                     <em>{{ fmt(clampPct(f.percent), 0) }}%</em>

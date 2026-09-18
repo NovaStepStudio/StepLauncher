@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
-import { IconX, IconPalette, IconMusic, IconSparkles, IconPin } from '@tabler/icons-vue';
+import { IconX, IconPalette, IconMusic, IconSparkles, IconPin, IconPhoto, IconFolderOpen } from '@tabler/icons-vue';
 import { useOverlayEscape } from '@/Common/Composables/useOverlayEscape';
 import { localTracks, totalTracks } from '../LocalStore';
 import TrackSelector from './TrackSelector.vue';
+import ColorField from '@/Common/Components/ColorField.vue';
+import { personalization } from '@/Common/Stores/Ui';
 
 const props = defineProps<{
     visible: boolean;
@@ -61,9 +63,62 @@ function submit(): void {
     close();
 }
 
+async function pickCoverFile(): Promise<void> {
+    try {
+        const mod: any = await import('@wailsjs/StepLauncher/internal/Services/Music/musicservice');
+        if (typeof mod.PickCustomCoverFile === 'function') {
+            const p: string = await mod.PickCustomCoverFile();
+            if (p && p.trim()) cover.value = p.trim();
+            return;
+        }
+    } catch (_e) {
+        // silencioso, el usuario puede escribir la ruta manualmente
+    }
+}
+
 useOverlayEscape(close, { isActive: () => props.visible, priority: 2 });
 
 const isEdit = computed(() => props.mode === 'edit');
+const recentColors = computed(() => personalization.value?.recentColors ?? []);
+const hasCustomColor = computed(() => !!color.value.trim());
+
+function toggleCustomColor(e: Event): void {
+    const checked = (e.target as HTMLInputElement).checked;
+    if (checked) {
+        if (!color.value.trim()) color.value = '#5ed89a';
+    } else {
+        color.value = '';
+    }
+}
+
+const coverResolved = ref('');
+watch(cover, async (p) => {
+    const raw = String(p ?? '').trim();
+    if (!raw) { coverResolved.value = ''; return; }
+    if (raw.startsWith('data:') || raw.startsWith('blob:') || raw.startsWith('http')) { coverResolved.value = raw; return; }
+    try {
+        const mod: any = await import('@wailsjs/StepLauncher/internal/Services/System/systemservice');
+        const data: any = await mod.ReadAbsoluteFile(raw).catch(() => null);
+        if (!data) { coverResolved.value = raw; return; }
+        let bytes: Uint8Array | null = null;
+        if (typeof data === 'string') {
+            const bin = atob(data as string);
+            bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        } else if (data instanceof Uint8Array) bytes = data;
+        else if (Array.isArray(data)) bytes = new Uint8Array(data as any);
+        if (!bytes || !bytes.length) { coverResolved.value = raw; return; }
+        const ext = raw.split('.').pop()?.toLowerCase() ?? 'jpeg';
+        const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
+        const blob = new Blob([bytes as BlobPart], { type: mime });
+        const url = URL.createObjectURL(blob);
+        // liberar anterior si era blob
+        if (coverResolved.value.startsWith('blob:')) try { URL.revokeObjectURL(coverResolved.value); } catch {}
+        coverResolved.value = url;
+    } catch {
+        coverResolved.value = raw;
+    }
+}, { immediate: true });
 </script>
 
 <template>
@@ -108,18 +163,34 @@ const isEdit = computed(() => props.mode === 'edit');
                             </div>
 
                             <label class="PlaylistForm_Field">
-                                <span>Color personalizado</span>
-                                <div class="PlaylistForm_ColorRow">
-                                    <input class="SsIn" v-model="color" placeholder="#a78bfa o vacío = auto" />
-                                    <span class="PlaylistForm_ColorPreview" :style="{ background: color || 'color-mix(in srgb, var(--progress-color) 18%, transparent)', borderColor: color || 'transparent' }" title="Vista previa">
-                                        <IconPalette :size="12" stroke="2" />
-                                    </span>
+                                <span>Color predominante</span>
+                                <div class="PlaylistForm_ColorToggle">
+                                    <label class="SsTg">
+                                        <input type="checkbox" :checked="hasCustomColor" @change="toggleCustomColor" />
+                                        <span class="SsTgS"></span>
+                                    </label>
+                                    <span class="PlaylistForm_ColorToggleLabel">{{ hasCustomColor ? 'Color personalizado' : 'Solo carátula (auto)' }}</span>
+                                    <span v-if="!hasCustomColor" class="PlaylistForm_AutoBadge">Auto</span>
                                 </div>
-                                <em class="PlaylistForm_Hint">Vacío usa la carátula más colorida.</em>
+                                <div v-if="hasCustomColor" class="PlaylistForm_ColorRow is-colorField">
+                                    <ColorField v-model="color" :recents="recentColors" />
+                                </div>
+                                <em class="PlaylistForm_Hint">{{ hasCustomColor ? 'Color personalizado aplicado a la card. Desactívalo para usar solo la carátula.' : 'Se usará el color más vivo de la carátula. Activa para elegir uno propio.' }}</em>
                             </label>
                             <label class="PlaylistForm_Field">
-                                <span>Carátula custom</span>
-                                <input class="SsIn" v-model="cover" placeholder="C:\covers\mi.png o cache/covers/..." />
+                                <span>Carátula personalizada</span>
+                                <div class="PlaylistForm_CoverRow">
+                                    <input class="SsIn" v-model="cover" placeholder="C:\covers\mi.png o cache/covers/..." />
+                                    <button class="SsBtn SsBtnSmall" @click="pickCoverFile" title="Elegir imagen PNG/JPG/WEBP">
+                                        <IconFolderOpen :size="14" stroke="2" /> Elegir
+                                    </button>
+                                </div>
+                                <div v-if="cover" class="PlaylistForm_CoverPreview">
+                                    <img :src="coverResolved || cover" alt="preview" @error="(e:any)=> e.target.style.display='none'" />
+                                    <span class="PlaylistForm_CoverPath" :title="cover">{{ cover.split(/[\\/]/).pop() || cover }}</span>
+                                    <button class="SsBtn SsBtnSmall SsBtnGhost" @click="cover=''" title="Quitar carátula"><IconX :size="12" stroke="2" /> Quitar</button>
+                                </div>
+                                <em class="PlaylistForm_Hint">PNG, JPG o WEBP. Se mostrará como portada de la playlist.</em>
                             </label>
                         </div>
 
@@ -312,18 +383,80 @@ const isEdit = computed(() => props.mode === 'edit');
     gap: 0.45rem;
     align-items: center;
     .SsIn { flex: 1; min-width: 0; }
+    &.is-colorField {
+        gap: 0.6rem;
+        padding: 0.25rem 0;
+        background: transparent;
+        border: none;
+        flex-wrap: wrap;
+    }
 }
-.PlaylistForm_ColorPreview {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 0.5rem;
-    border: 1px solid transparent;
+.PlaylistForm_ColorToggle {
     display: flex;
-    justify-content: center;
     align-items: center;
-    flex-shrink: 0;
+    gap: 0.55rem;
+    padding: 0.4rem 0.55rem;
+    border-radius: 0.55rem;
+    background: color-mix(in srgb, var(--control-bg) 60%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text-primary) 7%, transparent);
+}
+.PlaylistForm_ColorToggleLabel {
+    font-size: 0.72rem;
+    font-weight: 600;
     color: var(--text-primary);
-    box-shadow: 0 1px 6px rgba(0,0,0,0.12);
+}
+.PlaylistForm_AutoBadge {
+    margin-left: auto;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--progress-color) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--progress-color) 18%, transparent);
+    color: var(--progress-color);
+}
+.PlaylistForm_ColorValue {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.9;
+}
+.PlaylistForm_CoverRow {
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+    .SsIn { flex: 1; min-width: 0; }
+}
+.PlaylistForm_CoverPreview {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.55rem;
+    border-radius: 0.55rem;
+    background: color-mix(in srgb, var(--control-bg) 60%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text-primary) 7%, transparent);
+    img {
+        width: 2.2rem;
+        height: 2.2rem;
+        border-radius: 0.4rem;
+        object-fit: cover;
+        border: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
+        flex-shrink: 0;
+    }
+}
+.PlaylistForm_CoverPath {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.66rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .PlaylistForm_SelectorWrap {
     display: flex;

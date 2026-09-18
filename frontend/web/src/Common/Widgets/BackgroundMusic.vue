@@ -74,11 +74,16 @@ const displayArtist = computed(() => isLauncher.value ? (launcherTrack.value?.ar
 const displayCoverUrl = computed(() => isLauncher.value ? (launcherTrack.value?.coverUrl || '') : (meta.value?.coverUrl || ''));
 
 const launcherHasMusic = computed(() => localTracks.value.length > 0 || launcherQueue.value.length > 0);
-// El widget se muestra si hay contenido en la fuente activa
+// Indicador de que hay música de biblioteca en disco aunque aún no se haya cargado la lista (carga perezosa)
+const hasLibraryOnDisk = ref(false);
+const launcherHasMusicEffective = computed(() => launcherHasMusic.value || hasLibraryOnDisk.value);
+// El widget se muestra si hay música en cualquier fuente (fondo o biblioteca).
+// Así aparece al iniciar aunque la fuente seleccionada aún no haya cargado su lista.
 const show = computed(() => {
-    if (isLauncher.value) return launcherHasMusic.value;
-    const p = personalization.value?.backgroundMusic;
-    return !!p?.enabled && musicList.value.length > 0;
+    const bgHas = !!personalization.value?.backgroundMusic?.enabled;
+    const libHas = launcherHasMusicEffective.value;
+    // Si alguno tiene música, mostrar el widget (el contenido interno decide qué mostrar según isLauncher)
+    return bgHas || libHas;
 });
 
 async function onTogglePlay() {
@@ -188,20 +193,28 @@ function onEscapeKey(e: KeyboardEvent) {
 }
 
 // El menú principal se oculta solo con ciertos paneles (igual que App.vue:158 mainMenuHidden).
-// Respeta el orden de ocultación: solo se oculta al abrir x panel, no con cualquier overlay.
-const menuHidden = computed(() =>
-    !!heavyPanel.value
-    || accountsOpen.value
-    || versionsOpen.value
-    || newsOpen.value
-    || welcomeOpen.value
-    || previewOpen.value
-);
+// Para música de fondo sí se oculta al abrir paneles pesados; para biblioteca (launcher)
+// el widget debe permanecer visible siempre y no desaparecer por idle ni por menú.
+const menuHidden = computed(() => {
+    if (isLauncher.value) return false;
+    return !!heavyPanel.value
+        || accountsOpen.value
+        || versionsOpen.value
+        || newsOpen.value
+        || welcomeOpen.value
+        || previewOpen.value;
+});
 
-// Al cerrar todos los overlays (idle, etc.) el widget entero se oculta,
-// incluido el botón de abrir; reaparece con la próxima interacción.
+// Para fondo el widget se oculta por idle; para biblioteca nunca (siempre visible).
 const hiddenByOverlay = ref(false);
 let lastActivity = 0;
+
+const bgmHidden = computed(() => {
+    if (!show.value) return true;
+    if (hiddenByOverlay.value && !isLauncher.value) return true;
+    if (menuHidden.value && !isLauncher.value) return true;
+    return false;
+});
 
 watch(menuHidden, (hidden) => {
     if (hidden) {
@@ -211,7 +224,20 @@ watch(menuHidden, (hidden) => {
     }
 });
 
+watch(bgmHidden, (hidden) => {
+    if (hidden) {
+        expanded.value = false;
+        volOpen.value = false;
+        queueOpen.value = false;
+    }
+});
+
+watch(isLauncher, (v) => {
+    if (v && hiddenByOverlay.value) hiddenByOverlay.value = false;
+});
+
 function onCloseOverlays() {
+    if (isLauncher.value) return;
     hiddenByOverlay.value = true;
     expanded.value = false;
     volOpen.value = false;
@@ -227,6 +253,22 @@ function onActivity() {
 
 onMounted(() => {
     void loadMusicList();
+    // Comprobar si hay música de biblioteca en disco para que el widget aparezca al iniciar aunque la lista aún no se haya cargado (carga perezosa)
+    void (async () => {
+        try {
+            const sys: any = await import('@wailsjs/StepLauncher/internal/Services/Music/musicservice');
+            const stats: any = await sys.GetMusicLibraryStats?.().catch(() => null);
+            if (stats && Number(stats.totalTracks) > 0) {
+                hasLibraryOnDisk.value = true;
+                return;
+            }
+            const folders: any = await sys.GetMusicFolders?.().catch(() => []);
+            if (Array.isArray(folders) && folders.length) {
+                const page: any = await sys.GetMusicTracksPaged?.(0, 1, 'none', '').catch(() => null);
+                if (page && Number(page.total) > 0) hasLibraryOnDisk.value = true;
+            }
+        } catch {}
+    })();
     // loadLocalLibrary ya NO se llama aquí: es carga perezosa del panel de Música.
     // El widget reacciona automáticamente cuando el panel puebla localTracks.
     window.addEventListener(CLOSE_OVERLAYS_EVENT, onCloseOverlays);
@@ -249,7 +291,7 @@ onUnmounted(() => {
 
 <template>
     <Teleport to="body">
-        <div v-show="show && !hiddenByOverlay" class="Bgm" :class="{ 'Bgm--menuHidden': menuHidden }">
+        <div class="Bgm" :class="{ 'Bgm--hidden': bgmHidden }">
 
             <Transition name="bgm-up" mode="out-in">
                 <div v-if="!expanded" class="Bgm_Fab" :class="{ live: playing }" title="Música de fondo" @click="toggleExpand">
@@ -433,9 +475,10 @@ onUnmounted(() => {
 @use './Styles/BackgroundMusic.scss';
 
 .Bgm {
-    transition: opacity 400ms ease, transform 400ms ease, filter 400ms ease, visibility 0s linear 400ms;
+    transition: opacity 400ms ease, transform 400ms ease, filter 400ms ease;
 }
 
+.Bgm.Bgm--hidden,
 .Bgm.Bgm--menuHidden {
     opacity: 0;
     visibility: hidden;

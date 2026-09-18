@@ -52,7 +52,7 @@ const errorMsg = ref('');
 const musicEnabled = ref(false);
 const musicCoverSel = ref<'disc' | 'square' | 'background'>('disc');
 const musicRotate = ref(true);
-const musicVolume = ref(80);
+const musicVolume = ref(100);
 const musicBusy = ref(false);
 const musicMsg = ref('');
 
@@ -424,7 +424,7 @@ onMounted(async () => {
         musicEnabled.value = !!m.enabled;
         musicCoverSel.value = (['square', 'background'].includes(m.coverStyle) ? m.coverStyle : 'disc') as 'disc' | 'square' | 'background';
         musicRotate.value = typeof m.discRotation === 'boolean' ? m.discRotation : true;
-        musicVolume.value = Math.round((typeof m.volume === 'number' && m.volume >= 0 && m.volume <= 1 ? m.volume : 0.8) * 100);
+        musicVolume.value = Math.round((typeof m.volume === 'number' && m.volume >= 0 && m.volume <= 1 ? m.volume : 1) * 100);
         fontPrimary.value = p.fontPrimary ?? 'Lexend';
         fontSecondary.value = p.fontSecondary ?? 'Inter';
         fontPrimaryColor.value = p.fontPrimaryColor ?? '#ffffff';

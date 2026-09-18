@@ -2,6 +2,7 @@ import { ref, computed, watch } from 'vue';
 import type { LocalTrack } from './LocalStore';
 import { localTracks, ensureTrackMeta } from './LocalStore';
 import { addToHistory } from './HistoryStore';
+import { Events } from '@wailsio/runtime';
 
 // Estado global del reproductor local (música REAL, no música de fondo).
 // Usa un único HTMLAudioElement y Blob URLs creadas desde ReadAbsoluteFile.
@@ -12,7 +13,7 @@ export const currentIndex = ref(-1);
 export const playing = ref(false);
 export const currentTime = ref(0);
 export const duration = ref(0);
-export const volume = ref(0.85);
+export const volume = ref(1);
 export const playMode = ref<'queue' | 'shuffle' | 'repeat-one'>('queue');
 // Nuevos estados separados para los controles pedidos
 export const shuffleMode = ref<'linear' | 'shuffle'>('linear');
@@ -501,21 +502,54 @@ export async function playTrack(track: LocalTrack, queueOverride?: LocalTrack[])
         const after = localTracks.value.find((x) => x.path === track.path);
         if (after) hydrated = { ...track, title: after.title || track.title, artist: after.artist || track.artist, duration: after.duration || track.duration, coverUrl: after.coverUrl || track.coverUrl, coverRaw: (after as any).coverRaw || (track as any).coverRaw || '', fileName: after.fileName || track.fileName } as LocalTrack;
     }
-    // Si la cola viene de la playlist, asegurarse de que toda la cola tenga al menos intento de carátulas (no bloqueante)
+    // Si la cola viene de la playlist/librería, reemplazar la cola completa (nueva cola).
+    // IMPORTANTE: si la cola ya es la misma y el track está dentro, no reasignar (evita re-aleatorizar en modo shuffle al tocar la cola actual).
     if (queueOverride && queueOverride.length) {
-        const mapped = queueOverride.map((t) => {
-            const l = localTracks.value.find((x) => x.path === t.path);
-            return l ? ({ ...t, title: l.title || t.title, artist: l.artist || t.artist, duration: l.duration || t.duration, coverUrl: l.coverUrl || t.coverUrl, coverRaw: (l as any).coverRaw || (t as any).coverRaw || '' } as LocalTrack) : t;
-        });
-        queue.value = mapped;
-        // Disparar carga de carátulas para la cola visible sin bloquear
-        const need = mapped.filter((x) => !x.coverUrl).slice(0, 8);
-        if (need.length) void ensureTrackMeta(need as any);
-        hydrated = mapped.find((x) => x.path === hydrated.path) ?? hydrated;
+        const isQueueClick = queue.value.length > 0 && queueOverride.length === queue.value.length && queueOverride.every((t) => queue.value.some((q) => q.path === t.path));
+        // Si el override contiene exactamente los mismos paths que la cola actual (caso cola en reproducción con shuffle),
+        // no reemplazar la cola para no re-aleatorizar. Solo reproducir el track existente.
+        if (isQueueClick) {
+            // No tocar queue ni shuffledOrder, solo reproducir el track que ya está en cola
+            hydrated = queue.value.find((x) => x.path === hydrated.path) ?? hydrated;
+        } else {
+            const mapped = queueOverride.map((t) => {
+                const l = localTracks.value.find((x) => x.path === t.path);
+                return l ? ({ ...t, title: l.title || t.title, artist: l.artist || t.artist, duration: l.duration || t.duration, coverUrl: l.coverUrl || t.coverUrl, coverRaw: (l as any).coverRaw || (t as any).coverRaw || '' } as LocalTrack) : t;
+            });
+            queue.value = mapped;
+            // Si estaba en modo aleatorio, reconstruir el orden barajado con el nuevo track al frente
+            const isShuffle = shuffleMode.value === 'shuffle' || playMode.value === 'shuffle';
+            if (isShuffle && mapped.length > 1) {
+                const len = mapped.length;
+                const indices = Array.from({ length: len }, (_, i) => i);
+                for (let i = len - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    const tmp = indices[i]!; indices[i] = indices[j]!; indices[j] = tmp;
+                }
+                const hydIdx = mapped.findIndex((x) => x.path === hydrated.path);
+                if (hydIdx >= 0) {
+                    const pos = indices.indexOf(hydIdx);
+                    if (pos > 0) { indices.splice(pos, 1); indices.unshift(hydIdx); }
+                }
+                shuffledOrder.value = indices;
+            } else if (!isShuffle) {
+                shuffledOrder.value = [];
+            }
+            // Disparar carga de carátulas para la cola visible sin bloquear
+            const need = mapped.filter((x) => !x.coverUrl).slice(0, 8);
+            if (need.length) void ensureTrackMeta(need as any);
+            hydrated = mapped.find((x) => x.path === hydrated.path) ?? hydrated;
+            syncLoop();
+        }
     } else if (!queue.value.length) {
         queue.value = [hydrated];
     } else if (!queue.value.some((t) => t.path === hydrated.path)) {
         queue.value = [hydrated, ...queue.value];
+        // Si se inserta al inicio con shuffle activo, regenerar orden para incluirlo
+        if ((shuffleMode.value === 'shuffle' || playMode.value === 'shuffle') && queue.value.length > 1) {
+            // No re-aleatorizar toda la cola, solo reconstruir si tamaño cambió mucho
+            if (shuffledOrder.value.length !== queue.value.length) buildShuffledQueue();
+        }
     }
     // Sincronizar el track a reproducir con la versión hidratada en cola
     const idx = queue.value.findIndex((t) => t.path === hydrated.path);
@@ -777,3 +811,79 @@ async function tryRestoreQueue(): Promise<void> {
 }
 // tryRestoreQueue ya no se auto-ejecuta al importar; lo dispara ensurePlayerStoreInitialized()
 // cuando el usuario entra por primera vez al panel de Música.
+
+// --- Integración con el tray (solo biblioteca) ---
+let traySyncTimer: number | null = null;
+function scheduleTraySync(): void {
+    if (traySyncTimer !== null) window.clearTimeout(traySyncTimer);
+    traySyncTimer = window.setTimeout(() => { void pushTrayState(); traySyncTimer = null; }, 180);
+}
+async function pushTrayState(): Promise<void> {
+    try {
+        const hasQueue = queue.value.length > 0;
+        let hasNext = false;
+        let hasPrev = false;
+        if (hasQueue && queue.value.length > 1) {
+            const order = getQueueOrder();
+            const pos = order.indexOf(currentIndex.value);
+            if (pos >= 0) {
+                hasPrev = pos > 0;
+                hasNext = pos < order.length - 1;
+            } else {
+                // Si no hay índice válido, ambos habilitados si hay más de 1
+                hasPrev = true;
+                hasNext = true;
+            }
+            // Si es circular puro y spec quiere deshabilitar en límites, ya lo hace arriba.
+            // Para cola de 1, ambos quedan deshabilitados.
+        }
+        const mod: any = await import('@wailsjs/StepLauncher/internal/Services/System/systemservice');
+        if (typeof mod.UpdateTrayLibraryState === 'function') {
+            await mod.UpdateTrayLibraryState(playing.value, hasNext, hasPrev, hasQueue).catch(() => {});
+        }
+    } catch {}
+}
+
+// Listeners del tray que controlan solo la biblioteca
+Events.On('library_tray_play_pause', () => { void togglePlay(); });
+Events.On('library_tray_next', () => { void next(); });
+Events.On('library_tray_prev', () => { void prev(); });
+Events.On('tray_select_playlist', async ({ data }: any) => {
+    const id = typeof data === 'string' ? data : (data?.id ?? data);
+    if (!id || typeof id !== 'string') return;
+    try {
+        const mmod: any = await import('@wailsjs/StepLauncher/internal/Services/Music/musicservice');
+        const pl: any = await mmod.GetPlaylist(id).catch(() => null);
+        if (!pl || !Array.isArray(pl.trackPaths) || !pl.trackPaths.length) return;
+        const batch: any = await mmod.GetMusicTracksBatch(pl.trackPaths, 'thumb').catch(() => []);
+        const rawTracks: any[] = Array.isArray(batch) ? batch : [];
+        // Mapear DTO de Go a LocalTrack del frontend
+        const mapped: LocalTrack[] = rawTracks.map((t: any) => ({
+            id: t.path,
+            path: t.path,
+            fileName: t.fileName || (String(t.path).split(/[\\/]/).pop() || ''),
+            title: String(t.title || t.fileName || 'Desconocido').trim() || 'Desconocido',
+            artist: String(t.artist || 'Desconocido').trim() || 'Desconocido',
+            album: String(t.album || '').trim(),
+            duration: Number(t.duration) || 0,
+            coverUrl: t.coverThumb || t.coverRaw || '',
+            coverRaw: t.coverRaw || t.coverThumb || '',
+            hasCover: !!t.hasCover,
+        } as LocalTrack));
+        if (!mapped.length) return;
+        // Si hay pistas que no se pudieron resolver (faltan en batch por archivo borrado), filtrar
+        const valid = mapped.filter((x) => !!x.path);
+        if (!valid.length) return;
+        queue.value = valid;
+        if (shuffleMode.value === 'shuffle' || playMode.value === 'shuffle') buildShuffledQueue();
+        syncLoop();
+        await playTrack(valid[0]!, valid);
+    } catch (_e) {}
+});
+
+// Sincronizar estado del tray cuando cambian cola/índice/reproducción/modo
+watch([playing, queue, currentIndex, shuffleMode, playMode], () => { scheduleTraySync(); }, { deep: false } as any);
+watch(queue, () => { scheduleTraySync(); }, { deep: false });
+watch(currentIndex, () => { scheduleTraySync(); });
+// Push inicial tras restaurar cola (con delay para que la UI cargue)
+setTimeout(() => { void pushTrayState(); }, 900);
