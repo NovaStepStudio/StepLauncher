@@ -75,15 +75,10 @@ jobs:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Instalar Wails CLI v3
-        run: |
-          go install github.com/wailsapp/wails/v3/cmd/wails3@latest
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-          export PATH="$PATH:$(go env GOPATH)/bin"
-          wails3 version || echo "wails3 instalado, verificando GOPATH/bin"
-
+      # ── Dependencias por plataforma (ANTES de instalar Wails, porque wails3 necesita GTK en Linux) ──
       - name: Instalar dependencias Linux
         if: matrix.os == 'linux'
+        shell: bash
         run: |
           set -e
           echo "→ Actualizando apt..."
@@ -114,10 +109,28 @@ jobs:
           $env:Path += ";$nsisPath"
           Write-Host "NSIS en $nsisPath"
           & "$nsisPath\makensis.exe" -VERSION
-          makensis -VERSION
-          if ($LASTEXITCODE -ne 0) {
+          try { makensis -VERSION } catch {
             Write-Host "makensis aún no en PATH este step, pero estará disponible en el siguiente via GITHUB_PATH"
           }
+
+      - name: Instalar Wails CLI v3
+        shell: bash
+        run: |
+          go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          wails3 version || echo "wails3 instalado, verificando GOPATH/bin"
+
+      - name: Verificar herramientas
+        shell: bash
+        run: |
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          wails3 version || echo "wails3 no en PATH este step, pero estará en el siguiente via GITHUB_PATH"
+          task --version
+          go version
+          bun --version
+          which wails3 || where wails3 2>/dev/null || echo "wails3 path no resuelto aún"
+          ls -lh $(go env GOPATH)/bin/wails3* 2>&1 | head -n 5 || true
 
       - name: Instalar dependencias frontend
         working-directory: frontend
