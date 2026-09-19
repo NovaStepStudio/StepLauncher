@@ -1,4 +1,4 @@
-import type { BootstrapTask } from '../Types';
+import type { BootstrapTask } from '../types';
 import { loadAccounts, autoRefresh, refreshAllAccounts } from '@/Accounts/Store';
 
 export const accountsTask: BootstrapTask = {

@@ -1,4 +1,4 @@
-import type { BootstrapTask } from '../Types';
+import type { BootstrapTask } from '../types';
 import { loadLocal, personalization } from '@/Common/Stores/Ui';
 
 export const appearanceTask: BootstrapTask = {

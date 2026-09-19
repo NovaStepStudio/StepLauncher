@@ -1,4 +1,4 @@
-import type { BootstrapTask, BootstrapOptions, BootstrapContext } from './Types';
+import type { BootstrapTask, BootstrapOptions, BootstrapContext } from './types';
 import {
     bootstrapState,
     setStepStatus,
@@ -7,14 +7,14 @@ import {
     finishBootstrap,
     failBootstrap,
     log,
-} from './State';
-import { welcomeTask } from './tasks/Welcome';
-import { configTask } from './tasks/Config';
-import { appearanceTask, backgroundTask } from './tasks/Appearance';
-import { systemTask } from './tasks/System';
-import { accountsTask } from './tasks/Accounts';
-import { versionsTask } from './tasks/Versions';
-import { eventsTask } from './tasks/Events';
+} from './state';
+import { welcomeTask } from './tasks/welcome';
+import { configTask } from './tasks/config';
+import { appearanceTask, backgroundTask } from './tasks/appearance';
+import { systemTask } from './tasks/system';
+import { accountsTask } from './tasks/accounts';
+import { versionsTask } from './tasks/versions';
+import { eventsTask } from './tasks/events';
 
 const ALL_TASKS: BootstrapTask[] = [
     welcomeTask,

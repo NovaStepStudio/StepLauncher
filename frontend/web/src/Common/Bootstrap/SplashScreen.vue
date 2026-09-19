@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
-import { bootstrapState } from './State';
+import { bootstrapState } from './state';
 
 const showLogs = ref(false);
 const logsRef = ref<HTMLDivElement | null>(null);

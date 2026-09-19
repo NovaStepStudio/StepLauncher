@@ -5,7 +5,7 @@
  * App.vue solo consume el estado para el SplashScreen y no inicia nada.
  */
 
-export * from './Types';
-export * from './State';
-export * from './Runner';
+export * from './types';
+export * from './state';
+export * from './runner';
 export { default as SplashScreen } from './SplashScreen.vue';

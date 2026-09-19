@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue';
-import type { BootstrapState, BootstrapStep, BootstrapLog } from './Types';
-import { createLogger, trimLogs } from './Logger';
+import type { BootstrapState, BootstrapStep, BootstrapLog } from './types';
+import { createLogger, trimLogs } from './logger';
 
 const DEFAULT_STEPS: Omit<BootstrapStep, 'status'>[] = [
     { id: 'welcome', label: 'Comprobando primer arranque', weight: 0.5 },

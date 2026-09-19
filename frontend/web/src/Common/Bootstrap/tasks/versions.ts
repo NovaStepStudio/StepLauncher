@@ -1,4 +1,4 @@
-import type { BootstrapTask } from '../Types';
+import type { BootstrapTask } from '../types';
 import { loadVersions, loadProfiles, installedVersions, profiles } from '@/Launcher/Store';
 
 export const versionsTask: BootstrapTask = {

@@ -1,4 +1,4 @@
-import type { BootstrapLog, BootstrapLogLevel } from './Types';
+import type { BootstrapLog, BootstrapLogLevel } from './types';
 
 let seq = 0;
 const MAX_LOGS = 180;

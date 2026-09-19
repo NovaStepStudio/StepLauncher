@@ -1,4 +1,4 @@
-import type { BootstrapTask } from '../Types';
+import type { BootstrapTask } from '../types';
 import { GetFirstLaunch } from '@wailsjs/StepLauncher/internal/Services/System/systemservice';
 
 export const welcomeTask: BootstrapTask = {

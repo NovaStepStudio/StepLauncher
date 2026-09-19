@@ -1,4 +1,4 @@
-import type { BootstrapTask } from '../Types';
+import type { BootstrapTask } from '../types';
 import { GetConfig } from '@wailsjs/StepLauncher/internal/Services/Config/configservice';
 import { GetLauncherAssets, UpdatePersonalization } from '@wailsjs/StepLauncher/internal/Services/Appearance/appearanceservice';
 import { setUIScale, applyPersonalization } from '@/Common/Stores/Ui';

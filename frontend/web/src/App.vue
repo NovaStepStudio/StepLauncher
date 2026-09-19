@@ -47,7 +47,7 @@ import PersonalizationPreviewModal from '@/Settings/PersonalizationPreview.vue';
 import DownloadWidget from '@/Downloads/Widget.vue';
 import DialogHost from '@/Common/Overlays/Host.vue';
 import SplashScreen from '@/Common/Bootstrap/SplashScreen.vue';
-import { bootstrapState } from '@/Common/Bootstrap/State';
+import { bootstrapState } from '@/Common/Bootstrap/state';
 import { useBackground } from '@/Common/Composables/useBackground';
 import {
     selectedLabel,

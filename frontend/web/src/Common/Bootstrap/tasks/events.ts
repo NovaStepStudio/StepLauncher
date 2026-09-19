@@ -1,4 +1,4 @@
-import type { BootstrapTask } from '../Types';
+import type { BootstrapTask } from '../types';
 import { Events } from '@wailsio/runtime';
 import { refreshAfterDownload, onGameCrash, hideLaunchMessage, maybeShowWindow } from '@/Launcher/Store';
 

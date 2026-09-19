@@ -1,4 +1,4 @@
-import type { BootstrapTask } from '../Types';
+import type { BootstrapTask } from '../types';
 import { GetConfig } from '@wailsjs/StepLauncher/internal/Services/Config/configservice';
 import { startIdleTracking } from '@/Common/Stores/Idle';
 import { bindUpdateEvents, checkForUpdates } from '@/Updates/Store';

@@ -3,7 +3,7 @@ import App from './App.vue'
 import BackgroundMusicWidget from '@/Common/Widgets/BackgroundMusic.vue'
 import '@/Common/Styles/base/_index.scss'
 import { runBootstrap } from '@/Common/Bootstrap'
-import { bootstrapState } from '@/Common/Bootstrap/State'
+import { bootstrapState } from '@/Common/Bootstrap/state'
 
 // Asegura que el splash sea visible desde el primer fotograma, incluso antes
 // de que Vue termine de montar. El estado ya es idle visible, pero lo
