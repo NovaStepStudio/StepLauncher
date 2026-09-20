@@ -1,0 +1,314 @@
+@font-face {
+    font-family: 'Inter';
+    src: url('./assets/fonts/Inter.woff2');
+}
+
+@font-face {
+    font-family: 'Lexend';
+    src: url('./assets/fonts/Lexend.woff2');
+}
+
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 4rem;
+    overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    background: #000;
+    color: white;
+    font-family: 'Inter', system-ui;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    max-width: 100dvw;
+}
+
+img {
+    max-width: 100%;
+}
+
+/* ==========================================================================
+   Animaciones suaves y livianas (solo opacity + transform, nada pesado).
+   - .sl-enter: entrada al montar (heroes), con delay vía --sl-delay.
+   - .sl-fade: fundido simple (p. ej. cambio de tab).
+   - .sl-item: hijo que aparece con su propio --sl-delay (listas uno en uno).
+   - .sl-stagger: contenedor cuyos hijos aparecen uno en uno cuando un
+     ancestro .reveal ya es .is-visible (todo por CSS, sin JS extra).
+   - .sl-float: flotación ambiental lenta (logos de heroes).
+   - .reveal: la añade la directiva v-reveal; .is-visible al entrar en viewport.
+   ========================================================================== */
+
+@keyframes sl-fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes sl-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes sl-float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+.sl-enter {
+    opacity: 0;
+    animation: sl-fade-up .6s cubic-bezier(.22, .61, .36, 1) forwards;
+    animation-delay: var(--sl-delay, 0s);
+}
+
+.sl-fade {
+    opacity: 0;
+    animation: sl-fade-in .45s ease forwards;
+    animation-delay: var(--sl-delay, 0s);
+}
+
+.sl-item {
+    opacity: 0;
+    animation: sl-fade-up .5s cubic-bezier(.22, .61, .36, 1) forwards;
+    animation-delay: var(--sl-delay, 0s);
+}
+
+.sl-float {
+    animation: sl-float 6s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   .Collapse: expandir/colapsar animado sin medir alturas con JS.
+   El hijo directo (.CollapseInner) se recorta mientras las filas van de
+   0fr a 1fr. Solo grid + transition, nada pesado.
+   ========================================================================== */
+
+.Collapse {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .35s cubic-bezier(.22, .61, .36, 1);
+}
+
+.Collapse.open {
+    grid-template-rows: 1fr;
+}
+
+.Collapse > .CollapseInner {
+    overflow: hidden;
+    min-height: 0;
+}
+
+.reveal.is-visible .sl-stagger > * {
+    opacity: 0;
+    animation: sl-fade-up .55s cubic-bezier(.22, .61, .36, 1) forwards;
+}
+
+.reveal.is-visible .sl-stagger > *:nth-child(1) {
+    animation-delay: .05s;
+}
+
+.reveal.is-visible .sl-stagger > *:nth-child(2) {
+    animation-delay: .13s;
+}
+
+.reveal.is-visible .sl-stagger > *:nth-child(3) {
+    animation-delay: .21s;
+}
+
+.reveal.is-visible .sl-stagger > *:nth-child(4) {
+    animation-delay: .29s;
+}
+
+.reveal.is-visible .sl-stagger > *:nth-child(5) {
+    animation-delay: .37s;
+}
+
+.reveal.is-visible .sl-stagger > *:nth-child(n+6) {
+    animation-delay: .45s;
+}
+
+.reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity .55s ease, transform .55s cubic-bezier(.22, .61, .36, 1);
+    transition-delay: var(--sl-delay, 0s);
+    will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.sl-page-enter-active {
+    transition: opacity .22s ease;
+}
+
+.sl-page-leave-active {
+    transition: opacity .18s ease;
+}
+
+.sl-page-enter-from,
+.sl-page-leave-to {
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+    .sl-enter,
+    .sl-fade,
+    .sl-item,
+    .sl-float {
+        opacity: 1;
+        animation: none;
+    }
+    .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+    .reveal.is-visible .sl-stagger > * {
+        opacity: 1;
+        animation: none;
+    }
+    .sl-page-enter-active,
+    .sl-page-leave-active {
+        transition: none;
+    }
+    .Collapse {
+        transition: none;
+    }
+}
+
+/* ==========================================================================
+   .md-body: tipografía para el markdown renderizado del historial
+   (se inyecta con v-html, por eso vive acá y no en un scoped).
+   ========================================================================== */
+
+.md-body {
+    text-align: left;
+    font-size: .85rem;
+    line-height: 1.7;
+    color: #ffffffd9;
+    overflow-wrap: break-word;
+}
+
+.md-body h1,
+.md-body h2,
+.md-body h3 {
+    font-family: 'Lexend';
+    line-height: 1.4;
+    margin: 1.1rem 0 .5rem 0;
+}
+
+.md-body h1 {
+    font-size: 1.15rem;
+}
+
+.md-body h2 {
+    font-size: 1rem;
+}
+
+.md-body h3 {
+    font-size: .9rem;
+}
+
+.md-body p {
+    margin: .55rem 0;
+}
+
+.md-body ul,
+.md-body ol {
+    margin: .55rem 0;
+    padding-left: 1.3rem;
+}
+
+.md-body li {
+    margin: .25rem 0;
+}
+
+.md-body li::marker {
+    color: #ffffff80;
+}
+
+.md-body a {
+    color: #fff;
+    text-underline-offset: 3px;
+}
+
+.md-body a:hover {
+    opacity: .75;
+}
+
+.md-body code {
+    font-family: monospace;
+    font-size: .78rem;
+    padding: .1rem .35rem;
+    border-radius: .35rem;
+    border: 1px solid #ffffff20;
+    background: #ffffff0d;
+}
+
+.md-body pre {
+    margin: .7rem 0;
+    padding: .8rem .9rem;
+    border-radius: .6rem;
+    border: 1px solid #ffffff14;
+    background: #000;
+    overflow-x: auto;
+}
+
+.md-body pre code {
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.md-body blockquote {
+    margin: .7rem 0;
+    padding: .1rem 0 .1rem .9rem;
+    border-left: 2px solid #ffffff30;
+    opacity: .8;
+}
+
+.md-body hr {
+    margin: 1rem 0;
+    border: 0;
+    border-top: 1px solid #ffffff14;
+}
+
+/* ==========================================================================
+   Autofill del navegador: sin el fondo amarillo de Chrome en inputs oscuros.
+   ========================================================================== */
+
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+    -webkit-text-fill-color: #fff;
+    -webkit-box-shadow: 0 0 0 100px #101014 inset;
+    box-shadow: 0 0 0 100px #101014 inset;
+    transition: background-color 9999s ease-in-out 0s;
+    font-family: inherit;
+}

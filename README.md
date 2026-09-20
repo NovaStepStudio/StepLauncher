@@ -21,7 +21,7 @@ Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="launche
 [![Licencia](https://img.shields.io/badge/Licencia-GPL--3.0-a42e2e?style=for-the-badge&label=Licencia)](https://github.com/NovaStepStudio/StepLauncher/blob/main/LICENSE.md)
 
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev)
-[![Wails](https://img.shields.io/badge/Wails-v3.0.0--beta.9-DF4C6E?style=for-the-badge&logo=wails&logoColor=white)](https://wails.io)
+[![Wails](https://img.shields.io/badge/Wails-v3.0.0--beta.24-DF4C6E?style=for-the-badge&logo=wails&logoColor=white)](https://wails.io)
 [![Vue](https://img.shields.io/badge/Vue-3.5-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white)](https://vuejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
@@ -40,7 +40,7 @@ Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="launche
 |---|---|---|
 | [`launcher/`](launcher/) | App de escritorio (Wails v3 + Go + Vue 3): descargas, lanzamiento, modloaders, instancias, cuentas, música, personalización | [`launcher/README.md`](launcher/README.md) · [`launcher/AGENTS.md`](launcher/AGENTS.md) |
 | [`website/`](website/) | Web pública e informativa (Vue 3 + TS + Vite, despliegue en Cloudflare Pages): presentación, descargas, changelog, privacidad y términos | [`website/AGENTS.md`](website/AGENTS.md) |
-| [`api/`](api/) | Carpeta **reservada** para un futuro backend/API. Hoy está vacía: no se crea ni se modifica nada en ella sin permiso explícito | — |
+| [`api/`](api/) | Backend/API (Cloudflare Workers + Hono + Supabase): cuentas del jugador. Código aún no publicado en este repo | — |
 | [`.github/`](.github/) | CI, releases, plantillas de issues/PR y configuración del repositorio | — |
 
 
@@ -72,8 +72,9 @@ Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="launche
 - Landing, descargas, changelog público, privacidad y términos.
 - Vue 3 + Vite + Vue Router, desplegada como sitio estático en Cloudflare Pages (`bun run deploy`).
 
-### 🧩 `api/` — reservado
-- Sin código por ahora. No forma parte de ningún build ni deploy.
+### 🧩 `api/` — backend
+- API a medida (Cloudflare Workers + Hono, datos y Auth en Supabase) centrada en la cuenta del jugador.
+- Código aún no publicado en este repo: cuando se suba, traerá su propio `README.md` y `AGENTS.md`.
 
 ## 📁 Estructura del monorepo
 
@@ -94,7 +95,7 @@ StepLauncher/
 │   ├── vite.config.ts / wrangler.jsonc
 │   ├── dist/            # build generado (no se edita a mano)
 │   └── AGENTS.md        # reglas IA de la web
-├── api/                 # ← reservado, hoy vacío
+├── api/                 # ← backend (se publica por separado, aún no en el repo)
 ├── .github/             # workflows, plantillas, releases
 ├── AGENTS.md            # ← este archivo: enrutador del monorepo para IAs
 ├── README.md            # ← estás aquí: índice del monorepo
@@ -126,7 +127,7 @@ bun run deploy                    # build + despliegue a Cloudflare Pages
 
 **API:**
 ```powershell
-# api/ está vacía y reservada: no ejecutar ni crear nada sin permiso explícito.
+# api/ aún no vive en este repo: cuando se publique, ver su README propio.
 ```
 
 ## 📷 Galería (launcher)
