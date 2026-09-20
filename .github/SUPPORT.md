@@ -10,4 +10,4 @@
 - Discord, Reddit y estado de servicios listados en la web y en el `README.md`.
 
 ## Versiones
-Historial en `Changelogs/` y Releases de GitHub. Las prerelease/draft se generan automáticamente vía `.github/workflows/release.yml`.
+Historial en `launcher/Changelogs/` y Releases de GitHub. Las prerelease/draft se generan automáticamente vía `.github/workflows/release.yml` (build del subproyecto `launcher/`).

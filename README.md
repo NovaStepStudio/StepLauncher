@@ -1,16 +1,16 @@
 <div align="center">
 
 <a href="https://steplauncher.pages.dev">
-  <img src="resources/Banner_Web.png" alt="StepLauncher — Banner oficial | Powered by NovaCore Engine" width="100%">
+  <img src="launcher/resources/Banner_Web.png" alt="StepLauncher — Banner oficial | Powered by NovaCore Engine" width="100%">
 </a>
 
-<img src="frontend/web/assets/logo-step.png" alt="StepLauncher" width="110">
+<img src="launcher/frontend/web/assets/logo-step.png" alt="StepLauncher" width="110">
 
 # StepLauncher
 
-**El launcher no premium para Minecraft: Java Edition, creado por NovaStepStudio**
+**Monorepo oficial de StepLauncher — launcher no premium para Minecraft: Java Edition, creado por NovaStepStudio**
 
-Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="frontend/web/assets/logo-wails.png" alt="Wails" width="64" align="center">
+Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="launcher/frontend/web/assets/logo-wails.png" alt="Wails" width="64" align="center">
 
 > 🌐 **Visita nuestra página principal:** [**steplauncher.pages.dev**](https://steplauncher.pages.dev) — descubre el proyecto, la documentación y descarga la última beta. &nbsp;·&nbsp; Powered by **NovaCore Engine**
 
@@ -32,265 +32,112 @@ Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="fronten
 
 ---
 
+## 📖 Sobre este repositorio
+
+**StepLauncher ya es un monorepo**: contiene varios subproyectos independientes que se desarrollan, verifican y despliegan **por separado**. Un cambio en la web **no** tiene que modificar el launcher, y un cambio en el launcher **no** tiene que tocar la web.
+
+| Subproyecto | Qué es | Documentación propia |
+|---|---|---|
+| [`launcher/`](launcher/) | App de escritorio (Wails v3 + Go + Vue 3): descargas, lanzamiento, modloaders, instancias, cuentas, música, personalización | [`launcher/README.md`](launcher/README.md) · [`launcher/AGENTS.md`](launcher/AGENTS.md) |
+| [`website/`](website/) | Web pública e informativa (Vue 3 + TS + Vite, despliegue en Cloudflare Pages): presentación, descargas, changelog, privacidad y términos | [`website/AGENTS.md`](website/AGENTS.md) |
+| [`api/`](api/) | Carpeta **reservada** para un futuro backend/API. Hoy está vacía: no se crea ni se modifica nada en ella sin permiso explícito | — |
+| [`.github/`](.github/) | CI, releases, plantillas de issues/PR y configuración del repositorio | — |
+
+
 <div align="center">
 
-![Menú principal](resources/MainMenu.png)
+![Menú principal](launcher/resources/MainMenu.png)
 
-*Menú principal de StepLauncher*
+*Menú principal de StepLauncher (app de escritorio)*
 
 </div>
 
 ## 🌐 Página principal
 
-> **¿Quieres conocer mejor el proyecto?** Visita nuestra web oficial en **[steplauncher.pages.dev](https://steplauncher.pages.dev)** — allí encontrarás la presentación del launcher, características destacadas, la [Política de Privacidad](https://steplauncher.pages.dev/PrivacyPolicy) y los [Términos y Condiciones](https://steplauncher.pages.dev/TermsAndConditions) actualizados (19 de mayo de 2026), además de enlaces a Discord, GitHub y descarga.
+> La web oficial vive en **[steplauncher.pages.dev](https://steplauncher.pages.dev)** y su código vive en [`website/`](website/). Allí encontrarás la presentación del launcher, características destacadas, la [Política de Privacidad](https://steplauncher.pages.dev/PrivacyPolicy) y los [Términos y Condiciones](https://steplauncher.pages.dev/TermsAndConditions), además de enlaces a Discord, GitHub y descarga.
 
 <a href="https://steplauncher.pages.dev">
-  <img src="resources/Banner_Web.png" alt="StepLauncher — El launcher más orgánico y versátil para Minecraft Java | Powered by NovaCore Engine" width="100%">
+  <img src="launcher/resources/Banner_Web.png" alt="StepLauncher — El launcher más orgánico y versátil para Minecraft Java | Powered by NovaCore Engine" width="100%">
 </a>
 
-## 📖 Sobre
+## ✨ Qué hace cada parte (resumen)
 
-**StepLauncher** es un launcher de **Minecraft: Java Edition** no premium, desarrollado por **NovaStepStudio** y construido sobre **Wails v3** (Go + WebView2) con un frontend en **Vue 3 + TypeScript** altamente personalizable. Integra descargas, lanzamiento, modloaders, cuentas, historial, actualizaciones y biblioteca musical en una sola aplicación nativa y ligera para Windows, Linux y macOS.
+### 🖥️ `launcher/` — app de escritorio
+- Descarga concurrente de versiones con SHA1, pausa y reanudación.
+- Lanzamiento con detección de Java, modloaders (Fabric, Quilt, Forge, NeoForge…), instancias y cuentas offline/premium.
+- Biblioteca de música local, personalización (fondos, fuentes, colores, zoom) y Discord Rich Presence.
+- Beta actual: **2.5.0-beta** — historial en [`launcher/Changelogs/`](launcher/Changelogs/).
 
-Beta actual: **2.5.0-beta** — ver [`Changelogs/Beta/StepLauncher-2.5.0/`](Changelogs/Beta/StepLauncher-2.5.0/). Historial completo en [`Changelogs/`](Changelogs/).
+### 🌍 `website/` — web pública
+- Landing, descargas, changelog público, privacidad y términos.
+- Vue 3 + Vite + Vue Router, desplegada como sitio estático en Cloudflare Pages (`bun run deploy`).
 
-## ✨ Funcionalidades
+### 🧩 `api/` — reservado
+- Sin código por ahora. No forma parte de ningún build ni deploy.
 
-### 🎮 Juego
-- **Descarga de versiones** concurrente (1–16 hilos) con pausa, reanudación, límite de velocidad, reintentos y verificación **SHA1**.
-- **Lanzamiento** con detección de Java (auto/sistema/oficial/custom), classpath/natives, argumentos JVM/juego y streaming de logs en tiempo real.
-- **Modloaders** Fabric, Quilt, LegacyFabric, Forge y NeoForge con resolución Maven y detección del instalado.
-- **Instancias** con versión propia, configuración, verificación y clonación; descargas compartidas en `shared`.
-
-### 👤 Cuentas y presencia
-- **Cuentas offline y premium** (Microsoft / authlib-injector), refresco de tokens y avatares renderizados en el frontend.
-- **Discord Rich Presence** con reconexión automática.
-
-### 🎨 Personalización
-- **Fondos** imagen, vídeo y dinámicos; galería con dedup por URL.
-- **Fuentes** con slots (títulos/UI), **colores** tematizables y **UI** con zoom 50%–200%, blur y sombras.
-
-## 🎵 Panel de música
-
-El panel de música es una **biblioteca local real**, no un reproductor de fondo limitado. Escanea tu carpeta de música (mp3/wav/ogg/m4a/flac, hasta 2000 pistas) y crea un índice persistente `cache/music/index_v2.gob.gz` (~1 MB para 5000 pistas) con escaneo incremental.
-
-**Estructura del panel:**
-- **Inicio** — resumen con carátula en alta resolución, paleta extraída de la cover y estadísticas (pistas, listas, cola).
-- **Música** — lista paginada (20/50/100) con búsqueda, carátulas y paginación.
-- **Biblioteca** — playlists con grid 2×2 de carátulas, edición y `TrackSelector` visual para añadir pistas sin escribir rutas.
-- **Ahora suena** — carátula enorme, progreso y cola lateral paginada.
-- **Cola de Reproducción** — lista numerada con reorden y limpieza.
-
-**Reproductor (`PlayerBar`):** `HTMLAudioElement` con `Blob URLs` (LRU 6), 7 controles (prev/prev-prev/-10s/play-pause/+10s/next/next-next), modos aleatorio/bucle y volumen con popup que ya no colisiona con la lista. Widget dual **Fondo/Biblioteca** con mini cola.
-
-<div align="center">
-
-| Inicio | Explorar |
-|---|---|
-| ![Inicio música](resources/HomeMusicPanel.png) | ![Explorar música](resources/ExploreMusicPanel.png) |
-
-| Biblioteca | Ahora suena |
-|---|---|
-| ![Biblioteca](resources/LibrarySectionMusicPanel.png) | ![Ahora suena](resources/NowPlayingMusicPanel.png) |
-
-| Ahora suena (variante) | Cola de reproducción |
-|---|---|
-| ![Eva3 Ahora suena](resources/Eva3MusicPanelNowPlaying.png) | ![Cola](resources/ListReproductionMusicPanel.png) |
-
-</div>
-
-## 🧱 Stack tecnológico
-
-| Capa | Tecnología |
-|------|------------|
-| Backend | Go 1.26.4, Wails v3.0.0-beta.9 (9 servicios en `internal/Services/`) |
-| Motor | `internal/Handlers/Engine` + `internal/Core` + `internal/Music` (`index_v2`) |
-| Frontend | Vue 3.5, TypeScript, Vite 8, SCSS |
-| Gestión | bun + `vue-tsc` |
-
-### 📊 Estadísticas del proyecto (SCC)
-
-```
-───────────────────────────────────────────────────────────────────────────────
-Language            Files       Lines    Blanks  Comments       Code Complexity
-───────────────────────────────────────────────────────────────────────────────
-Go                    129      28,059     2,723       907     24,429      6,979
-Markdown              126       9,351     2,446         0      6,905          0
-TypeScript            105      10,571     1,186       847      8,538      1,758
-Sass                   59      23,354     2,806       136     20,412          0
-Vue                    54      19,007     1,624       247     17,136      1,686
-JSON                   16         400         1         0        399          0
-YAML                    7       1,376       134       139      1,103          0
-Shell                   5          59        11        19         29          4
-TypeScript Typ…         2          43         1         6         36          0
-XML                     2         109        12         0         97          0
-HTML                    1         114        13         0        101          0
-Powershell              1         128         3         5        120          9
-SVG                     1           9         0         0          9          0
-───────────────────────────────────────────────────────────────────────────────
-Total                 508      92,580    10,960     2,306     79,314     10,436
-───────────────────────────────────────────────────────────────────────────────
-```
-
-## 📁 Estructura del proyecto
-
-> Árbol **completo de carpetas** (162 directorios) generado con `python` ignorando `node_modules`, `dist`, `bin`, `.git`, `cache` y `.task`. Solo se omiten archivos para no saturar; todas las carpetas reales están listadas.
+## 📁 Estructura del monorepo
 
 ```
 StepLauncher/
-├── main.go / go.mod / go.sum / Taskfile.yml
-├── AGENTS.md / CODE_OF_CONDUCT.md / LICENSE.md / README.md / .gitignore / .npmrc
-├── frontend/
-│   ├── bindings/
-│   │   ├── StepLauncher/
-│   │   │   └── internal/
-│   │   │       ├── Config/
-│   │   │       ├── Core/
-│   │   │       │   ├── Accounts/
-│   │   │       │   ├── Assets/
-│   │   │       │   ├── Cache/
-│   │   │       │   ├── Downloader/
-│   │   │       │   ├── Launcher/
-│   │   │       │   └── ModLoader/
-│   │   │       ├── Handlers/
-│   │   │       │   └── Engine/
-│   │   │       ├── Music/
-│   │   │       │   ├── MusicHistory/
-│   │   │       │   ├── NowPlaying/
-│   │   │       │   └── Playlist/
-│   │   │       └── Services/
-│   │   │           ├── Account/
-│   │   │           ├── Appearance/
-│   │   │           ├── Config/
-│   │   │           ├── Download/
-│   │   │           ├── Game/
-│   │   │           ├── Instance/
-│   │   │           ├── ModLoader/
-│   │   │           ├── Music/
-│   │   │           └── System/
-│   │   └── github.com/
-│   │       └── wailsapp/
-│   │           └── wails/
-│   │               └── v3/
-│   └── web/
-│       ├── assets/
-│       │   ├── background/
-│       │   ├── decorations/
-│       │   ├── fonts/
-│       │   ├── gif/
-│       │   ├── icons/
-│       │   └── not_found/
-│       ├── public/
-│       │   └── wails/
-│       └── src/
-│           ├── Accounts/
-│           │   └── Styles/
-│           ├── Common/
-│           │   ├── Bootstrap/
-│           │   │   ├── Styles/
-│           │   │   └── tasks/
-│           │   ├── Components/
-│           │   ├── Composables/
-│           │   │   └── SkinPlayer/
-│           │   ├── Overlays/
-│           │   ├── Stores/
-│           │   ├── Styles/
-│           │   │   ├── App/
-│           │   │   ├── Components/
-│           │   │   └── base/
-│           │   └── Widgets/
-│           │       └── Styles/
-│           ├── Crash/
-│           │   └── Styles/
-│           ├── Downloads/
-│           │   └── Styles/
-│           ├── Instances/
-│           │   └── Styles/
-│           ├── Launcher/
-│           ├── Login/
-│           │   └── Styles/
-│           ├── Mods/
-│           │   └── Styles/
-│           ├── Music/
-│           │   ├── Components/
-│           │   └── Styles/
-│           ├── News/
-│           │   └── Styles/
-│           ├── Screenshots/
-│           │   └── Styles/
-│           ├── Settings/
-│           │   ├── Sections/
-│           │   └── Styles/
-│           ├── Updates/
-│           │   └── Styles/
-│           ├── Versions/
-│           │   └── Styles/
-│           └── Welcome/
-│               └── Styles/
-├── internal/
-│   ├── Config/
-│   ├── Core/
-│   │   ├── Accounts/
-│   │   ├── Assets/
-│   │   ├── Auth/
-│   │   ├── Cache/
-│   │   ├── Downloader/
-│   │   │   └── Utils/
-│   │   ├── Launcher/
-│   │   │   ├── Helpers/
-│   │   │   ├── History/
-│   │   │   ├── Instance/
-│   │   │   ├── Log/
-│   │   │   ├── Profile/
-│   │   │   └── Utils/
-│   │   ├── Logger/
-│   │   ├── ModLoader/
-│   │   │   ├── Installer/
-│   │   │   └── Provider/
-│   │   ├── News/
-│   │   ├── Platform/
-│   │   └── Utils/
-│   ├── Handlers/
-│   │   └── Engine/
-│   │       └── engineconfig/
-│   ├── Music/
-│   │   ├── MusicHistory/
-│   │   ├── NowPlaying/
-│   │   └── Playlist/
-│   ├── RichPresence/
-│   ├── Services/
-│   │   ├── Account/
-│   │   ├── Appearance/
-│   │   ├── Config/
-│   │   ├── Download/
-│   │   ├── Game/
-│   │   ├── Instance/
-│   │   ├── ModLoader/
-│   │   ├── Music/
-│   │   └── System/
-│   ├── Tray/
-│   └── Updater/
-└── resources/
+├── launcher/            # ← app de escritorio (su propio go.mod, frontend, build, Changelogs)
+│   ├── main.go / go.mod / Taskfile.yml
+│   ├── internal/        # backend Go (Config, Core, Services, Music, Updater…)
+│   ├── frontend/        # frontend Vue del launcher (web/src por dominios + bindings)
+│   ├── resources/       # banners y capturas del launcher
+│   ├── build/           # config Wails por plataforma (windows, darwin, linux, android)
+│   ├── bin/             # binarios generados
+│   ├── Changelogs/      # memoria histórica SOLO del launcher
+│   ├── AGENTS.md        # reglas IA del launcher
+│   └── README.md        # detalle completo del launcher
+├── website/             # ← web pública (su propio package.json, vite, wrangler)
+│   ├── web/src/         # Home, Download, Changelog, About, Common…
+│   ├── vite.config.ts / wrangler.jsonc
+│   ├── dist/            # build generado (no se edita a mano)
+│   └── AGENTS.md        # reglas IA de la web
+├── api/                 # ← reservado, hoy vacío
+├── .github/             # workflows, plantillas, releases
+├── AGENTS.md            # ← este archivo: enrutador del monorepo para IAs
+├── README.md            # ← estás aquí: índice del monorepo
+├── LICENSE.md / CODE_OF_CONDUCT.md / .gitignore
 ```
 
-> Frontend por **dominios** (feature-first): cada dominio con su `Store.ts`, `Styles/` y composables. Lo transversal en `Common/`.
+> No hay `go.mod` ni `package.json` en la raíz: **cada subproyecto compila dentro de su propia carpeta**.
 
-## 🚀 Desarrollo
+## 🚀 Desarrollo (por subproyecto, aislado)
 
+**Launcher (app de escritorio):**
 ```powershell
+cd launcher
+go build ./...                    # verificación backend
 cd frontend; bun install; cd ..
-wails3 dev          # dev start
-go vet ./...        # verificación
-wails3 build        # build/bin/StepLauncher.exe
+cd frontend; bun run build; cd .. # type-check + build frontend (bun obligatorio, prohibido npm)
+wails3 dev                        # modo desarrollo
+wails3 build                      # binario en bin/
 ```
 
-## 📷 Galería
+**Website (página pública):**
+```powershell
+cd website
+bun install                       # bun obligatorio, prohibido npm
+bun run build                     # type-check + build Vite (verificación obligatoria)
+bun run dev                       # desarrollo local
+bun run deploy                    # build + despliegue a Cloudflare Pages
+```
+
+**API:**
+```powershell
+# api/ está vacía y reservada: no ejecutar ni crear nada sin permiso explícito.
+```
+
+## 📷 Galería (launcher)
 
 | | | |
 |---|---|---|
-| ![MainMenu variante](resources/MainMenu-001.png) | ![Welcome 1](resources/Welcome-001.png) | ![Welcome 2](resources/Welcome-002.png) |
-| ![Welcome 3](resources/Welcome-003.png) | ![Play](resources/PlayMenu.png) | ![News](resources/News.png) |
-| ![Download](resources/DownloadModal.png) | ![Instances](resources/Instances-001.png) | ![Preview](resources/PreviewStyle.png) |
+| ![MainMenu variante](launcher/resources/MainMenu-001.png) | ![Welcome 1](launcher/resources/Welcome-001.png) | ![Welcome 2](launcher/resources/Welcome-002.png) |
+| ![Welcome 3](launcher/resources/Welcome-003.png) | ![Play](launcher/resources/PlayMenu.png) | ![News](launcher/resources/News.png) |
+| ![Download](launcher/resources/DownloadModal.png) | ![Instances](launcher/resources/Instances-001.png) | ![Preview](launcher/resources/PreviewStyle.png) |
+
+Galería completa del panel de música en [`launcher/README.md`](launcher/README.md).
 
 ---
 

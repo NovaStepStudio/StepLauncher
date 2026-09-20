@@ -1,8 +1,14 @@
-.task
 bin
-.bindings-tmp
-frontend/dist
-frontend-lite/dist
+dist
 node_modules
-build/linux/appimage/build
-build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+launcher/build/linux/appimage/build
+launcher/build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+
+*.wrangler
+*.bindings-tmp
+*.env
+*.task
+*.jsonc
+# Excepciones: la config de deploy sí se versiona (no lleva secretos)
+!api/wrangler.jsonc
+!website/wrangler.jsonc

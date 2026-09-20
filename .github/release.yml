@@ -27,6 +27,11 @@ changelog:
         - area:ui
         - area:frontend
 
+    - title: Sitio Web
+      labels:
+        - area:website
+        - area:web
+
     - title: Internacionalización
       labels:
         - area:i18n

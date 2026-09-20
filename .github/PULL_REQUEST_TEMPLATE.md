@@ -22,12 +22,12 @@
 
 ## Checklist
 
-- [ ] El código compila sin errores (`go vet ./... && bun run build`)
-- [ ] Los tests pasan (`go test ./...` / `bun run build`)
+- [ ] El código compila sin errores (`go build ./...` dentro de `launcher/` y `bun run build` dentro de `launcher/frontend` o `website/` según el subproyecto)
+- [ ] Los tests pasan (`go test ./...` en `launcher/` / `bun run build` en el frontend afectado)
 - [ ] Se agregaron tests si es necesario
 - [ ] La documentación fue actualizada si aplica
 - [ ] Probado manualmente en las plataformas afectadas
-- [ ] `build/config.yml` y `internal/Handlers/Engine/engineconfig/Config.go` sincronizados si cambia la versión
+- [ ] `launcher/build/config.yml` y `launcher/internal/Handlers/Engine/engineconfig/Config.go` sincronizados si cambia la versión
 
 ## Screenshots / logs (si aplica)
 
