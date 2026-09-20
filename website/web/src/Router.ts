@@ -3,6 +3,8 @@ import HomeIndex from './Home/Index.vue';
 import DownloadIndex from './Download/Index.vue';
 import AboutIndex from './About/Index.vue';
 import ChangelogIndex from './Changelog/Index.vue';
+import PrivacyIndex from './Privacy/Index.vue';
+import TermsIndex from './Terms/Index.vue';
 import AuthIndex from './Auth/Index.vue';
 import DashboardIndex from './Auth/Dashboard/Index.vue';
 import CuentaIndex from './Community/Index.vue';
@@ -42,6 +44,18 @@ const SEO_CHANGELOG: SeoData = {
     description: 'Todas las versiones de StepLauncher: estables, betas y alphas con sus notas, fechas y descargas desde GitHub.',
     image: DEFAULT_IMAGE,
     url: `${SITE_URL}/changelog`,
+};
+const SEO_PRIVACY: SeoData = {
+    title: 'Política de privacidad - StepLauncher',
+    description: 'Qué datos guarda StepLauncher, para qué los usa y cómo pedir que se borren.',
+    image: DEFAULT_IMAGE,
+    url: `${SITE_URL}/privacy`,
+};
+const SEO_TERMS: SeoData = {
+    title: 'Términos y condiciones - StepLauncher',
+    description: 'Las reglas para usar StepLauncher y tu cuenta: licencia, cuentas, uso aceptable y responsabilidad.',
+    image: DEFAULT_IMAGE,
+    url: `${SITE_URL}/terms`,
 };
 const SEO_LOGIN: SeoData = {
     title: 'Entrar a StepLauncher',
@@ -114,6 +128,8 @@ const Router = createRouter({
         { path: '/download', name: 'download', component: DownloadIndex, meta: { seo: SEO_DOWNLOAD } },
         { path: '/about', name: 'about', component: AboutIndex, meta: { seo: SEO_ABOUT } },
         { path: '/changelog', name: 'changelog', component: ChangelogIndex, meta: { seo: SEO_CHANGELOG } },
+        { path: '/privacy', name: 'privacy', component: PrivacyIndex, meta: { seo: SEO_PRIVACY } },
+        { path: '/terms', name: 'terms', component: TermsIndex, meta: { seo: SEO_TERMS } },
         { path: '/login', redirect: { path: '/auth', query: { tab: 'login' } } },
         { path: '/register', redirect: { path: '/auth', query: { tab: 'register' } } },
         { path: '/auth', name: 'auth', component: AuthIndex, meta: { guest: true, seo: SEO_LOGIN } },

@@ -45,6 +45,11 @@ onMounted(() => load());
                     <RouterLink v-if="autenticado" to="/dashboard">Mi panel</RouterLink>
                     <RouterLink v-else to="/auth">Entrar</RouterLink>
                 </div>
+                <div class="Column">
+                    <b>Legal</b>
+                    <RouterLink to="/privacy">Privacidad</RouterLink>
+                    <RouterLink to="/terms">Términos</RouterLink>
+                </div>
             </div>
         </div>
         <div class="Bottom">

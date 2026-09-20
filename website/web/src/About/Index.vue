@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import Hero from './Components/Hero.vue';
 import Project from './Components/Project.vue';
+import HowItWorks from './Components/HowItWorks.vue';
 import Stack from './Components/Stack.vue';
+import Ecosystem from './Components/Ecosystem.vue';
 import Studio from './Components/Studio.vue';
 </script>
 
@@ -9,7 +11,9 @@ import Studio from './Components/Studio.vue';
     <div class="About">
         <Hero />
         <Project />
+        <HowItWorks />
         <Stack />
+        <Ecosystem />
         <Studio />
     </div>
 </template>

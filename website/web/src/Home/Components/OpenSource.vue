@@ -15,8 +15,8 @@ import { IconBrandGithub, IconScale, IconStar, IconUsers } from '@tabler/icons-v
             </div>
             <div class="CodeBody sl-stagger">
                 <span><em>$</em> git clone https://github.com/NovaStepStudio/StepLauncher.git</span>
-                <span><em>$</em> cd StepLauncher</span>
-                <span><em>$</em> wails3 dev</span>
+                <span><em>$</em> cd StepLauncher/launcher</span>
+                <span><em>$</em> go build ./...</span>
             </div>
             <div class="CodeFoot">
                 <img src="../../../assets/logo-step-white.png" alt="StepLauncher" loading="lazy" decoding="async">
@@ -34,7 +34,7 @@ import { IconBrandGithub, IconScale, IconStar, IconUsers } from '@tabler/icons-v
             </div>
             <div class="Description">
                 <h2>Código abierto, sin letra chica.</h2>
-                <p>StepLauncher es gratis y de código abierto bajo licencia GPL-3.0. Podés ver el código, reportar issues y seguir cada release en GitHub.</p>
+                <p>StepLauncher es gratis y de código abierto bajo licencia GPL-3.0. El repo es un monorepo: la app vive en <code>launcher/</code>, esta web en <code>website/</code> y la API en <code>api/</code>. Podés ver el código, reportar issues y seguir cada release en GitHub.</p>
             </div>
             <div class="Points sl-stagger">
                 <div class="Point">
@@ -64,6 +64,9 @@ import { IconBrandGithub, IconScale, IconStar, IconUsers } from '@tabler/icons-v
                     <IconBrandGithub stroke="2" />
                     Ver código
                 </a>
+                <RouterLink class="Btn" to="/about">
+                    Cómo funciona
+                </RouterLink>
             </div>
         </div>
     </div>
@@ -211,6 +214,15 @@ import { IconBrandGithub, IconScale, IconStar, IconUsers } from '@tabler/icons-v
                 line-height: 1.6;
                 opacity: .65;
                 max-width: 27rem;
+                code{
+                    font-family: monospace;
+                    font-size: .8rem;
+                    padding: .1rem .35rem;
+                    border-radius: .3rem;
+                    border: 1px solid #ffffff20;
+                    background: #ffffff10;
+                    opacity: 1;
+                }
             }
         }
         .Points{
