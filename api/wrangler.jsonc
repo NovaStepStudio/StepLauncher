@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "steplauncher",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Entorno lógico de la API. Valores permitidos: "local" | "preview" | "production".
+  "vars": {
+    "API_ENV": "production",
+    "ALLOWED_ORIGINS": "https://steplauncher.pages.dev,http://localhost:5173"
+  }
+
+  // Cuando se necesite límite de peticiones distribuido, crear un KV y descomentar:
+  // "kv_namespaces": [
+  //   { "binding": "RATE_LIMIT_KV", "id": "PEGAR_ID_REAL_DE_KV" }
+  // ]
+}

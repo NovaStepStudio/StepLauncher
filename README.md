@@ -14,14 +14,14 @@ Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="launche
 
 > 🌐 **Visita nuestra página principal:** [**steplauncher.pages.dev**](https://steplauncher.pages.dev) — descubre el proyecto, la documentación y descarga la última beta. &nbsp;·&nbsp; Powered by **NovaCore Engine**
 
-[![Versión](https://img.shields.io/badge/Versión-2.5.0--beta-31b3ff?style=for-the-badge&logo=github&logoColor=white)](https://github.com/NovaStepStudio/StepLauncher/releases)
+[![Versión](https://img.shields.io/badge/Versión-2.5.0-31b3ff?style=for-the-badge&logo=github&logoColor=white)](https://github.com/NovaStepStudio/StepLauncher/releases)
 [![Descargas](https://img.shields.io/github/downloads/NovaStepStudio/StepLauncher/total?style=for-the-badge&label=Descargas)](https://github.com/NovaStepStudio/StepLauncher/releases)
 [![Estrellas](https://img.shields.io/github/stars/NovaStepStudio/StepLauncher?style=for-the-badge&label=Estrellas)](https://github.com/NovaStepStudio/StepLauncher/stargazers)
 [![Último commit](https://img.shields.io/github/last-commit/NovaStepStudio/StepLauncher?style=for-the-badge&label=Último%20commit)](https://github.com/NovaStepStudio/StepLauncher/commits/main)
 [![Licencia](https://img.shields.io/badge/Licencia-GPL--3.0-a42e2e?style=for-the-badge&label=Licencia)](https://github.com/NovaStepStudio/StepLauncher/blob/main/LICENSE.md)
 
 [![Go](https://img.shields.io/badge/Go-1.26.4-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev)
-[![Wails](https://img.shields.io/badge/Wails-v3.0.0--beta.24-DF4C6E?style=for-the-badge&logo=wails&logoColor=white)](https://wails.io)
+[![Wails](https://img.shields.io/badge/Wails-v3.0.0--beta.9-DF4C6E?style=for-the-badge&logo=wails&logoColor=white)](https://wails.io)
 [![Vue](https://img.shields.io/badge/Vue-3.5-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white)](https://vuejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
@@ -39,8 +39,8 @@ Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="launche
 | Subproyecto | Qué es | Documentación propia |
 |---|---|---|
 | [`launcher/`](launcher/) | App de escritorio (Wails v3 + Go + Vue 3): descargas, lanzamiento, modloaders, instancias, cuentas, música, personalización | [`launcher/README.md`](launcher/README.md) · [`launcher/AGENTS.md`](launcher/AGENTS.md) |
-| [`website/`](website/) | Web pública e informativa (Vue 3 + TS + Vite, despliegue en Cloudflare Pages): presentación, descargas, changelog, privacidad y términos | [`website/AGENTS.md`](website/AGENTS.md) |
-| [`api/`](api/) | Backend/API (Cloudflare Workers + Hono + Supabase): cuentas del jugador. Código aún no publicado en este repo | — |
+| [`website/`](website/) | Web pública e informativa (Vue 3 + TS + Vite, despliegue en Cloudflare Pages): presentación, descargas, changelog y comunidad | [`website/AGENTS.md`](website/AGENTS.md) |
+| [`api/`](api/) | Backend/API (Cloudflare Workers + Hono + Supabase): cuentas del jugador, versionado `/vN`, docs y SQL versionados | [`api/README.md`](api/README.md) · [`api/AGENTS.md`](api/AGENTS.md) |
 | [`.github/`](.github/) | CI, releases, plantillas de issues/PR y configuración del repositorio | — |
 
 
@@ -54,7 +54,7 @@ Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="launche
 
 ## 🌐 Página principal
 
-> La web oficial vive en **[steplauncher.pages.dev](https://steplauncher.pages.dev)** y su código vive en [`website/`](website/). Allí encontrarás la presentación del launcher, características destacadas, la [Política de Privacidad](https://steplauncher.pages.dev/PrivacyPolicy) y los [Términos y Condiciones](https://steplauncher.pages.dev/TermsAndConditions), además de enlaces a Discord, GitHub y descarga.
+> La web oficial vive en **[steplauncher.pages.dev](https://steplauncher.pages.dev)** y su código vive en [`website/`](website/). Allí encontrarás la presentación del launcher, características destacadas, descargas, changelog y comunidad, además de enlaces a GitHub y descarga.
 
 <a href="https://steplauncher.pages.dev">
   <img src="launcher/resources/Banner_Web.png" alt="StepLauncher — El launcher más orgánico y versátil para Minecraft Java | Powered by NovaCore Engine" width="100%">
@@ -74,7 +74,9 @@ Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="launche
 
 ### 🧩 `api/` — backend
 - API a medida (Cloudflare Workers + Hono, datos y Auth en Supabase) centrada en la cuenta del jugador.
-- Código aún no publicado en este repo: cuando se suba, traerá su propio `README.md` y `AGENTS.md`.
+- Versionado `/v1`, `/v2`… sin romper versiones anteriores; respuestas con sobre único `ok()` / `fail()`.
+- Documentación obligatoria en `docs/` y SQL versionado en `db/v1/` (`install.sql` + `verify.sql`).
+- Detalle completo en [`api/README.md`](api/README.md) y reglas IA en [`api/AGENTS.md`](api/AGENTS.md).
 
 ## 📁 Estructura del monorepo
 
@@ -95,7 +97,14 @@ StepLauncher/
 │   ├── vite.config.ts / wrangler.jsonc
 │   ├── dist/            # build generado (no se edita a mano)
 │   └── AGENTS.md        # reglas IA de la web
-├── api/                 # ← backend (se publica por separado, aún no en el repo)
+├── api/                 # ← backend (su propio package.json, wrangler, docs, db)
+│   ├── src/             # index, env, lib, middleware, routes/v1, schemas/v1, types
+│   ├── docs/            # arquitectura, oauth, cuentas, api/v1
+│   ├── db/v1/           # SQL versionado + install.sql + verify.sql
+│   ├── scripts/         # build-db-bundle.ts
+│   ├── wrangler.jsonc / package.json / tsconfig.json
+│   ├── AGENTS.md        # reglas IA de la api
+│   └── README.md        # detalle completo de la api
 ├── .github/             # workflows, plantillas, releases
 ├── AGENTS.md            # ← este archivo: enrutador del monorepo para IAs
 ├── README.md            # ← estás aquí: índice del monorepo
@@ -125,20 +134,14 @@ bun run dev                       # desarrollo local
 bun run deploy                    # build + despliegue a Cloudflare Pages
 ```
 
-**API:**
+**API (backend):**
 ```powershell
-# api/ aún no vive en este repo: cuando se publique, ver su README propio.
+cd api
+bun install                       # bun obligatorio, prohibido npm
+copy .dev.vars.example .dev.vars  # rellenar variables locales (nunca commitear secretos)
+bun run dev                       # wrangler dev (probar / y /v1/health)
+bun run typecheck                 # tsc --noEmit (verificación obligatoria antes de cada PR)
 ```
-
-## 📷 Galería (launcher)
-
-| | | |
-|---|---|---|
-| ![MainMenu variante](launcher/resources/MainMenu-001.png) | ![Welcome 1](launcher/resources/Welcome-001.png) | ![Welcome 2](launcher/resources/Welcome-002.png) |
-| ![Welcome 3](launcher/resources/Welcome-003.png) | ![Play](launcher/resources/PlayMenu.png) | ![News](launcher/resources/News.png) |
-| ![Download](launcher/resources/DownloadModal.png) | ![Instances](launcher/resources/Instances-001.png) | ![Preview](launcher/resources/PreviewStyle.png) |
-
-Galería completa del panel de música en [`launcher/README.md`](launcher/README.md).
 
 ---
 
@@ -146,7 +149,7 @@ Galería completa del panel de música en [`launcher/README.md`](launcher/README
 
 **NovaStepStudio** — Santiago Stepnicka
 
-[🌐 Página principal](https://steplauncher.pages.dev) · [Política de Privacidad](https://steplauncher.pages.dev/PrivacyPolicy) · [Términos](https://steplauncher.pages.dev/TermsAndConditions) · [GitHub](https://github.com/NovaStepStudio) · [Repositorio](https://github.com/NovaStepStudio/StepLauncher) · [Wails](https://wails.io)
+[🌐 Página principal](https://steplauncher.pages.dev) · [GitHub](https://github.com/NovaStepStudio) · [Repositorio](https://github.com/NovaStepStudio/StepLauncher) · [Wails](https://wails.io)
 
 <sub>© 2026 NovaStepStudio — Powered by NovaCore Engine · No afiliado a Mojang Studios ni a Microsoft.</sub>
 

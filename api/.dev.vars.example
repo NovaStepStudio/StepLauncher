@@ -1,0 +1,14 @@
+# Plantilla de variables LOCALES. Copiar a `.dev.vars` (gitignored) y rellenar.
+# NUNCA commitear valores reales. En producción usar `wrangler secret put`.
+
+# URL pública del proyecto Supabase (no es secreta, pero va en variable por entorno).
+SUPABASE_URL="https://xyzcompany.supabase.co"
+# Clave anónima (pública, limitada por RLS). Sirve para validar sesiones de usuario.
+SUPABASE_ANON_KEY="PEGAR_ANON_KEY_SOLO_LOCAL"
+# Clave de servicio (solo servidor, bypass RLS). Jamás exponer al cliente.
+SUPABASE_SERVICE_ROLE_KEY="PEGAR_SERVICE_ROLE_SOLO_LOCAL_Y_WRANGLER_SECRET"
+
+# Entorno lógico: local | preview | production
+API_ENV="local"
+# Orígenes CORS permitidos en local, separados por coma.
+ALLOWED_ORIGINS="http://localhost:5173,http://localhost:8787"
