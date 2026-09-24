@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"StepLauncher/internal/Core/Downloader"
 )
 
 // DownloadGalleryImageAsBackground descarga una imagen de la galería de Modrinth
@@ -88,7 +90,8 @@ func (a *App) DownloadGalleryImageAsBackground(urlStr, author, modName, title st
 	fileName := fmt.Sprintf("%s_%d%s", baseName, time.Now().UnixNano(), ext)
 	destPath := filepath.Join(destDir, fileName)
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	// Transporte directo del launcher (sin proxy del sistema ni HTTP/2).
+	client := &http.Client{Transport: downloader.DefaultTransport.Clone(), Timeout: 30 * time.Second}
 	req, err := http.NewRequest("GET", urlStr, nil)
 	if err != nil {
 		return "", fmt.Errorf("URL inválida: %v", err)

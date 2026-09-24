@@ -14,6 +14,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"StepLauncher/internal/Core/Downloader"
 )
 
 const ALIHeader = "X-Authlib-Injector-API-Location"
@@ -56,7 +58,8 @@ func New(baseURL string) (*Client, error) {
 		return nil, err
 	}
 	return &Client{
-		http:    &http.Client{Timeout: 20 * time.Second},
+		// Directo del launcher (sin proxy del sistema ni HTTP/2).
+		http:    &http.Client{Transport: downloader.DefaultTransport.Clone(), Timeout: 20 * time.Second},
 		baseURL: base,
 		root:    strings.TrimSuffix(base, "/authserver"),
 	}, nil
@@ -93,7 +96,7 @@ func ResolveServerURL(ctx context.Context, raw string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := &http.Client{Transport: downloader.DefaultTransport.Clone(), Timeout: 15 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("no se pudo contactar con el servidor de autenticacion: %w", err)
@@ -117,7 +120,7 @@ func FetchMetadata(ctx context.Context, apiRoot string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := &http.Client{Transport: downloader.DefaultTransport.Clone(), Timeout: 15 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("no se pudo obtener la metadata del auth server: %w", err)
@@ -419,7 +422,7 @@ func fetchImageBytes(ctx context.Context, imageURL string) ([]byte, string, erro
 		return nil, "", err
 	}
 	req.Header.Set("User-Agent", "StepLauncher/2.3.1")
-	client := &http.Client{Timeout: 20 * time.Second}
+	client := &http.Client{Transport: downloader.DefaultTransport.Clone(), Timeout: 20 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, "", fmt.Errorf("no se pudo descargar la imagen: %w", err)

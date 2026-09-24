@@ -14,6 +14,8 @@ import (
 	"time"
 
 	engineconfig "StepLauncher/internal/Handlers/Engine/engineconfig"
+
+	"StepLauncher/internal/Core/Downloader"
 )
 
 const (
@@ -25,7 +27,8 @@ const (
 	updateMaxBodySize      = 4 * 1024 * 1024
 )
 
-var updateHTTPClient = &http.Client{Timeout: 25 * time.Second}
+// Cliente directo del launcher (sin proxy del sistema ni HTTP/2).
+var updateHTTPClient = &http.Client{Transport: downloader.DefaultTransport.Clone(), Timeout: 25 * time.Second}
 
 type workerRelease struct {
 	TagName     string `json:"tag_name"`

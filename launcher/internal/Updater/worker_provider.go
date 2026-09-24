@@ -11,6 +11,8 @@ import (
 
 	wailsupdater "github.com/wailsapp/wails/v3/pkg/updater"
 	"golang.org/x/mod/semver"
+
+	"StepLauncher/internal/Core/Downloader"
 )
 
 // WorkerProvider implementa wailsupdater.Provider contra el Worker de Cloudflare
@@ -50,7 +52,8 @@ func NewWorker(cfg WorkerProvider) (*WorkerProvider, error) {
 		cfg.PrereleasesURL = "https://steplauncher.stepnicka012.workers.dev/updates/steplauncher/prereleases"
 	}
 	if cfg.HTTPClient == nil {
-		cfg.HTTPClient = &http.Client{Timeout: 20 * time.Second}
+		// Directo del launcher (sin proxy del sistema ni HTTP/2).
+		cfg.HTTPClient = &http.Client{Transport: downloader.DefaultTransport.Clone(), Timeout: 20 * time.Second}
 	}
 	return &WorkerProvider{
 		ReleasesURL:    cfg.ReleasesURL,

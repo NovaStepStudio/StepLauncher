@@ -20,7 +20,7 @@ func NewTransport(inner http.RoundTripper, maxMbps, minMbps float64) *Transport 
 		minBps: minMbps * 1024 * 1024 / 8,
 	}
 	if t.inner == nil {
-		t.inner = http.DefaultTransport
+		t.inner = DefaultTransport
 	}
 	return t
 }

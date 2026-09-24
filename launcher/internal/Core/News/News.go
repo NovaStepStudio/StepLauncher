@@ -15,6 +15,8 @@ import (
 	"time"
 
 	engineconfig "StepLauncher/internal/Handlers/Engine/engineconfig"
+
+	"StepLauncher/internal/Core/Downloader"
 )
 
 const (
@@ -25,7 +27,8 @@ const (
 	requestTimeout = 20 * time.Second
 )
 
-var httpClient = &http.Client{Timeout: 25 * time.Second}
+// Cliente directo del launcher (sin proxy del sistema ni HTTP/2).
+var httpClient = &http.Client{Transport: downloader.DefaultTransport.Clone(), Timeout: 25 * time.Second}
 
 type EventHandler func(eventType string, data []byte)
 

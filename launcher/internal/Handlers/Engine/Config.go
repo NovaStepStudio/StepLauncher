@@ -76,6 +76,9 @@ func (e *Engine) SetMaxMbps(mbps float64) {
 }
 
 func (e *Engine) applyNetworkConfig(cfg engineconfig.Config) {
+	// El cliente HTTP del launcher es siempre directo y sin HTTP/2: el proxy
+	// manual de Ajustes > Red es SOLO para el juego (flags JVM) y nunca se
+	// aplica aquí. Solo se propaga el límite de velocidad.
 	client, err := downloader.NewConfiguredHTTPClient(
 		cfg.MaxMbps,
 		cfg.ProxyEnabled,

@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"StepLauncher/internal/Core/Downloader"
 )
 
 const (
@@ -51,7 +53,8 @@ func EnsureInjector(ctx context.Context, jarPath string, force bool) (string, er
 	}
 
 	tmp := jarPath + ".part"
-	client := &http.Client{Timeout: 60 * time.Second}
+	// Directo del launcher (sin proxy del sistema ni HTTP/2).
+	client := &http.Client{Transport: downloader.DefaultTransport.Clone(), Timeout: 60 * time.Second}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, art.DownloadURL, nil)
 	if err != nil {
 		return "", err
@@ -99,7 +102,7 @@ func fetchInjectorArtifact(ctx context.Context, api string) (*injectorArtifact, 
 	if err != nil {
 		return nil, err
 	}
-	client := &http.Client{Timeout: 20 * time.Second}
+	client := &http.Client{Transport: downloader.DefaultTransport.Clone(), Timeout: 20 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

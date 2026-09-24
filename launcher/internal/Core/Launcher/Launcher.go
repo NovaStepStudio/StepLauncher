@@ -782,7 +782,9 @@ func (l *Launcher) prepareEmit(phase string, current, total int, label, message 
 func (l *Launcher) hasInternet() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 2500*time.Millisecond)
 	defer cancel()
-	client := &http.Client{Timeout: 2500 * time.Millisecond}
+	// Directo del launcher (sin proxy del sistema ni HTTP/2), igual que el resto.
+	client := downloader.DefaultHTTPClient()
+	client.Timeout = 2500 * time.Millisecond
 	req, err := http.NewRequestWithContext(ctx, http.MethodHead, "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json", nil)
 	if err != nil {
 		return false
@@ -894,8 +896,8 @@ func (l *Launcher) downloadMissingLibraries(cpEntries *[]helpers.ClasspathEntry,
 				SHA1: l.ver.Downloads.Client.SHA1,
 				Size: l.ver.Downloads.Client.Size,
 			}
-			if err := downloader.DownloadFile(ctx, task, http.DefaultClient, 3, nil, 60000, 3); err != nil {
-				l.log("WARN [%d/%d] failed: %s: %v", i+1, total, label, err)
+		if err := downloader.DownloadFile(ctx, task, downloader.DefaultHTTPClient(), 3, nil, 60000, 3); err != nil {
+			l.log("WARN [%d/%d] failed: %s: %v", i+1, total, label, err)
 				failed++
 			} else {
 				l.log("  âœ“ [%d/%d] %s", i+1, total, label)
@@ -925,14 +927,14 @@ func (l *Launcher) downloadMissingLibraries(cpEntries *[]helpers.ClasspathEntry,
 		l.log("Downloading [%d/%d] %s%s", i+1, total, m.lib.Name, sizeStr)
 		os.MkdirAll(filepath.Dir(m.path), 0755)
 		task := downloader.DownloadTask{URL: url, Dest: m.path, SHA1: sha1, Size: size}
-		if err := downloader.DownloadFile(ctx, task, http.DefaultClient, 3, nil, 60000, 3); err != nil {
+		if err := downloader.DownloadFile(ctx, task, downloader.DefaultHTTPClient(), 3, nil, 60000, 3); err != nil {
 			// Los version.json antiguos de Forge apuntan al jar "plain"
 			// (forge-X.jar) que ya no existe en maven; el jar real se llama
 			// forge-X-universal.jar. Se reintenta con ese sufijo.
 			if fbURL := universalForgeURL(m.lib, url); fbURL != "" {
 				l.log("Retrying [%d/%d] %s with -universal.jar", i+1, total, m.lib.Name)
 				fbTask := downloader.DownloadTask{URL: fbURL, Dest: m.path}
-				if err2 := downloader.DownloadFile(ctx, fbTask, http.DefaultClient, 3, nil, 60000, 3); err2 == nil {
+				if err2 := downloader.DownloadFile(ctx, fbTask, downloader.DefaultHTTPClient(), 3, nil, 60000, 3); err2 == nil {
 					l.log("  âœ“ [%d/%d] %s", i+1, total, m.lib.Name)
 					continue
 				}
@@ -1468,7 +1470,9 @@ func (l *Launcher) preVerifyAuthServer(cfg AuthLibConfig) error {
 	if timeout <= 0 {
 		timeout = 10
 	}
-	client := &http.Client{Timeout: time.Duration(timeout) * time.Second}
+	// Directo del launcher (sin proxy del sistema ni HTTP/2).
+	client := downloader.DefaultHTTPClient()
+	client.Timeout = time.Duration(timeout) * time.Second
 	resp, err := client.Get(cfg.AuthServerURL)
 	if err != nil {
 		return fmt.Errorf("auth server unreachable: %w", err)

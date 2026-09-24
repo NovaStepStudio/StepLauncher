@@ -38,20 +38,19 @@ async function saveAuthVerify() {
 
 async function saveProxy() {
     proxyMsg.value = '';
-    // No permitir un proxy "fantasma": activado sin host/puerto válidos
-    // rompía todas las peticiones (manifiesto, modloaders) con errores raros.
+    // Al activar se valida, pero SIN apagar el interruptor: los campos de
+    // dirección siempre están visibles y el usuario puede estar a mitad de
+    // la configuración. Solo se persiste cuando los datos están completos.
     if (proxyEnabled.value) {
         const host = proxyHost.value.trim();
         const port = Number(proxyPort.value);
         if (!host) {
-            proxyEnabled.value = false;
-            proxyMsg.value = 'Escribe la dirección del proxy antes de activarlo.';
+            proxyMsg.value = 'Escribe la dirección del proxy para activarlo (ej: 127.0.0.1 y puerto 7890). Aún no se guardó nada.';
             proxyMsgOk.value = false;
             return;
         }
         if (!Number.isFinite(port) || port < 1 || port > 65535) {
-            proxyEnabled.value = false;
-            proxyMsg.value = 'El puerto debe estar entre 1 y 65535.';
+            proxyMsg.value = 'El puerto debe estar entre 1 y 65535. Aún no se guardó nada.';
             proxyMsgOk.value = false;
             return;
         }
@@ -95,24 +94,24 @@ async function saveProxy() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Usar proxy para Minecraft y descargas</span>
-                    <span class="SsDesc">Si tu red necesita proxy, el juego y el launcher lo usarán para Mojang. Soporta HTTP y SOCKS5.</span>
+                    <span class="SsLabel">Usar proxy solo para el juego</span>
+                    <span class="SsDesc">Solo lo usa Minecraft al lanzarse. El launcher siempre va en directo. Soporta HTTP y SOCKS5.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="proxyEnabled" @change="saveProxy"><span class="SsTgS"></span></label>
                 </div>
             </div>
-            <template v-if="proxyEnabled">
-                <div class="SsRow">
-                    <div class="SsInfo">
-                        <span class="SsLabel">Dirección del proxy</span>
-                        <span class="SsDesc">Host y puerto. Para SOCKS5 escribe socks5://127.0.0.1 (Clash: HTTP 7890, SOCKS 7891).</span>
-                    </div>
-                    <div class="SsGrid">
-                        <input class="SsIn" v-model="proxyHost" placeholder="Ej: 127.0.0.1 o socks5://127.0.0.1" @change="saveProxy">
-                        <input class="SsIn" type="number" v-model.number="proxyPort" placeholder="8080" @change="saveProxy">
-                    </div>
+            <div class="SsRow">
+                <div class="SsInfo">
+                    <span class="SsLabel">Dirección del proxy</span>
+                    <span class="SsDesc">Host y puerto. Para SOCKS5 escribe socks5://127.0.0.1 (Clash: HTTP 7890, SOCKS 7891).</span>
                 </div>
+                <div class="SsGrid">
+                    <input class="SsIn" v-model="proxyHost" placeholder="Ej: 127.0.0.1 o socks5://127.0.0.1" @change="saveProxy">
+                    <input class="SsIn" type="number" v-model.number="proxyPort" placeholder="8080" @change="saveProxy">
+                </div>
+            </div>
+            <template v-if="proxyEnabled">
                 <div class="SsRow">
                     <div class="SsInfo">
                         <span class="SsLabel">Usuario y contraseña</span>
@@ -125,6 +124,10 @@ async function saveProxy() {
                 </div>
             </template>
             <p v-if="proxyMsg" :class="['Ss_ProxyMsg', { error: !proxyMsgOk }]">{{ proxyMsg }}</p>
+            <div v-if="!proxyEnabled" class="SsTip">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span>Si tu red necesita proxy, escribe aquí la dirección y luego activa el interruptor.</span>
+            </div>
             <div v-if="proxyEnabled" class="SsTip">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 <span>Error "malformed HTTP status" = puerto equivocado. Si usas Clash/V2Ray, el HTTP suele ser 7890 y el SOCKS 7891. Prueba con socks5:// delante del host si tu proxy es SOCKS.</span>

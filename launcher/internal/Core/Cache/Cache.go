@@ -237,6 +237,13 @@ func (m *Manager) cleanup() {
 
 	now := time.Now()
 	for _, sub := range subdirs() {
+		// El manifiesto de Mojang es el salvavidas sin red: una copia
+		// expirada sigue sirviendo la lista de versiones, así que nunca se
+		// auto-borra por caducidad. Solo se elimina con limpieza explícita
+		// (Clear/DeleteCategory) o al sobrescribirse con datos nuevos.
+		if sub == "manifest" {
+			continue
+		}
 		dir := filepath.Join(m.cacheDir, sub)
 		entries, err := os.ReadDir(dir)
 		if err != nil {

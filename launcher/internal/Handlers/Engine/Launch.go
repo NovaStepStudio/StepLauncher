@@ -125,8 +125,9 @@ func (e *Engine) buildBaseLaunchConfig(cfg launcher.LaunchConfig) launcher.Launc
 	adv.Fullscreen = ec.Fullscreen
 	adv.VerifyBeforeLaunch = ec.VerifyBeforeLaunch
 
-	// Propagar proxy global a la config de lanzamiento (el proxy afecta tanto
-	// a descargas como a la JVM del juego vía -Dhttp.proxyHost / -DsocksProxyHost)
+	// Propagar proxy global a la config de lanzamiento: el proxy manual es
+	// SOLO para el juego y se aplica únicamente vía flags de la JVM
+	// (-Dhttp.proxyHost / -DsocksProxyHost). Nunca afecta a peticiones del launcher.
 	if ec.ProxyEnabled && strings.TrimSpace(ec.ProxyHost) != "" {
 		adv.ProxyHost = strings.TrimSpace(ec.ProxyHost)
 		adv.ProxyPort = ec.ProxyPort
