@@ -84,6 +84,13 @@ func (s *AppearanceService) ListScreenshots() ([]ScreenshotInfo, error) {
 	return s.handler.ListScreenshots()
 }
 
+func (s *AppearanceService) SetScreenshotAsBackground(relPath string) (string, error) {
+	if s.handler == nil {
+		return "", errors.New("handler no disponible")
+	}
+	return s.handler.SetScreenshotAsBackground(relPath)
+}
+
 func (s *AppearanceService) PickBackgroundFile(kind string) (string, error) {
 	return s.handler.PickBackgroundFile(kind)
 }

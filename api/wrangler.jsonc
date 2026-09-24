@@ -8,7 +8,8 @@
   // Entorno lógico de la API. Valores permitidos: "local" | "preview" | "production".
   "vars": {
     "API_ENV": "production",
-    "ALLOWED_ORIGINS": "https://steplauncher.pages.dev,http://localhost:5173"
+    "ALLOWED_ORIGINS": "https://steplauncher.pages.dev,http://localhost:5173",
+    "SITE_URL": "https://steplauncher.pages.dev"
   }
 
   // Cuando se necesite límite de peticiones distribuido, crear un KV y descomentar:

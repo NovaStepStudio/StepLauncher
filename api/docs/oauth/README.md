@@ -7,27 +7,37 @@ launcher y hacia dónde evoluciona. El contrato HTTP exacto vive en
 ## Modelo actual v1 (implementado, ver `src/routes/v1/auth.ts`)
 
 Las **sesiones las emite Supabase Auth** (`access_token` + `refresh_token`); la API
-**no inventa criptografía** (ADR-007). Flujo del launcher (desktop):
+**no inventa criptografía** (ADR-007, ADR-015). Flujo con confirmación (web y launcher):
 
-1. `POST /v1/auth/register` (email + usuario + contraseña) o
-   `POST /v1/auth/login` (email **o** usuario + contraseña).
-2. La API responde `{ user: { id, email, username }, session: { accessToken,
-   refreshToken, expiresAt, tokenType: "bearer" } }` (registro: 201).
-3. El launcher guarda ambos tokens en el dispositivo y envía
-   `Authorization: Bearer <accessToken>` en cada petición de cuenta.
-4. Antes de caducar, `POST /v1/auth/refresh` con el `refreshToken` renueva la sesión.
-5. Al cerrar sesión, `POST /v1/auth/logout` revoca en servidor **y el cliente borra
+1. `POST /v1/auth/register` (email + usuario + contraseña) crea la cuenta vía
+   `signUp` y envía la plantilla **Confirm sign up** a `<SITE_URL>/auth/callback`.
+   Responde `201` pendiente (`session: null`, `emailConfirmationRequired: true`).
+2. El jugador confirma en `POST /v1/auth/confirm` (`type: signup`, con el código o
+   `token_hash` del enlace) o desde el propio enlace; ahí recibe
+   `{ user, session }`. Reenvío en `POST /v1/auth/resend` (siempre genérico).
+3. `POST /v1/auth/login` (email **o** usuario + contraseña). Sin confirmar →
+   `403 email_not_confirmed` (la web ofrece reenviar); si no, `{ user, session }`.
+4. El cliente guarda ambos tokens y envía `Authorization: Bearer <accessToken>`.
+5. Antes de caducar, `POST /v1/auth/refresh` renueva la sesión.
+6. Recupero: `POST /v1/auth/recover` (plantilla **Reset password**, genérico) →
+   `POST /v1/auth/reset-password` (`email` + `token` + `newPassword`) → login.
+   Supabase avisa además con **Password changed**.
+7. Cambio de email: `POST /v1/accounts/me/email-change` (plantilla
+   **Change email address** al NUEVO, aviso **Email address changed** al viejo) →
+   confirmar en `POST /v1/auth/confirm` (`type: email_change`).
+8. Al cerrar sesión, `POST /v1/auth/logout` revoca en servidor **y el cliente borra
    sus tokens** (si solo borra sin llamar, el access sigue válido hasta caducar).
 
-Detalles honestos del MVP:
+Detalles honestos:
 
-- `email_confirm: true` al registrar: sin fricción de correo (revisar en ADR-007
-  cuando se quiera verificación real).
+- `register` ya no usa `email_confirm: true` (fin del MVP sin fricción, ver ADR-015).
+  Si el proyecto aún tiene la confirmación desactivada, puede llegar sesión
+  inmediata (compatibilidad transitoria).
 - Login con usuario resuelve username→email vía función `email_for_username`
-  (`SECURITY DEFINER`, revocada): el 401 es siempre genérico
-  (`invalid_credentials`, sin revelar si existe el usuario).
-- Tras el registro, la API inicia sesión inmediata; si eso falla, devuelve 500 con
-  `Cuenta creada, pero inicia sesión manualmente` (la cuenta SÍ quedó creada).
+  (`SECURITY DEFINER`, revocada). `invalid_credentials` sigue genérico, pero
+  `email_not_confirmed` es propio para guiar a la bandeja.
+- `resend`/`recover` responden éxito genérico siempre para no enumerar correos;
+  el error real queda en logs con `requestId`.
 
 ## Tokens y PKCE (qué hay y qué no)
 

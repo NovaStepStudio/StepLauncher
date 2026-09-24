@@ -27,8 +27,11 @@ El 404 global y los errores no controlados usan el mismo sobre.
 ## Auth
 
 Cabecera en todo endpoint privado: `Authorization: Bearer <access_token>`.
-Sesiones: `POST /v1/auth/register|login` → guardar `accessToken` + `refreshToken`;
-renovar con `POST /v1/auth/refresh`; revocar con `POST /v1/auth/logout` y borrar
+Sesiones: `POST /v1/auth/register` (pendiente de confirmación) → confirmar en
+`POST /v1/auth/confirm` o desde el enlace al correo → guardar `accessToken` +
+`refreshToken`; login en `POST /v1/auth/login`; reenviar con `POST /v1/auth/resend`;
+recupero con `POST /v1/auth/recover` + `POST /v1/auth/reset-password`; renovar con
+`POST /v1/auth/refresh`; revocar con `POST /v1/auth/logout` y borrar
 tokens en el dispositivo. Detalle: `auth.md` + `docs/oauth/README.md`.
 
 ## Cabeceras
@@ -44,7 +47,7 @@ tokens en el dispositivo. Detalle: `auth.md` + `docs/oauth/README.md`.
 |---|---|---|---|
 | `public` | 1 min | 120 | `GET /v1/health` |
 | `account` | 1 min | 30 | Todo lo de cuenta por defecto |
-| `sensitive` | 10 min | 20 | `register`, `login`, `refresh`, `email-change`, `password-change`, `friends/requests` (POST), `friends/blocks` (POST) |
+| `sensitive` | 10 min | 20 | `register`, `login`, `refresh`, `resend`, `recover`, `confirm`, `reset-password`, `recovery-password`, `email-change`, `password-change`, `friends/requests` (POST), `friends/blocks` (POST) |
 
 Excedido → `429 rate_limited` (`Demasiadas peticiones…`).
 
@@ -54,6 +57,8 @@ Excedido → `429 rate_limited` (`Demasiadas peticiones…`).
 |---|---|---|
 | 400 | `validation_error` | Cuerpo/query/param no cumple el contrato (+ `details`) |
 | 400 | `weak_password` | Contraseña rechazada por Auth al registrar |
+| 400 | `invalid_code` | Código de confirmación/recupero inválido o expirado |
+| 400 | `recovery_expired` | Enlace de recupero vencido o ya usado (vale 1 h, un solo uso) |
 | 400 | `same_email` | Pedir cambio al email que ya usas |
 | 400 | `cannot_add_self` | Solicitud de amistad a uno mismo |
 | 400 | `cannot_block` | Bloqueo imposible (a uno mismo o sin perfil) |
@@ -64,6 +69,7 @@ Excedido → `429 rate_limited` (`Demasiadas peticiones…`).
 | 401 | `invalid_credentials` | Login fallido (genérico: no revela si existe el usuario) |
 | 401 | `invalid_refresh` | Refresh inválido/expirado (volver a login) |
 | 401 | `current_password_incorrect` | La actual no coincide al cambiar contraseña |
+| 403 | `email_not_confirmed` | Cuenta sin confirmar (reenviar con `POST /v1/auth/resend`) |
 | 403 | `user_blocked` | Solicitar a quien bloqueaste (desbloquea primero) |
 | 404 | `not_found` | Recurso ajeno/inexistente (genérico) |
 | 404 | `user_not_found` | Destinatario inexistente o que te bloqueó (genérico a propósito) |
@@ -90,7 +96,7 @@ Excedido → `429 rate_limited` (`Demasiadas peticiones…`).
 | Dominio | Archivo | Rutas |
 |---|---|---|
 | Salud | `health.md` | `GET /v1/health` |
-| Auth | `auth.md` | `POST /v1/auth/register|login|refresh|logout` |
+| Auth | `auth.md` | `POST /v1/auth/register\|login\|refresh\|logout\|resend\|recover\|confirm\|reset-password\|recovery-password` |
 | Cuenta | `cuentas.md` | `GET|PATCH /v1/accounts/me`, presencia, email, contraseña, avatar, banner, cosméticos, privacidad |
 | Archivos | `archivos.md` | `POST /v1/files/skin|cape`, `GET /v1/files`, `GET /v1/files/:id/url`, `DELETE /v1/files/:id` |
 | Notificaciones | `notificaciones.md` | `GET /v1/notifications`, `PATCH …/:id/read`, `POST …/read-all`, `DELETE …/:id` |

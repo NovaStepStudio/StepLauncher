@@ -2,10 +2,13 @@ import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vu
 import HomeIndex from './Home/Index.vue';
 import DownloadIndex from './Download/Index.vue';
 import AboutIndex from './About/Index.vue';
+import FaqIndex from './Faq/Index.vue';
 import ChangelogIndex from './Changelog/Index.vue';
+import BrandingIndex from './Branding/Index.vue';
 import PrivacyIndex from './Privacy/Index.vue';
 import TermsIndex from './Terms/Index.vue';
 import AuthIndex from './Auth/Index.vue';
+import AuthCallbackIndex from './Auth/Callback/Index.vue';
 import DashboardIndex from './Auth/Dashboard/Index.vue';
 import CuentaIndex from './Community/Index.vue';
 import { useAuth } from './Auth/Composables/useAuth';
@@ -23,7 +26,7 @@ declare module 'vue-router' {
 // La URL canónica se resuelve en seoForRoute para incluir :id cuando hay.
 const SEO_HOME: SeoData = {
     title: 'StepLauncher - Launcher de Minecraft Java',
-    description: 'Launcher moderno, rápido y multiplataforma para Minecraft: Java Edition. Gestioná versiones, modloaders, instancias y cuentas desde una interfaz limpia.',
+    description: 'Launcher moderno, rápido y multiplataforma para Minecraft: Java Edition. Gestioná versiones, modloaders, instancias y cuentas con Yggdrasil desde una interfaz limpia.',
     image: DEFAULT_IMAGE,
     url: `${SITE_URL}/`,
 };
@@ -39,11 +42,23 @@ const SEO_ABOUT: SeoData = {
     image: DEFAULT_IMAGE,
     url: `${SITE_URL}/about`,
 };
+const SEO_FAQ: SeoData = {
+    title: 'Preguntas frecuentes - StepLauncher',
+    description: 'Respuestas cortas sobre StepLauncher: descargas oficiales, mods, cuentas con Yggdrasil, modo offline y online, seguridad y datos.',
+    image: DEFAULT_IMAGE,
+    url: `${SITE_URL}/faq`,
+};
 const SEO_CHANGELOG: SeoData = {
     title: 'Historial de cambios - StepLauncher',
     description: 'Todas las versiones de StepLauncher: estables, betas y alphas con sus notas, fechas y descargas desde GitHub.',
     image: DEFAULT_IMAGE,
     url: `${SITE_URL}/changelog`,
+};
+const SEO_BRANDING: SeoData = {
+    title: 'Branding oficial - StepLauncher',
+    description: 'El kit oficial de marca de StepLauncher: banner e iconos en alta resolución, listos para descargar.',
+    image: DEFAULT_IMAGE,
+    url: `${SITE_URL}/branding`,
 };
 const SEO_PRIVACY: SeoData = {
     title: 'Política de privacidad - StepLauncher',
@@ -69,6 +84,20 @@ const SEO_REGISTER: SeoData = {
     description: 'Creá tu cuenta gratis de StepLauncher para personalizar tu perfil con skins y capas en 3D, sumar amigos y más.',
     image: DEFAULT_IMAGE,
     url: `${SITE_URL}/auth`,
+    robots: 'noindex, nofollow',
+};
+const SEO_RECOVERY: SeoData = {
+    title: 'Recuperar contraseña - StepLauncher',
+    description: 'Pedí un enlace a tu correo para elegir una contraseña nueva de StepLauncher.',
+    image: DEFAULT_IMAGE,
+    url: `${SITE_URL}/auth`,
+    robots: 'noindex, nofollow',
+};
+const SEO_CALLBACK: SeoData = {
+    title: 'Confirmar correo - StepLauncher',
+    description: 'Confirmá tu correo o restablecé tu contraseña de StepLauncher desde el enlace que te llegó.',
+    image: DEFAULT_IMAGE,
+    url: `${SITE_URL}/auth/callback`,
     robots: 'noindex, nofollow',
 };
 const SEO_DASHBOARD: SeoData = {
@@ -98,7 +127,12 @@ const PANEL_TITLES: Record<string, string> = {
 // Resuelve el SEO final según ruta, query (?tab=) y params (:id).
 function seoForRoute(to: RouteLocationNormalized): SeoData {
     if (to.name === 'auth') {
-        return to.query.tab === 'register' ? SEO_REGISTER : SEO_LOGIN;
+        if (to.query.tab === 'register') return SEO_REGISTER;
+        if (to.query.tab === 'recovery') return SEO_RECOVERY;
+        return SEO_LOGIN;
+    }
+    if (to.name === 'auth-callback') {
+        return SEO_CALLBACK;
     }
     if (to.name === 'dashboard') {
         const tab = typeof to.query.tab === 'string' ? to.query.tab : '';
@@ -127,12 +161,15 @@ const Router = createRouter({
         { path: '/', name: 'home', component: HomeIndex, meta: { seo: SEO_HOME } },
         { path: '/download', name: 'download', component: DownloadIndex, meta: { seo: SEO_DOWNLOAD } },
         { path: '/about', name: 'about', component: AboutIndex, meta: { seo: SEO_ABOUT } },
+        { path: '/faq', name: 'faq', component: FaqIndex, meta: { seo: SEO_FAQ } },
         { path: '/changelog', name: 'changelog', component: ChangelogIndex, meta: { seo: SEO_CHANGELOG } },
+        { path: '/branding', name: 'branding', component: BrandingIndex, meta: { seo: SEO_BRANDING } },
         { path: '/privacy', name: 'privacy', component: PrivacyIndex, meta: { seo: SEO_PRIVACY } },
         { path: '/terms', name: 'terms', component: TermsIndex, meta: { seo: SEO_TERMS } },
         { path: '/login', redirect: { path: '/auth', query: { tab: 'login' } } },
         { path: '/register', redirect: { path: '/auth', query: { tab: 'register' } } },
         { path: '/auth', name: 'auth', component: AuthIndex, meta: { guest: true, seo: SEO_LOGIN } },
+        { path: '/auth/callback', name: 'auth-callback', component: AuthCallbackIndex, meta: { seo: SEO_CALLBACK } },
         { path: '/dashboard', name: 'dashboard', component: DashboardIndex, meta: { requiresAuth: true, seo: SEO_DASHBOARD } },
         { path: '/community/account/:id?', name: 'cuenta', component: CuentaIndex, meta: { requiresAuth: true, seo: SEO_COMMUNITY } },
         {

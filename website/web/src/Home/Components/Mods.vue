@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { IconPuzzle, IconPackage, IconBrush, IconBlocks } from '@tabler/icons-vue';
+import { capturaAlAzar } from '@/Common/Composables/capturas';
+
+const captura = capturaAlAzar('Mods');
 </script>
 
 <template>
     <div class="Mods" v-reveal>
         <div class="Image">
-            <img src="../../../assets/capturesPreview/ModsExplorer.png" alt="Descarga de mods en StepLauncher" loading="lazy" decoding="async">
+            <img :src="captura" alt="Descarga de mods en StepLauncher" loading="lazy" decoding="async">
             <div class="ImageTag">
                 <b>Explorador de mods</b>
                 <small>Modrinth integrado al launcher</small>

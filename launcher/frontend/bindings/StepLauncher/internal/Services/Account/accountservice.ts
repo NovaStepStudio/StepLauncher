@@ -12,9 +12,6 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as Config$0 from "../../Config/models.js";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore: Unused imports
 import * as engine$0 from "../../Handlers/Engine/models.js";
 
 export function CancelAuthlibLogin(): $CancellablePromise<void> {
@@ -53,7 +50,7 @@ export function GetProfile(name: string): $CancellablePromise<engine$0.Profile |
     return $Call.ByID(4133132141, name);
 }
 
-export function GetRichPresenceConfig(): $CancellablePromise<Config$0.RichPresenceConfig> {
+export function GetRichPresenceConfig(): $CancellablePromise<boolean> {
     return $Call.ByID(857131409);
 }
 

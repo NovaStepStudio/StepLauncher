@@ -45,6 +45,9 @@ const indice = computed(() => Math.max(0, props.tabs.findIndex((t) => t.key === 
 .Tabs{
     position: relative;
     display: grid;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     padding: .35rem;
     border-radius: .7rem;
     border: 1px solid #ffffff14;
@@ -99,11 +102,20 @@ const indice = computed(() => Math.max(0, props.tabs.findIndex((t) => t.key === 
 @media (max-width: 600px){
     .Tabs{
         display: flex;
+        grid-template-columns: none;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        &::-webkit-scrollbar{
+            display: none;
+        }
         .TabSlider{
             display: none;
         }
         .Tab{
-            flex: 1 0 auto;
+            flex: 0 0 auto;
+            min-width: max-content;
             &.active{
                 background: #fff;
             }

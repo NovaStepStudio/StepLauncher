@@ -642,4 +642,48 @@ onMounted(() => cargarTodo());
         }
     }
 }
+@media (max-width: 600px){
+    .Card{
+        min-width: 0;
+        padding: 1rem;
+        .Search{
+            .SearchRow{
+                flex-direction: column;
+                align-items: stretch;
+                .GhostBtn{
+                    width: 100%;
+                    min-height: 2.75rem;
+                }
+            }
+        }
+        .Group{
+            min-width: 0;
+            .BlockRow{
+                flex-direction: column;
+                align-items: stretch;
+                .MiniBtn{
+                    width: 100%;
+                    min-height: 2.75rem;
+                }
+            }
+        }
+        .Results,
+        .Group ul{
+            li{
+                flex-wrap: wrap;
+                .Who{
+                    flex: 1 1 8rem;
+                }
+            }
+        }
+        .GhostBtn{
+            &.more{
+                width: 100%;
+                min-height: 2.75rem;
+                white-space: normal;
+                text-align: center;
+            }
+        }
+    }
+}
 </style>

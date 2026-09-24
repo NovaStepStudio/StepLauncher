@@ -93,6 +93,10 @@ export function SetIdle(idle: Config$0.IdleConfig): $CancellablePromise<void> {
     return $Call.ByID(3587740046, idle);
 }
 
+export function SetScreenshotAsBackground(relPath: string): $CancellablePromise<string> {
+    return $Call.ByID(899305012, relPath);
+}
+
 export function SetUIScale(percent: number): $CancellablePromise<void> {
     return $Call.ByID(3298425212, percent);
 }

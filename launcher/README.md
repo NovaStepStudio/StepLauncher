@@ -1,10 +1,10 @@
 <div align="center">
 
 <a href="https://steplauncher.pages.dev">
-  <img src="resources/Banner_Web.png" alt="StepLauncher — Banner oficial | Powered by NovaCore Engine" width="100%">
+  <img src="../branding/banner-002.png" alt="StepLauncher — Banner oficial | Powered by NovaCore Engine" width="100%">
 </a>
 
-<img src="frontend/web/assets/logo-step.png" alt="StepLauncher" width="110">
+<img src="../branding/appicon-neon.png" alt="StepLauncher" width="110">
 
 # StepLauncher
 
@@ -45,7 +45,7 @@ Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="fronten
 > **¿Quieres conocer mejor el proyecto?** Visita nuestra web oficial en **[steplauncher.pages.dev](https://steplauncher.pages.dev)** — allí encontrarás la presentación del launcher, características destacadas, la [Política de Privacidad](https://steplauncher.pages.dev/PrivacyPolicy) y los [Términos y Condiciones](https://steplauncher.pages.dev/TermsAndConditions) actualizados (19 de mayo de 2026), además de enlaces a Discord, GitHub y descarga.
 
 <a href="https://steplauncher.pages.dev">
-  <img src="resources/Banner_Web.png" alt="StepLauncher — El launcher más orgánico y versátil para Minecraft Java | Powered by NovaCore Engine" width="100%">
+  <img src="../branding/banner-003-rectangle.png" alt="StepLauncher — El launcher más orgánico y versátil para Minecraft Java | Powered by NovaCore Engine" width="100%">
 </a>
 
 ## 📖 Sobre

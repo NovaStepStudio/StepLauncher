@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconAppWindow, IconWorld, IconServer } from '@tabler/icons-vue';
+import { IconAppWindow, IconWorld, IconServer, IconKey } from '@tabler/icons-vue';
 </script>
 
 <template>
@@ -9,8 +9,8 @@ import { IconAppWindow, IconWorld, IconServer } from '@tabler/icons-vue';
                 <span>El ecosistema</span>
             </div>
             <div class="Description">
-                <h2>Un monorepo, tres piezas.</h2>
-                <p>Launcher, web y API viven en el mismo repositorio pero se desarrollan y despliegan por separado: lo que cambia en uno no rompe al otro.</p>
+                <h2>Un monorepo, cuatro piezas.</h2>
+                <p>Launcher, web, API y Yggdrasil viven en el mismo repositorio pero se desarrollan y despliegan por separado: lo que cambia en uno no rompe al otro.</p>
             </div>
         </div>
         <div class="Cards sl-stagger">
@@ -33,6 +33,13 @@ import { IconAppWindow, IconWorld, IconServer } from '@tabler/icons-vue';
                 <div class="CardTxt">
                     <b>api/ — el backend</b>
                     <small>La API de cuentas y comunidad: Cloudflare Workers con validación estricta y datos en Supabase. Versionada para no romper nada.</small>
+                </div>
+            </div>
+            <div class="Card">
+                <span class="CardIcon"><IconKey stroke="2" /></span>
+                <div class="CardTxt">
+                    <b>Yggdrasil — auth público</b>
+                    <small>Servicio público de autenticación compatible con Yggdrasil: tu identidad (nombre, UUID y texturas) que cualquier servidor puede aceptar.</small>
                 </div>
             </div>
         </div>
@@ -86,12 +93,12 @@ import { IconAppWindow, IconWorld, IconServer } from '@tabler/icons-vue';
         }
     }
     .Cards{
-        align-items:stretch;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: .8rem;
         width: 100%;
         max-width: 60rem;
         .Card{
-            flex: 1;
             align-items:flex-start;
             gap: .7rem;
             padding: .9rem 1rem;
@@ -136,7 +143,7 @@ import { IconAppWindow, IconWorld, IconServer } from '@tabler/icons-vue';
         width: calc(100% - 3rem);
         padding: 3rem 1.5rem;
         .Cards{
-            flex-direction:column;
+            grid-template-columns: 1fr;
         }
     }
 }

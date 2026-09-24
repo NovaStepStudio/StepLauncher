@@ -41,11 +41,12 @@ el contrato HTTP exacto vive en `docs/api/v1/` (`auth.md`, `cuentas.md`,
 
 | Método | Ruta | Uso |
 |---|---|---|
-| `POST` | `/v1/auth/register` · `/login` · `/refresh` · `/logout` | Sesiones (ver `auth.md`) |
+| `POST` | `/v1/auth/register` · `/login` · `/refresh` · `/logout` | Sesiones base (ver `auth.md`) |
+| `POST` | `/v1/auth/resend` · `/confirm` · `/recover` · `/reset-password` | Confirmación y recupero Supabase (ver `auth.md`) |
 | `GET` | `/v1/accounts/me` | Perfil completo: bio, versión/UUID MC, banner, `isOnline`, fechas |
 | `PATCH` | `/v1/accounts/me` | Usuario, nombre, bio, versión MC, UUID MC (`""` desvincula/regenera), `isOnline` |
 | `PATCH` | `/v1/accounts/me/presence` | Heartbeat de presencia (`{ isOnline }`) |
-| `POST` | `/v1/accounts/me/email-change` · `/password-change` | Email (confirma en el nuevo) y contraseña (exige la actual, distinta) |
+| `POST` | `/v1/accounts/me/email-change` · `/password-change` | Email (verificado en el nuevo vía **Change email**) y contraseña (exige la actual, distinta; avisa **Password changed**) |
 | `POST` | `/v1/accounts/me/avatar` · `/me/banner` | Avatar (PNG/JPG/WEBP ≤2 MB) y banner (PNG/GIF/JPG/WEBP ≤8 MB, máx 1080p) |
 | `POST` | `/v1/accounts/me/cosmetics/equip` · `/unequip` | Equipar/desequipar cosmético propio |
 | `GET`/`PATCH` | `/v1/accounts/me/privacy` | Las 4 opciones de privacidad |

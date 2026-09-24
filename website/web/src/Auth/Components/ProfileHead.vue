@@ -353,6 +353,7 @@ const conBanner = computed(() => !!props.bannerUrl);
 }
 @media (max-width: 600px){
     .ProfileHead{
+        min-width: 0;
         .Cover{
             height: 11rem;
         }
@@ -360,19 +361,59 @@ const conBanner = computed(() => !!props.bannerUrl);
             .Cover{
                 height: 9rem;
             }
-        }
-        .IdentityRow{
-            flex-wrap: wrap;
-            .Who{
-                flex: 1 1 12rem;
-                h1{
-                    font-size: 1.5rem;
-                    white-space: normal;
+            .IdentityRow{
+                .Avatar{
+                    width: 4.5rem;
+                    height: 4.5rem;
+                    span{
+                        font-size: 1.6rem;
+                    }
+                }
+                .Who{
+                    h1{
+                        font-size: 1.4rem;
+                    }
                 }
             }
         }
-        .Acciones{
-            width: 100%;
+        .EditBanner{
+            padding: .5rem .8rem;
+            min-height: 2.5rem;
+        }
+        .IdentityRow{
+            flex-wrap: wrap;
+            gap: .9rem;
+            min-width: 0;
+            .Avatar{
+                width: 4.5rem;
+                height: 4.5rem;
+                margin-top: -.8rem;
+                span{
+                    font-size: 1.6rem;
+                }
+            }
+            .Who{
+                flex: 1 1 10rem;
+                min-width: 0;
+                h1{
+                    font-size: 1.4rem;
+                    white-space: normal;
+                    overflow-wrap: anywhere;
+                    text-overflow: clip;
+                }
+                .Handle{
+                    overflow-wrap: anywhere;
+                }
+            }
+            .Acciones{
+                width: 100%;
+                min-width: 0;
+            }
+        }
+        .StatsInline{
+            font-size: .75rem;
+            gap: .35rem .55rem;
+            overflow-wrap: anywhere;
         }
     }
 }

@@ -33,7 +33,7 @@ async function guardarEmail() {
     enviandoEmail.value = true;
     try {
         await conAuth((token) => pedirCambioEmail(token, nuevoEmail.value.trim().toLowerCase()));
-        avisoEmail.value = 'Listo: revisá tu correo nuevo para confirmar el cambio.';
+        avisoEmail.value = 'Listo: confirmalo desde tu correo nuevo. Tu correo viejo recibe un aviso del cambio.';
         nuevoEmail.value = '';
     } catch (err) {
         errorEmailApi.value = err instanceof ApiError ? err.message : 'Servicio no disponible. Probá más tarde.';
@@ -54,7 +54,7 @@ async function guardarClave() {
     cambiando.value = true;
     try {
         await conAuth((token) => cambiarContrasena(token, { currentPassword: actual.value, newPassword: nueva.value }));
-        avisoClave.value = 'Contraseña actualizada.';
+        avisoClave.value = 'Contraseña actualizada. Te avisamos por correo.';
         actual.value = '';
         nueva.value = '';
         repite.value = '';
@@ -363,6 +363,31 @@ onMounted(() => cargarPrivacidad());
         svg{
             width: 1.1rem;
             height: 1.1rem;
+        }
+    }
+}
+@media (max-width: 600px){
+    .Card{
+        min-width: 0;
+        padding: 1rem;
+        .Block{
+            min-width: 0;
+            width: 100%;
+        }
+        .GhostBtn{
+            width: 100%;
+            min-height: 2.75rem;
+        }
+        .Toggles{
+            li{
+                align-items: flex-start;
+                .Txt{
+                    min-width: 0;
+                    small{
+                        overflow-wrap: anywhere;
+                    }
+                }
+            }
         }
     }
 }

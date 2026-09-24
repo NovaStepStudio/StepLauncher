@@ -45,7 +45,7 @@ export interface AuthlibLoginReq {
 
 export const accounts = ref<AccountInfo[]>([]);
 export const selectedAccountId = ref('');
-export const autoRefresh = ref(false);
+export const autoRefresh = ref(true);
 
 export const accountAvatars = ref<Record<string, string>>({});
 
@@ -91,7 +91,7 @@ export async function loadAccounts(): Promise<void> {
     } catch (_e) {}
     try {
         const ar = await GetAccountsAutoRefresh();
-        autoRefresh.value = ar === true;
+        autoRefresh.value = ar !== false;
     } catch (_e) {}
     for (const a of accounts.value) {
         if (a.type === 'authlib') fetchAccountAvatar(a.id);

@@ -164,8 +164,8 @@ func (a *App) applyRichPresence(cfg Config.Config) {
 	if a.rp == nil {
 		return
 	}
-	a.rp.SetEnabled(cfg.RichPresence.EnabledValue())
-	if cfg.RichPresence.EnabledValue() {
+	a.rp.SetEnabled(cfg.Launcher.RichPresenceEnabled())
+	if cfg.Launcher.RichPresenceEnabled() {
 		a.rp.SetActivity("StepLauncher", "Navegando por el menú", 0)
 	}
 }
@@ -216,11 +216,11 @@ func (a *App) runningGameVersion() string {
 	return ""
 }
 
-func (a *App) GetRichPresenceConfig() Config.RichPresenceConfig {
+func (a *App) GetRichPresenceConfig() bool {
 	if a.config == nil {
-		return Config.RichPresenceConfig{}
+		return true
 	}
-	return a.config.Get().RichPresence
+	return a.config.Get().Launcher.RichPresenceEnabled()
 }
 
 func (a *App) SetRichPresenceEnabled(v bool) {

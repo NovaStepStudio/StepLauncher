@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { IconPalette, IconPhoto, IconDroplet, IconTextSize } from '@tabler/icons-vue';
+import { capturaAlAzar } from '@/Common/Composables/capturas';
+
+const captura = capturaAlAzar('Personalization');
 </script>
 
 <template>
     <div class="Customize" v-reveal>
         <div class="Image">
-            <img src="../../../assets/capturesPreview/PreviewStyle.png" alt="Personalización de StepLauncher" loading="lazy" decoding="async">
+            <img :src="captura" alt="Personalización de StepLauncher" loading="lazy" decoding="async">
             <div class="ImageTag">
                 <b>Vista previa en vivo</b>
                 <small>Así se verá con tus colores</small>

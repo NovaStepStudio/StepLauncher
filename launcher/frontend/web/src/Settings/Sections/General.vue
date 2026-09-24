@@ -31,7 +31,7 @@ async function loadConfig() {
         const cfg = await GetConfig();
         if (cfg) {
             hideLauncher.value = cfg.launcher?.hideLauncherOnLaunch ?? true;
-            richPresence.value = cfg.richPresence?.enabled ?? true;
+            richPresence.value = (cfg.launcher as any)?.richPresence ?? true;
             animations.value = cfg.personalization?.animations ?? true;
             blur.value = cfg.personalization?.blur ?? true;
             shadows.value = cfg.personalization?.shadows ?? true;

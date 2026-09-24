@@ -45,6 +45,8 @@ watch(autenticado, () => refrescar());
             <RouterLink to="/">Inicio</RouterLink>
             <RouterLink to="/download">Descarga</RouterLink>
             <RouterLink to="/changelog">Historial</RouterLink>
+            <RouterLink to="/branding">Branding</RouterLink>
+            <RouterLink to="/faq">FAQ</RouterLink>
             <RouterLink to="/about">Acerca De</RouterLink>
             <a class="Github" href="https://github.com/NovaStepStudio/StepLauncher" target="_blank" rel="noopener">
                 <IconBrandGithub stroke="2" />
@@ -77,6 +79,8 @@ watch(autenticado, () => refrescar());
             <RouterLink to="/" @click="open = false">Inicio</RouterLink>
             <RouterLink to="/download" @click="open = false">Descarga</RouterLink>
             <RouterLink to="/changelog" @click="open = false">Historial</RouterLink>
+            <RouterLink to="/branding" @click="open = false">Branding</RouterLink>
+            <RouterLink to="/faq" @click="open = false">FAQ</RouterLink>
             <RouterLink to="/about" @click="open = false">Acerca De</RouterLink>
             <a href="https://github.com/NovaStepStudio/StepLauncher" target="_blank" rel="noopener">
                 <IconBrandGithub stroke="2" />

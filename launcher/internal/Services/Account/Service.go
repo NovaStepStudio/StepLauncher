@@ -1,7 +1,6 @@
 package account
 
 import (
-	"StepLauncher/internal/Config"
 	"StepLauncher/internal/Handlers"
 	engine "StepLauncher/internal/Handlers/Engine"
 	"errors"
@@ -78,7 +77,10 @@ func (s *AccountService) GetProfile(name string) (*engine.Profile, error) {
 	return s.engine.GetProfile(name)
 }
 
-func (s *AccountService) GetRichPresenceConfig() Config.RichPresenceConfig {
+func (s *AccountService) GetRichPresenceConfig() bool {
+	if s.handler == nil {
+		return true
+	}
 	return s.handler.GetRichPresenceConfig()
 }
 

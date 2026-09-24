@@ -23,6 +23,7 @@ queda en historial).
 | `SUPABASE_SERVICE_ROLE_KEY` | **Sí, ultra** | Bypass RLS; solo servidor, jamás al cliente ni a logs |
 | `API_ENV` | No | `local` \| `preview` \| `production` (defecto `production`; HSTS solo en producción) |
 | `ALLOWED_ORIGINS` | No | Orígenes CORS separados por coma, sin wildcard (ej: `https://steplauncher.pages.dev,http://localhost:5173`) |
+| `SITE_URL` | No | Base pública de la web para enlaces de correo (`emailRedirectTo`/`redirectTo` → `<SITE_URL>/auth/callback`; ej: `https://steplauncher.pages.dev`, local `http://localhost:5173`; si falta, se usa el primer `ALLOWED_ORIGINS`) |
 
 `getEnv()` falla con `server_misconfigured` (500 genérico, sin decir qué falta:
 detallarlo sería enumeración para un atacante) si falta alguna de Supabase.

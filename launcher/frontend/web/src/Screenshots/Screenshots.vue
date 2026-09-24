@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, reactive, watch, onMounted, onUnmounted } from 'vue';
-import { IconPhoto, IconX, IconZoomIn, IconZoomOut, IconChevronLeft, IconChevronRight } from '@tabler/icons-vue';
-import { ListScreenshots } from '@wailsjs/StepLauncher/internal/Services/Appearance/appearanceservice';
+import { IconPhoto, IconX, IconZoomIn, IconZoomOut, IconChevronLeft, IconChevronRight, IconWallpaper } from '@tabler/icons-vue';
+import { ListScreenshots, SetScreenshotAsBackground } from '@wailsjs/StepLauncher/internal/Services/Appearance/appearanceservice';
 import { ListInstanceScreenshots } from '@wailsjs/StepLauncher/internal/Services/Instance/instanceservice';
 import { ReadLocalFile } from '@wailsjs/StepLauncher/internal/Services/System/systemservice';
+import { GetConfig } from '@wailsjs/StepLauncher/internal/Services/Config/configservice';
 import type { ScreenshotInfo } from '@wailsjs/StepLauncher/internal/Handlers/models';
 import { CLOSE_OVERLAYS_EVENT } from '@/Common/Stores/Idle';
+import { applyPersonalization } from '@/Common/Stores/Ui';
+import { useBackground } from '@/Common/Composables/useBackground';
 import {
     heavyPanel, openHeavyPanel, closeHeavyPanel,
     shotsInstance, shotsReturn,
@@ -273,6 +276,38 @@ useOverlayEscape(
     { isActive: () => heavyPanel.value === 'shots' }
 );
 
+// Estado para "Colocar como fondo" (igual que la galería de mods)
+const isSettingBg = ref(false);
+const bgSetMsg = ref('');
+const bgSetError = ref('');
+
+async function setAsBackground(): Promise<void> {
+    if (!preview.value || isSettingBg.value) return;
+    isSettingBg.value = true;
+    bgSetMsg.value = '';
+    bgSetError.value = '';
+    try {
+        const rel = await SetScreenshotAsBackground(preview.value.path);
+        if (rel) {
+            // Refrescar personalización para que el fondo se aplique al instante
+            try {
+                const cfg = await GetConfig();
+                if ((cfg as any)?.personalization) {
+                    applyPersonalization((cfg as any).personalization as any);
+                    await useBackground().refreshBackground();
+                }
+            } catch (_e) {}
+            bgSetMsg.value = 'Fondo aplicado';
+            setTimeout(() => { bgSetMsg.value = ''; }, 2500);
+        }
+    } catch (e: any) {
+        bgSetError.value = e?.message ?? 'No se pudo colocar como fondo';
+        setTimeout(() => { bgSetError.value = ''; }, 4000);
+    } finally {
+        isSettingBg.value = false;
+    }
+}
+
 function fmtSize(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -310,6 +345,15 @@ onUnmounted(() => {
                         <span class="Shots_PreviewName" :title="preview.name">{{ preview.name }}</span>
                         <span class="Shots_PreviewCount">{{ (previewIndex ?? 0) + 1 }} / {{ shots.length }}</span>
                         <div class="Shots_PreviewTools">
+                            <button
+                                class="Shots_BgBtn"
+                                :disabled="isSettingBg"
+                                title="Colocar como fondo"
+                                @click.stop="setAsBackground"
+                            >
+                                <IconWallpaper stroke="2" />
+                                <span>{{ isSettingBg ? 'Aplicando…' : 'Colocar como fondo' }}</span>
+                            </button>
                             <button title="Cerrar (Esc)" @click="close">
                                 <IconX stroke="2" />
                             </button>
@@ -344,6 +388,9 @@ onUnmounted(() => {
                         <button title="Acercar (+)" @click.stop="biteZoom(0.25)">
                             <IconZoomIn stroke="2" />
                         </button>
+                    </div>
+                    <div v-if="bgSetMsg || bgSetError" class="Shots_BgMsg" :class="{ error: !!bgSetError }">
+                        {{ bgSetMsg || bgSetError }}
                     </div>
                     <button
                         v-if="shots.length > 1"

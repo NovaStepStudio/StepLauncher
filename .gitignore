@@ -8,7 +8,7 @@ launcher/build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 *.bindings-tmp
 *.env
 *.task
-*.jsonc
+*.pem
 # Excepciones: la config de deploy sí se versiona (no lleva secretos)
 !api/wrangler.jsonc
 !website/wrangler.jsonc

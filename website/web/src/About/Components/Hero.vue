@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { IconBrandGithub } from '@tabler/icons-vue';
+import { capturaAlAzar } from '@/Common/Composables/capturas';
+
+const captura = capturaAlAzar('Welcome');
 </script>
 
 <template>
@@ -15,7 +18,7 @@ import { IconBrandGithub } from '@tabler/icons-vue';
             </div>
             <div class="Description sl-enter" style="--sl-delay: .16s">
                 <h2>Un launcher hecho a tu medida.</h2>
-                <p>StepLauncher nació para jugar Minecraft: Java Edition sin vueltas: rápido, personalizable y con todo integrado, desde los mods hasta tu música.</p>
+                <p>StepLauncher nació para jugar Minecraft: Java Edition sin vueltas: rápido, personalizable y con todo integrado, desde la descarga oficial del juego y los modloaders hasta tu música y tu cuenta con Yggdrasil público.</p>
             </div>
             <div class="Buttons sl-enter" style="--sl-delay: .24s">
                 <RouterLink class="BtnPrimary" to="/download">
@@ -33,7 +36,7 @@ import { IconBrandGithub } from '@tabler/icons-vue';
             </div>
         </div>
         <div class="Image sl-fade" style="--sl-delay: .2s">
-            <img src="../../../assets/capturesPreview/Welcome-001.png" alt="Bienvenida de StepLauncher" loading="eager" decoding="async" fetchpriority="high">
+            <img :src="captura" alt="Bienvenida de StepLauncher" loading="eager" decoding="async" fetchpriority="high">
             <div class="ImageTag">
                 <b>Bienvenida guiada</b>
                 <small>Así arranca tu primera vez</small>

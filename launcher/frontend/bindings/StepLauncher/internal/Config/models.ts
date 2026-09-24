@@ -18,7 +18,6 @@ export interface Config {
     "launcher": LauncherConfig;
     "personalization": Personalization;
     "idle": IdleConfig;
-    "richPresence": RichPresenceConfig;
     "musicPanel": MusicPanelConfig;
     "extraData": ExtraData;
     "firstLaunch": boolean;
@@ -51,6 +50,14 @@ export interface LauncherConfig {
     "checkForUpdatesOnStart": boolean;
     "launchAfterInstall": boolean;
     "verifyBeforeLaunch": boolean | null;
+
+    /**
+     * RichPresence indica si se muestra la presencia en Discord.
+     * Vive dentro del bloque "launcher" (booleano simple).
+     * Nil equivale a true para conservar el comportamiento por defecto
+     * en configs antiguas donde la clave no existe.
+     */
+    "richPresence"?: boolean | null;
 }
 
 export interface MinecraftConfig {
@@ -155,10 +162,6 @@ export interface Personalization {
     "shadows": boolean;
     "textShadow": boolean;
     "textShadowIntensity": number;
-}
-
-export interface RichPresenceConfig {
-    "enabled": boolean | null;
 }
 
 export interface ThemeColors {

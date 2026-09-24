@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { IconBox, IconCopy, IconShieldCheck, IconSettings } from '@tabler/icons-vue';
+import { capturaAlAzar } from '@/Common/Composables/capturas';
+
+const captura = capturaAlAzar('Instances');
 </script>
 
 <template>
@@ -38,7 +41,7 @@ import { IconBox, IconCopy, IconShieldCheck, IconSettings } from '@tabler/icons-
             </div>
         </div>
         <div class="Image">
-            <img src="../../../assets/capturesPreview/Instances-001.png" alt="Lista de instancias de StepLauncher" loading="lazy" decoding="async">
+            <img :src="captura" alt="Lista de instancias de StepLauncher" loading="lazy" decoding="async">
             <div class="ImageTag">
                 <b>Mis instancias</b>
                 <small>Versiones y perfiles independientes</small>

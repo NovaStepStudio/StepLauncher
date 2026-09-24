@@ -48,3 +48,12 @@ export function validarIdentificador(valor: string): string {
     if (valor.trim().length < 3) return 'Mínimo 3 caracteres.';
     return '';
 }
+
+// Código de verificación del correo (OTP de 6 dígitos o hash del enlace).
+export function validarCodigo(valor: string): string {
+    const codigo = valor.trim();
+    if (!codigo) return 'Ingresá el código que te llegó por correo.';
+    if (codigo.length < 6) return 'Ese código es demasiado corto.';
+    if (codigo.length > 4096) return 'Ese código es demasiado largo.';
+    return '';
+}

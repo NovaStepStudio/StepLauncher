@@ -28,7 +28,8 @@ func NewManager(workDir string) *Manager {
 	return &Manager{
 		filePath: filepath.Join(workDir, "launcher_accounts.json"),
 		data: AccountsFile{
-			Accounts: make(map[string]*Account),
+			Accounts:    make(map[string]*Account),
+			AutoRefresh: true,
 		},
 	}
 }
@@ -99,6 +100,14 @@ func (m *Manager) Load() error {
 			return fmt.Errorf("parse accounts: %w", err)
 		}
 		m.logf("Archivo de cuentas en formato legacy; se migrara a la raiz")
+	}
+	// Migración: los archivos antiguos sin la clave "autoRefresh" (omitempty
+	// con valor false por defecto) deben activar la renovación automática.
+	var keys map[string]json.RawMessage
+	if json.Unmarshal(raw, &keys) == nil {
+		if _, exists := keys["autoRefresh"]; !exists {
+			m.data.AutoRefresh = true
+		}
 	}
 	m.sanitizeLoaded()
 	m.mu.Unlock()

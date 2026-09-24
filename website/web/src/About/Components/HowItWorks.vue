@@ -10,7 +10,7 @@ import { IconDownload, IconBox, IconPlayerPlay } from '@tabler/icons-vue';
             </div>
             <div class="Description">
                 <h2>De la descarga a jugar en minutos.</h2>
-                <p>Sin cuentas raras ni configuraciones eternas: instalás, armás tu instancia y jugás.</p>
+                <p>Descarga oficial, cuenta con Yggdrasil y tu instancia lista: instalás, armás y jugás.</p>
             </div>
         </div>
         <div class="Steps sl-stagger">
@@ -25,20 +25,20 @@ import { IconDownload, IconBox, IconPlayerPlay } from '@tabler/icons-vue';
                 <span class="Num">2</span>
                 <div class="StepTxt">
                     <b><IconBox stroke="2" /> Creá tu instancia</b>
-                    <small>Elegí la versión de Minecraft, el Java que corresponda y, si querés, un modloader (Fabric, Quilt, Forge o NeoForge). Cada instancia guarda su propia configuración.</small>
+                    <small>El juego se descarga desde fuentes oficiales junto al Java que corresponda y, si querés, un modloader (Forge, Fabric, Quilt o NeoForge). Cada instancia guarda su propia configuración.</small>
                 </div>
             </div>
             <div class="Step">
                 <span class="Num">3</span>
                 <div class="StepTxt">
                     <b><IconPlayerPlay stroke="2" /> Jugá</b>
-                    <small>Apretá jugar y listo. Si algo falla, el historial de errores te dice qué pasó en español, sin códigos crípticos.</small>
+                    <small>Jugá offline sin verificar tu identidad, o entrá en modo online con tu cuenta StepLauncher (Yggdrasil público) o un servidor externo. Apretá jugar y listo. Si algo falla, el historial de errores te dice qué pasó en español, sin códigos crípticos.</small>
                 </div>
             </div>
         </div>
         <div class="Note">
-            <b>Qué no es StepLauncher</b>
-            <p>No es una cuenta premium ni vende Minecraft: necesitás tu copia del juego. No está afiliado a Mojang Studios ni a Microsoft. Es un proyecto independiente y gratuito, con el código a la vista bajo licencia GPL-3.0.</p>
+            <b>Descarga oficial y proyecto independiente</b>
+            <p>StepLauncher descarga y ejecuta Minecraft: Java Edition y los modloaders desde fuentes oficiales, siguiendo las políticas de Mojang y Microsoft. No vende el juego ni otorga licencias, no es cuenta premium y no está afiliado a Mojang Studios ni a Microsoft. Es gratuito, con el código a la vista bajo licencia GPL-3.0.</p>
         </div>
     </div>
 </template>

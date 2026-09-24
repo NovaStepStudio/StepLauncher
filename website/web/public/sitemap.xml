@@ -21,6 +21,16 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://steplauncher.pages.dev/branding</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://steplauncher.pages.dev/faq</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://steplauncher.pages.dev/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

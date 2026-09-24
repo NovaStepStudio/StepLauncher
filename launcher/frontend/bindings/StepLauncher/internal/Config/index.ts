@@ -11,6 +11,5 @@ export type {
     MusicConfig,
     MusicPanelConfig,
     Personalization,
-    RichPresenceConfig,
     ThemeColors
 } from "./models.js";

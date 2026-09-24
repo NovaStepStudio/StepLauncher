@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { IconBolt, IconFeather, IconDevices, IconRocket } from '@tabler/icons-vue';
+import { capturaAlAzar } from '@/Common/Composables/capturas';
+
+const captura = capturaAlAzar('Playing');
 </script>
 
 <template>
@@ -38,7 +41,7 @@ import { IconBolt, IconFeather, IconDevices, IconRocket } from '@tabler/icons-vu
             </div>
         </div>
         <div class="Image">
-            <img src="../../../assets/capturesPreview/PlayMenu.png" alt="Menú de juego de StepLauncher" loading="lazy" decoding="async">
+            <img :src="captura" alt="Menú de juego de StepLauncher" loading="lazy" decoding="async">
             <div class="ImageTag">
                 <b>Listo para jugar</b>
                 <small>Detecta tu Java y a jugar</small>

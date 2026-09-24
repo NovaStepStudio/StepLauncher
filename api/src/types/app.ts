@@ -15,6 +15,10 @@ export interface AppBindings {
   API_ENV?: string;
   /** Orígenes CORS permitidos, separados por coma. Vacío = denegar todo. */
   ALLOWED_ORIGINS?: string;
+  /** Base pública de la web para los enlaces de correo (verificación y recupero).
+   * Ej: https://steplauncher.pages.dev (local: http://localhost:5173).
+   * No es secreta: solo construye `redirectTo` hacia `/auth/callback`. */
+  SITE_URL?: string;
 }
 
 /** Usuario autenticado mínimo que guardamos en el contexto. */

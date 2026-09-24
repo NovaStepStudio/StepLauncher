@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	platform "StepLauncher/internal/Core/Platform"
 	globalutils "StepLauncher/internal/Core/Utils"
 )
 
@@ -62,6 +63,18 @@ type LauncherConfig struct {
 	CheckForUpdatesOnStart bool   `json:"checkForUpdatesOnStart"`
 	LaunchAfterInstall    bool    `json:"launchAfterInstall"`
 	VerifyBeforeLaunch    *bool   `json:"verifyBeforeLaunch"`
+	// RichPresence indica si se muestra la presencia en Discord.
+	// Vive dentro del bloque "launcher" (booleano simple).
+	// Nil equivale a true para conservar el comportamiento por defecto
+	// en configs antiguas donde la clave no existe.
+	RichPresence *bool `json:"richPresence,omitempty"`
+}
+
+func (l LauncherConfig) RichPresenceEnabled() bool {
+	if l.RichPresence == nil {
+		return true
+	}
+	return *l.RichPresence
 }
 
 func (l LauncherConfig) VerifyEnabled() bool {
@@ -106,17 +119,6 @@ type BackgroundConfig struct {
 	ImageAuthor     string   `json:"imageAuthor,omitempty"`
 	ImageModName    string   `json:"imageModName,omitempty"`
 	ImageUrl        string   `json:"imageUrl,omitempty"`
-}
-
-type RichPresenceConfig struct {
-	Enabled *bool `json:"enabled"`
-}
-
-func (r RichPresenceConfig) EnabledValue() bool {
-	if r.Enabled == nil {
-		return true
-	}
-	return *r.Enabled
 }
 
 type ThemeColors struct {
@@ -286,10 +288,26 @@ type Config struct {
 	Launcher        LauncherConfig  `json:"launcher"`
 	Personalization Personalization `json:"personalization"`
 	Idle            IdleConfig      `json:"idle"`
-	RichPresence RichPresenceConfig `json:"richPresence"`
 	MusicPanel   MusicPanelConfig   `json:"musicPanel"`
 	ExtraData    ExtraData          `json:"extraData"`
 	FirstLaunch    bool             `json:"firstLaunch"`
+}
+
+// defaultRAMGB calcula la RAM inicial como la mitad de la RAM total
+// del equipo, con un mínimo de 2GB y un máximo de 8GB.
+func defaultRAMGB() int {
+	totalMB := platform.TotalRAMMB()
+	if totalMB <= 0 {
+		return 4
+	}
+	halfGB := int(totalMB / 2048)
+	if halfGB < 2 {
+		return 2
+	}
+	if halfGB > 8 {
+		return 8
+	}
+	return halfGB
 }
 
 func Default() Config {
@@ -306,7 +324,7 @@ func Default() Config {
 			SeparateGameDir:      boolPtr(true),
 		},
 		Launcher: LauncherConfig{
-			MaxRAMGB:              2,
+			MaxRAMGB:              defaultRAMGB(),
 			MaxMbps:               0,
 			ConcurrentDownloads:   4,
 			HideLauncherOnLaunch:  true,
@@ -314,14 +332,12 @@ func Default() Config {
 			IntegritySector:       "todo",
 			CheckForUpdatesOnStart: true,
 			VerifyBeforeLaunch:    boolPtr(true),
+			RichPresence:          boolPtr(true),
 		},		Idle: IdleConfig{
 			AutoCloseModals:    false,
 			IdleMinutes:        1,
 			ConfigCheckEnabled: true,
 			ConfigCheckMinutes: 3,
-		},
-		RichPresence: RichPresenceConfig{
-			Enabled: boolPtr(true),
 		},
 		MusicPanel: MusicPanelConfig{
 			CoverStyle: "square",
@@ -350,6 +366,9 @@ func Default() Config {
 			UIScale: 100,
 			Background: BackgroundConfig{
 				Type:            "none",
+				ImagePath:       "",
+				VideoPath:       "",
+				DynamicImages:   []string{},
 				DynamicOrder:    "sequential",
 				DynamicInterval: 10,
 			},
@@ -367,19 +386,20 @@ func Default() Config {
 			FontPrimarySize:    1,
 			FontSecondarySize:  1,
 			Colors: ThemeColors{
-				Sidebar:       "#0005",
-				Modal:         "#111",
-				Buttons:       "#111",
-				BorderModal:   "#494949",
-				Border:        "rgba(37, 37, 37, 0.3)",
+				Sidebar:       "#00000066",
+				Modal:         "#0b0b0b",
+				Buttons:       "#2b2b3d",
+				BorderModal:   "#131313",
+				Border:        "#131313",
 				Progress:      "#5ed89a",
-				PlayButton:    "#111",
-				ButtonPrimary: "#111",
+				PlayButton:    "#1f1f1f",
+				ButtonPrimary: "#19191a",
 				Error:         "#ff6b6b",
-				Success:       "#5ed89a",
+				Success:       "#34d399",
 				Tag:           "#a974ff",
-				Warning:       "#ffb347",
+				Warning:       "#fbbf24",
 			},
+			RecentColors: []string{},
 			Animations:          true,
 			Blur:                true,
 			Shadows:             true,
@@ -438,6 +458,7 @@ func (m *Manager) load() {
 			return
 		}
 		m.cfg = cfg
+		m.migrateRichPresence(raw)
 		m.sanitize()
 		m.Save()
 		m.logf("Configuracion cargada: %s | uiScale=%d%% | background=%s | downloads=%d | proxy=%v | idle=%v/%dmin check=%v/%dmin",
@@ -448,6 +469,41 @@ func (m *Manager) load() {
 		return
 	}
 	m.migrateLegacy(data)
+}
+
+// migrateRichPresence traslada el antiguo bloque propio "richPresence"
+// (objeto {"enabled": bool} o booleano directo) al nuevo booleano simple
+// dentro de "launcher". Si la clave ya existe en "launcher", se respeta
+// el valor nuevo y solo se descarta el bloque viejo al guardar.
+func (m *Manager) migrateRichPresence(raw map[string]json.RawMessage) {
+	oldRaw, ok := raw["richPresence"]
+	if !ok || len(oldRaw) == 0 {
+		return
+	}
+	// Si el bloque launcher ya trae richPresence, no migrar encima.
+	if launcherRaw, ok := raw["launcher"]; ok {
+		var launcherKeys map[string]json.RawMessage
+		if json.Unmarshal(launcherRaw, &launcherKeys) == nil {
+			if _, exists := launcherKeys["richPresence"]; exists {
+				return
+			}
+		}
+	}
+	// Formato antiguo: objeto {"enabled": bool}
+	var oldObj struct {
+		Enabled *bool `json:"enabled"`
+	}
+	if err := json.Unmarshal(oldRaw, &oldObj); err == nil && oldObj.Enabled != nil {
+		m.cfg.Launcher.RichPresence = oldObj.Enabled
+		m.logf("RichPresence migrado desde bloque propio a launcher.richPresence=%v", *oldObj.Enabled)
+		return
+	}
+	// Formato alternativo: booleano directo
+	var oldBool bool
+	if err := json.Unmarshal(oldRaw, &oldBool); err == nil {
+		m.cfg.Launcher.RichPresence = &oldBool
+		m.logf("RichPresence migrado desde bloque propio a launcher.richPresence=%v", oldBool)
+	}
 }
 
 func (m *Manager) migrateLegacy(data []byte) {
@@ -537,8 +593,8 @@ func (m *Manager) sanitize() {
 	if c.Idle.ConfigCheckMinutes < 1 || c.Idle.ConfigCheckMinutes > 30 {
 		c.Idle.ConfigCheckMinutes = 3
 	}
-	if c.RichPresence.Enabled == nil {
-		c.RichPresence.Enabled = boolPtr(true)
+	if c.Launcher.RichPresence == nil {
+		c.Launcher.RichPresence = boolPtr(true)
 	}
 	if c.Personalization.UIScale < 50 || c.Personalization.UIScale > 200 {
 		c.Personalization.UIScale = 100
@@ -548,6 +604,9 @@ func (m *Manager) sanitize() {
 	case "image", "video", "dynamic":
 	default:
 		bg.Type = "none"
+	}
+	if bg.DynamicImages == nil {
+		bg.DynamicImages = []string{}
 	}
 	if len(bg.DynamicImages) > 10 {
 		bg.DynamicImages = bg.DynamicImages[:10]
@@ -671,18 +730,21 @@ func (m *Manager) sanitize() {
 	if c.Personalization.TextShadowIntensity < 0.5 || c.Personalization.TextShadowIntensity > 2 {
 		c.Personalization.TextShadowIntensity = 1
 	}
-	sanitizeColor(&c.Personalization.Colors.Sidebar, "#0005")
-	sanitizeColor(&c.Personalization.Colors.Modal, "#111")
-	sanitizeColor(&c.Personalization.Colors.Buttons, "#111")
-	sanitizeColor(&c.Personalization.Colors.BorderModal, "#494949")
-	sanitizeColor(&c.Personalization.Colors.Border, "rgba(37, 37, 37, 0.3)")
+	sanitizeColor(&c.Personalization.Colors.Sidebar, "#00000066")
+	sanitizeColor(&c.Personalization.Colors.Modal, "#0b0b0b")
+	sanitizeColor(&c.Personalization.Colors.Buttons, "#2b2b3d")
+	sanitizeColor(&c.Personalization.Colors.BorderModal, "#131313")
+	sanitizeColor(&c.Personalization.Colors.Border, "#131313")
 	sanitizeColor(&c.Personalization.Colors.Progress, "#5ed89a")
-	sanitizeColor(&c.Personalization.Colors.PlayButton, "#111")
-	sanitizeColor(&c.Personalization.Colors.ButtonPrimary, "#111")
+	sanitizeColor(&c.Personalization.Colors.PlayButton, "#1f1f1f")
+	sanitizeColor(&c.Personalization.Colors.ButtonPrimary, "#19191a")
 	sanitizeColor(&c.Personalization.Colors.Error, "#ff6b6b")
-	sanitizeColor(&c.Personalization.Colors.Success, "#5ed89a")
+	sanitizeColor(&c.Personalization.Colors.Success, "#34d399")
 	sanitizeColor(&c.Personalization.Colors.Tag, "#a974ff")
-	sanitizeColor(&c.Personalization.Colors.Warning, "#ffb347")
+	sanitizeColor(&c.Personalization.Colors.Warning, "#fbbf24")
+	if c.Personalization.RecentColors == nil {
+		c.Personalization.RecentColors = []string{}
+	}
 	keep := c.Personalization.RecentColors[:0]
 	for _, col := range c.Personalization.RecentColors {
 		if sanitizeColorString(col) == "" {
@@ -942,7 +1004,7 @@ func (m *Manager) SetLaunchAfterInstall(v bool) error {
 func (m *Manager) SetRichPresenceEnabled(v bool) error {
 	val := v
 	m.mu.Lock()
-	m.cfg.RichPresence.Enabled = &val
+	m.cfg.Launcher.RichPresence = &val
 	m.mu.Unlock()
 	m.logf("RichPresence -> %v", val)
 	return m.Save()

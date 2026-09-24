@@ -58,7 +58,10 @@ Heartbeat del launcher (encender al abrir, apagar al cerrar):
 { "newEmail": "nuevo@ejemplo.com" }
 ```
 
-La confirmación viaja al correo **nuevo**. `200` →
+Flujo verificado (plantilla Supabase **Change email address**): la confirmación
+viaja al correo **nuevo** vía `updateUser` con la identidad del usuario (no admin
+directo); el viejo se mantiene hasta confirmar en `POST /v1/auth/confirm`
+(type `email_change`) y recibe el aviso **Email address changed**. `200` →
 `{ emailChangeRequested: true, message: "Revisa tu nuevo correo…" }`.
 Errores: `same_email` 400 (ya usas ese) · `email_taken` 409.
 
@@ -70,6 +73,7 @@ Errores: `same_email` 400 (ya usas ese) · `email_taken` 409.
 
 Verifica la actual (si falla: `current_password_incorrect` 401, sin más detalle);
 la nueva 8–72 y distinta. `200` → `{ passwordChanged: true }`.
+Supabase envía además el aviso **Password changed** si la plantilla está activa.
 
 ## `POST /v1/accounts/me/avatar` — subir avatar (`multipart`)
 

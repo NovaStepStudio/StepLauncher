@@ -26,7 +26,7 @@ Todo endpoint que lea o modifique datos del usuario debe cumplir, **por orden**:
 
 | Capa | Estado |
 |---|---|
-| `requireAuth()` en todos los endpoints de cuenta | Sí (auth/register-login-refresh son públicos por necesidad) |
+| `requireAuth()` en todos los endpoints de cuenta | Sí (auth/register-login-refresh-resend-recover-confirm-reset-password son públicos por necesidad) |
 | RLS propia en `profiles`, `privacy_settings`, `file_uploads`, `notifications` | Sí |
 | Lectura social solo vía funciones revocadas | Sí (`resolve_*`, `search_users`, `my_friends`, `block_*`, `equipped_cosmetics`) |
 | Buckets sin listado global | Sí (`avatars`/`banners` públicos sin SELECT amplio; `skins`/`capes` privados) |

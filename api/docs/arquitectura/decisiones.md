@@ -143,6 +143,25 @@ y añadir un ADR nuevo en vez de reescribir historia.
 - **Consecuencias**: la docs vuelve a ser la memoria del proyecto; cualquier
   divergencia futura se detecta comparando con el código.
 
+## ADR-015 — Verificación por correo Supabase (2026-09-21)
+
+- **Contexto**: el MVP registraba con `email_confirm: true` (sin fricción, ADR-007)
+  y cambiaba el email con `admin` directo; no existía recupero y Supabase no enviaba
+  sus plantillas (Confirm sign up, Change email, Reset password + avisos Password/
+  Email changed). La web prepara `/auth/callback` como vuelta única.
+- **Decisión**: `register` vía `signUp` (sin sesión hasta confirmar en
+  `POST /v1/auth/confirm` type `signup`); `resend`/`recover`/`confirm`/`reset-password`
+  nuevos con preset `sensitive` y respuestas genéricas anti-enumeración; `login`
+  mapea `email_not_confirmed` 403; `email-change` vía `updateUser` del usuario
+  (verificación al NUEVO + aviso al viejo); nueva var NO secreta `SITE_URL` para
+  `emailRedirectTo`/`redirectTo` → `<SITE_URL>/auth/callback`. Cambio semántico de
+  `register` asumido en v1 por ser fin del MVP 0.x (sin launcher publicado con el
+  contrato viejo); la web/launcher se actualizan después.
+- **Consecuencias**: hay que activar en Supabase `Confirm email`, `Secure email change`
+  y las 5 plantillas, con `Site URL` + `Redirect .../auth/callback` permitida;
+  `password-change` y `reset-password` disparan el aviso **Password changed** sin
+  código extra. Ver `docs/api/v1/auth.md` y `docs/oauth/README.md`.
+
 ## Plantilla para el próximo ADR
 
 ```md

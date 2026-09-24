@@ -11,6 +11,8 @@ export interface SafeEnv {
   supabaseServiceRoleKey: string;
   apiEnv: string;
   allowedOrigins: string[];
+  /** Base pública de la web para `emailRedirectTo`/`redirectTo` (puede ser ""). */
+  siteUrl: string;
 }
 
 /** Falla con mensaje genérico (sin filtrar qué variable falta). */
@@ -32,6 +34,7 @@ export function getEnv(c: Context<AppEnv>): SafeEnv {
     supabaseServiceRoleKey,
     apiEnv: (raw.API_ENV ?? "production").trim() || "production",
     allowedOrigins: parseAllowedOrigins(raw.ALLOWED_ORIGINS),
+    siteUrl: parseSiteUrl(raw.SITE_URL, raw.ALLOWED_ORIGINS),
   };
 }
 
@@ -43,4 +46,19 @@ export function parseAllowedOrigins(value: string | undefined): string[] {
     .map((o) => o.trim().replace(/\/+$/, ""))
     .filter((o) => o.length > 0 && (o.startsWith("https://") || o.startsWith("http://")));
   return [...new Set(list)];
+}
+
+/** Base pública para enlaces de correo: SITE_URL o primer origen permitido. */
+export function parseSiteUrl(siteUrl: string | undefined, allowedOrigins: string | undefined): string {
+  const direct = siteUrl?.trim().replace(/\/+$/, "");
+  if (direct && (direct.startsWith("https://") || direct.startsWith("http://"))) return direct;
+  const fallback = parseAllowedOrigins(allowedOrigins)[0];
+  return fallback ?? "";
+}
+
+/** Callback de la web donde Supabase devuelve tras verificar (fijo por contrato). */
+export function emailCallbackUrl(siteUrl: string): string | undefined {
+  const base = siteUrl.trim().replace(/\/+$/, "");
+  if (!base) return undefined;
+  return `${base}/auth/callback`;
 }

@@ -363,7 +363,23 @@ onMounted(() => cargar());
 }
 @media (max-width: 600px){
     .Card{
+        min-width: 0;
+        padding: 1rem;
+        padding-top: 2.6rem;
+        .Quota{
+            top: 1rem;
+            right: 1rem;
+            left: 1rem;
+            white-space: normal;
+            text-align: right;
+        }
         .Uploads{
+            grid-template-columns: minmax(0, 1fr);
+        }
+        .Drop{
+            min-height: 2.75rem;
+        }
+        .Grid{
             grid-template-columns: minmax(0, 1fr);
         }
     }

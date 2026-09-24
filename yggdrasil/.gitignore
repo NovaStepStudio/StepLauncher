@@ -1,0 +1,19 @@
+# Dependencias y build (generados, nunca se editan a mano)
+node_modules/
+dist/
+.dev.vars
+.wrangler/
+
+# Wrangler / Cloudflare (local)
+.wrangler/state/
+
+# Tipos generados por Wrangler
+worker-configuration.d.ts
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.pem
+
+# Claves RSA generadas por scripts/generar-claves.js
+.keys/

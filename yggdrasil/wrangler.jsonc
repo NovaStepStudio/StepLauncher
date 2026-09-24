@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "steplauncher-yggdrasil",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "API_ENV": "production",
+    "SERVER_NAME": "StepLauncher",
+    "SUPABASE_URL": "https://wpnvconaefhdmvgvqbsv.supabase.co",
+    "SKIN_DOMAINS": "steplauncher-yggdrasil.stepnicka012.workers.dev,https://steplauncher-yggdrasil.stepnicka012.workers.dev,https://wpnvconaefhdmvgvqbsv.supabase.co",
+    "HOMEPAGE_URL": "https://steplauncher.pages.dev",
+    "REGISTER_URL": "https://steplauncher.pages.dev/auth"
+  }
+}

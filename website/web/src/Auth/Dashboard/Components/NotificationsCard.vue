@@ -399,4 +399,37 @@ onMounted(() => cargar());
         }
     }
 }
+@media (max-width: 600px){
+    .Card{
+        min-width: 0;
+        padding: 1rem;
+        .Row{
+            .GhostBtn{
+                flex: 1 1 auto;
+                min-height: 2.75rem;
+            }
+            .Count{
+                width: 100%;
+                margin-left: 0;
+                text-align: right;
+            }
+        }
+        .List{
+            li{
+                flex-direction: column;
+                align-items: stretch;
+                .Txt{
+                    min-width: 0;
+                }
+                .RowBtns{
+                    justify-content: flex-end;
+                    .MiniBtn{
+                        flex: 1;
+                        min-height: 2.75rem;
+                    }
+                }
+            }
+        }
+    }
+}
 </style>

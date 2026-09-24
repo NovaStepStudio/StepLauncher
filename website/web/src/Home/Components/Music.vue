@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { IconMusic, IconLibrary, IconPlaylist, IconPlayerPlay } from '@tabler/icons-vue';
+import { capturaAlAzar } from '@/Common/Composables/capturas';
+
+const captura = capturaAlAzar('MusicPanel');
 </script>
 
 <template>
@@ -38,7 +41,7 @@ import { IconMusic, IconLibrary, IconPlaylist, IconPlayerPlay } from '@tabler/ic
             </div>
         </div>
         <div class="Image">
-            <img src="../../../assets/capturesPreview/HomeMusicPanel.png" alt="Biblioteca de música de StepLauncher" loading="lazy" decoding="async">
+            <img :src="captura" alt="Biblioteca de música de StepLauncher" loading="lazy" decoding="async">
             <div class="ImageTag">
                 <b>Tu música, a tu ritmo</b>
                 <small>Biblioteca y reproductor integrados</small>

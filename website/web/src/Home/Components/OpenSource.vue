@@ -34,7 +34,7 @@ import { IconBrandGithub, IconScale, IconStar, IconUsers } from '@tabler/icons-v
             </div>
             <div class="Description">
                 <h2>Código abierto, sin letra chica.</h2>
-                <p>StepLauncher es gratis y de código abierto bajo licencia GPL-3.0. El repo es un monorepo: la app vive en <code>launcher/</code>, esta web en <code>website/</code> y la API en <code>api/</code>. Podés ver el código, reportar issues y seguir cada release en GitHub.</p>
+                <p>StepLauncher es gratis y de código abierto bajo licencia GPL-3.0. El repo es un monorepo de cuatro piezas: la app vive en <code>launcher/</code>, esta web en <code>website/</code>, la API en <code>api/</code> y la autenticación pública con Yggdrasil. Podés ver el código, reportar issues y seguir cada release en GitHub.</p>
             </div>
             <div class="Points sl-stagger">
                 <div class="Point">

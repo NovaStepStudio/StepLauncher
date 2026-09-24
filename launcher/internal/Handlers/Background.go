@@ -16,6 +16,50 @@ import (
 const maxBackgroundWidth = 1920
 const maxBackgroundHeight = 1080
 
+// SetScreenshotAsBackground copia una captura del juego a
+// cache/backgrounds/ y la establece como fondo del launcher
+// (personalization.background.type = "image").
+//
+// relPath es la ruta relativa al directorio del launcher tal como la
+// devuelve ListScreenshots (p. ej. "game/screenshots/2026-01-01_10.00.00.png").
+func (a *App) SetScreenshotAsBackground(relPath string) (string, error) {
+	if a.engine == nil || a.config == nil {
+		return "", fmt.Errorf("engine no disponible")
+	}
+	rel := strings.TrimSpace(relPath)
+	if rel == "" {
+		return "", fmt.Errorf("ruta vacía")
+	}
+	root := filepath.Clean(a.engine.ConfigManager().RootDir())
+	abs := filepath.Clean(filepath.Join(root, filepath.FromSlash(rel)))
+	if abs != root && !strings.HasPrefix(abs, root+string(os.PathSeparator)) {
+		return "", fmt.Errorf("ruta fuera del directorio del launcher")
+	}
+	ext := strings.ToLower(filepath.Ext(abs))
+	if !imageExts[ext] {
+		return "", fmt.Errorf("formato de imagen no soportado: %s", ext)
+	}
+	if info, err := os.Stat(abs); err != nil || !info.Mode().IsRegular() {
+		return "", fmt.Errorf("no se encontró la captura")
+	}
+	newRel, err := a.ImportBackground(abs, "image")
+	if err != nil {
+		return "", err
+	}
+	cfg := a.config.Get()
+	cfg.Personalization.Background.Type = "image"
+	cfg.Personalization.Background.ImagePath = newRel
+	cfg.Personalization.Background.ImageAuthor = ""
+	cfg.Personalization.Background.ImageModName = ""
+	cfg.Personalization.Background.ImageUrl = ""
+	cfg.Personalization.Background.VideoPath = ""
+	if err := a.updatePersonalizationInternal(cfg.Personalization); err != nil {
+		return "", fmt.Errorf("no se pudo guardar personalización: %v", err)
+	}
+	a.logf("[Screenshots] Fondo colocado desde captura: %s -> %s", rel, newRel)
+	return newRel, nil
+}
+
 func (a *App) PickBackgroundFile(kind string) (string, error) {
 	if a.runtime == nil {
 		return "", fmt.Errorf("runtime no disponible")

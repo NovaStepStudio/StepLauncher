@@ -24,7 +24,18 @@ export interface AuthUser {
 
 export interface AuthPayload {
     user: AuthUser;
-    session: ApiSession;
+    session: ApiSession | null;
+    emailConfirmationRequired?: boolean;
+    message?: string;
+}
+
+export type ConfirmType = 'signup' | 'email_change' | 'recovery';
+
+export interface ConfirmResult {
+    user?: AuthUser;
+    session?: ApiSession | null;
+    recoveryVerified?: boolean;
+    message?: string;
 }
 
 export interface Profile {
@@ -88,6 +99,12 @@ function mensajePara(code: string, details: unknown): string {
             return 'Elegí una contraseña de al menos 8 caracteres.';
         case 'invalid_credentials':
             return 'Credenciales inválidas. Revisá tus datos e intentá de nuevo.';
+        case 'email_not_confirmed':
+            return 'Tenés que confirmar tu correo antes de entrar. Revisá tu bandeja.';
+        case 'invalid_code':
+            return 'Código inválido o expirado. Pedí un nuevo enlace.';
+        case 'recovery_expired':
+            return 'Ese enlace venció o ya se usó. Pedí uno nuevo desde Recuperar.';
         case 'invalid_refresh':
             return 'Tu sesión expiró. Iniciá sesión de nuevo.';
         case 'current_password_incorrect':
@@ -216,6 +233,31 @@ export function renovar(refreshToken: string): Promise<{ session: ApiSession }> 
 
 export function salir(token: string): Promise<{ loggedOut: boolean }> {
     return json<{ loggedOut: boolean }>('/v1/auth/logout', 'POST', undefined, token);
+}
+
+// --- Verificación y recupero (plantillas Supabase) ------------------------------
+// La API responde éxito genérico en resend/recover para no enumerar correos.
+
+export function reenviarConfirmacion(input: { email: string; type?: ConfirmType }): Promise<{ resent: boolean; message: string }> {
+    return json('/v1/auth/resend', 'POST', { type: 'signup', ...input });
+}
+
+export function pedirRecupero(email: string): Promise<{ recoverySent: boolean; message: string }> {
+    return json('/v1/auth/recover', 'POST', { email });
+}
+
+export function confirmarCodigo(input: { email: string; token: string; type: ConfirmType }): Promise<ConfirmResult> {
+    return json<ConfirmResult>('/v1/auth/confirm', 'POST', input);
+}
+
+export function fijarNuevaPassword(input: { email: string; token: string; newPassword: string }): Promise<{ passwordReset: boolean }> {
+    return json('/v1/auth/reset-password', 'POST', input);
+}
+
+// Fijar contraseña con la sesión del enlace de recupero (Bearer del hash,
+// sin email ni código: la sesión ya prueba el correo). No guarda sesión.
+export function fijarPasswordRecupero(token: string, newPassword: string): Promise<{ passwordReset: boolean }> {
+    return json('/v1/auth/recovery-password', 'POST', { newPassword }, token);
 }
 
 // --- Cuenta propia ------------------------------------------------------------

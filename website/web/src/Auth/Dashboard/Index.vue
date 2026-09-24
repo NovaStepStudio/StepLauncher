@@ -434,6 +434,9 @@ async function elegirBanner(evento: Event) {
     }
     .Bar{
         display: none;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
     }
     .Content{
         display: flex;
@@ -498,17 +501,45 @@ async function elegirBanner(evento: Event) {
             display: none;
         }
         .Bar{
-            display: grid;
+            display: block;
         }
     }
 }
 @media (max-width: 600px){
     .Dashboard{
         padding: 4rem 1rem 0 1rem;
+        overflow-x: clip;
     }
     .DashHead{
+        min-width: 0;
         .LogoutBtn{
             width: 100%;
+            min-height: 2.75rem;
+        }
+    }
+    .Body{
+        min-width: 0;
+        .Layout{
+            gap: 1rem;
+            padding-top: 1.2rem;
+            margin-top: 1.2rem;
+        }
+        .Content{
+            min-width: 0;
+            width: 100%;
+        }
+        .SectionHead{
+            min-width: 0;
+            h2{
+                font-size: 1.25rem;
+                overflow-wrap: anywhere;
+            }
+            p{
+                font-size: .8rem;
+            }
+        }
+        .TabBody{
+            min-width: 0;
         }
     }
 }

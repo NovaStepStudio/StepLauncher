@@ -1,10 +1,10 @@
 <div align="center">
 
 <a href="https://steplauncher.pages.dev">
-  <img src="launcher/resources/Banner_Web.png" alt="StepLauncher — Banner oficial | Powered by NovaCore Engine" width="100%">
+  <img src="branding/banner-002.png" alt="StepLauncher — Banner oficial | Powered by NovaCore Engine" width="100%">
 </a>
 
-<img src="launcher/frontend/web/assets/logo-step.png" alt="StepLauncher" width="110">
+<img src="branding/appicon-neon.png" alt="StepLauncher" width="110">
 
 # StepLauncher
 
@@ -57,7 +57,7 @@ Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="launche
 > La web oficial vive en **[steplauncher.pages.dev](https://steplauncher.pages.dev)** y su código vive en [`website/`](website/). Allí encontrarás la presentación del launcher, características destacadas, descargas, changelog y comunidad, además de enlaces a GitHub y descarga.
 
 <a href="https://steplauncher.pages.dev">
-  <img src="launcher/resources/Banner_Web.png" alt="StepLauncher — El launcher más orgánico y versátil para Minecraft Java | Powered by NovaCore Engine" width="100%">
+  <img src="branding/banner-003-rectangle.png" alt="StepLauncher — El launcher más orgánico y versátil para Minecraft Java | Powered by NovaCore Engine" width="100%">
 </a>
 
 ## ✨ Qué hace cada parte (resumen)
@@ -69,7 +69,7 @@ Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="launche
 - Beta actual: **2.5.0-beta** — historial en [`launcher/Changelogs/`](launcher/Changelogs/).
 
 ### 🌍 `website/` — web pública
-- Landing, descargas, changelog público, privacidad y términos.
+- Landing, descargas, changelog público, branding, privacidad y términos.
 - Vue 3 + Vite + Vue Router, desplegada como sitio estático en Cloudflare Pages (`bun run deploy`).
 
 ### 🧩 `api/` — backend
@@ -77,6 +77,12 @@ Impulsado por **Wails v3** + **Go** + **Vue 3** &nbsp;·&nbsp; <img src="launche
 - Versionado `/v1`, `/v2`… sin romper versiones anteriores; respuestas con sobre único `ok()` / `fail()`.
 - Documentación obligatoria en `docs/` y SQL versionado en `db/v1/` (`install.sql` + `verify.sql`).
 - Detalle completo en [`api/README.md`](api/README.md) y reglas IA en [`api/AGENTS.md`](api/AGENTS.md).
+
+## 🎨 Branding
+
+El banner y los iconos oficiales los diseñó **♦ シ 𝑅𝑒𝑒𝑑𝑢𝑟𝑜𝑠** — [portafolio](https://www.behance.net/gallery/242802323/Experience-My-Portfolio-D) · [perfil de Behance](https://www.behance.net/reedurosxd).
+
+Los archivos viven en [`branding/`](branding/) y se pueden ver y descargar en la web: [steplauncher.pages.dev/branding](https://steplauncher.pages.dev/branding).
 
 ## 📁 Estructura del monorepo
 
@@ -106,6 +112,7 @@ StepLauncher/
 │   ├── AGENTS.md        # reglas IA de la api
 │   └── README.md        # detalle completo de la api
 ├── .github/             # workflows, plantillas, releases
+├── branding/            # banner e iconos oficiales (ver 🎨 Branding)
 ├── AGENTS.md            # ← este archivo: enrutador del monorepo para IAs
 ├── README.md            # ← estás aquí: índice del monorepo
 ├── LICENSE.md / CODE_OF_CONDUCT.md / .gitignore

@@ -1,0 +1,25 @@
+# Plantilla de variables LOCALES de yggdrasil/. Copiar a `.dev.vars` y rellenar.
+# NUNCA commitear valores reales. En producción usar `wrangler secret put`.
+# Este servicio lee la MISMA base Supabase que `api/` (fuente única de usuarios).
+
+# URL pública del proyecto Supabase (la misma que usa api/).
+SUPABASE_URL="https://xyzcompany.supabase.co"
+# Clave anónima (pública, limitada por RLS). Valida sesiones si hiciera falta.
+SUPABASE_ANON_KEY="PEGAR_ANON_KEY_SOLO_LOCAL"
+# Clave de servicio (solo servidor, bypass RLS). Verifica logins y lee profiles.
+SUPABASE_SERVICE_ROLE_KEY="PEGAR_SERVICE_ROLE_SOLO_LOCAL_Y_WRANGLER_SECRET"
+
+# Clave privada RSA (PEM, formato PKCS8) para firmar `textures` (SHA1withRSA).
+# Generar con: openssl genrsa -out ygg.pem 2048 (y extraer la pública para verificar).
+# En .dev.vars va multilínea entre comillas; en producción: wrangler secret put YGG_SIGN_PRIVATE_KEY
+YGG_SIGN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nPEGAR_CLAVE_PRIVADA_SOLO_LOCAL\n-----END PRIVATE KEY-----\n"
+
+# Entorno lógico: local | preview | production
+API_ENV="local"
+# Nombre visible del servidor en GET / (meta.serverName).
+SERVER_NAME="StepLauncher"
+# Dominios de texturas separados por coma (ver docs/base-yggdrasil.md § whitelist).
+SKIN_DOMAINS="localhost:8787"
+# Enlaces visibles en meta.links (home y registro de cuentas StepLauncher).
+HOMEPAGE_URL="https://steplauncher.pages.dev"
+REGISTER_URL="https://steplauncher.pages.dev/auth"

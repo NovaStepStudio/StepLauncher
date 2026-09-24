@@ -27,6 +27,8 @@ onMounted(() => load());
                     <RouterLink to="/">Inicio</RouterLink>
                     <RouterLink to="/download">Descarga</RouterLink>
                     <RouterLink to="/changelog">Historial</RouterLink>
+                    <RouterLink to="/branding">Branding</RouterLink>
+                    <RouterLink to="/faq">FAQ</RouterLink>
                     <RouterLink to="/about">Acerca De</RouterLink>
                 </div>
                 <div class="Column">
@@ -63,12 +65,13 @@ onMounted(() => load());
 <style scoped lang="scss">
 .Footer{
     position: relative;
-    width: calc(100% - 10rem);
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 3rem 5rem;
     gap: 2rem;
+    margin: auto;
     border-top: 1px solid #ffffff14;
     z-index: 1;
     &::after{

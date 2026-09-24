@@ -5,7 +5,7 @@
 import { Hono, type Context } from "hono";
 import { createClient } from "@supabase/supabase-js";
 import type { AppEnv } from "../../types/app";
-import { getEnv, type SafeEnv } from "../../env";
+import { emailCallbackUrl, getEnv, type SafeEnv } from "../../env";
 import { ok, fail } from "../../lib/respond";
 import { supabaseAdmin, supabaseForUser } from "../../lib/supabase";
 import { requireAuth, getBearerToken } from "../../middleware/auth";
@@ -262,7 +262,9 @@ accountRoutes.patch(
   },
 );
 
-// POST /v1/accounts/me/email-change — pedir cambio de email (se confirma en el NUEVO correo).
+// POST /v1/accounts/me/email-change — pedir cambio de email (plantilla "Change email").
+// El enlace viaja al correo NUEVO; el viejo recibe aviso "Email address changed".
+// Supabase mantiene el viejo hasta confirmar en /v1/auth/confirm (type email_change).
 accountRoutes.post(
   "/me/email-change",
   rateLimit(rateLimitPresets.sensitive),
@@ -277,12 +279,19 @@ accountRoutes.post(
     if (a.user.email && a.user.email.toLowerCase() === input.newEmail) {
       return fail(c, { code: "same_email", message: "Ya usas ese email.", status: 400 });
     }
-    const { error } = await supabaseAdmin(a.env).auth.admin.updateUserById(a.user.id, {
-      email: input.newEmail,
-    });
+    // Flujo verificado con la identidad del usuario (RLS + correo Supabase),
+    // no con admin directo: así se envía la confirmación al NUEVO correo.
+    const emailRedirectTo = emailCallbackUrl(a.env.siteUrl);
+    const { error } = await supabaseForUser(a.env, a.token).auth.updateUser(
+      { email: input.newEmail },
+      emailRedirectTo ? { emailRedirectTo } : undefined,
+    );
     if (error) {
-      if (/already/i.test(error.message)) {
+      if (/already|registered|exists|taken/i.test(error.message)) {
         return fail(c, { code: "email_taken", message: "Ese email ya está registrado.", status: 409 });
+      }
+      if (/same|identical/i.test(error.message)) {
+        return fail(c, { code: "same_email", message: "Ya usas ese email.", status: 400 });
       }
       console.error(`[${c.get("requestId")}] email-change:`, error.message);
       return fail(c, { code: "internal_error", message: "Error interno.", status: 500 });

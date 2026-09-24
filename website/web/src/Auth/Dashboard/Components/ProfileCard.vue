@@ -3,11 +3,12 @@
 // y bio (PATCH /v1/accounts/me; bio vacía la borra).
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import { IconUser, IconPencil, IconCheck, IconAlertCircle, IconCircleCheck, IconMail, IconId, IconBrandMinecraft, IconCalendar, IconClock, IconCopy, IconHash, IconEye, IconEyeOff } from '@tabler/icons-vue';
+import { IconUser, IconPencil, IconCheck, IconAlertCircle, IconCircleCheck, IconMail, IconId, IconBrandMinecraft, IconCalendar, IconClock, IconCopy, IconHash, IconEye, IconEyeOff, IconShare2 } from '@tabler/icons-vue';
 import { useAuth } from '@/Auth/Composables/useAuth';
 import { actualizarPerfil } from '@/Auth/Api';
 import { validarUsername, validarDisplayName, validarBio } from '@/Auth/validation';
 import { ApiError } from '@/Auth/Api';
+import { SITE_URL } from '@/Common/Composables/useSeo';
 
 const { profile, conAuth } = useAuth();
 
@@ -69,6 +70,27 @@ async function copiarTexto(valor: string, clave: string) {
 }
 
 const bioLongitud = computed(() => bio.value.length);
+
+// Enlace público del perfil (comunidad): por usuario si hay, si no por id.
+const enlacePerfil = computed(() => {
+    const id = profile.value?.username?.trim() || profile.value?.id?.trim() || '';
+    if (!id) return '';
+    return `${SITE_URL}/community/account/${encodeURIComponent(id)}`;
+});
+
+// Compartir el perfil: diálogo nativo en móvil, portapapeles en escritorio.
+async function compartirPerfil() {
+    if (!enlacePerfil.value) return;
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
+        try {
+            await navigator.share({ title: 'Mi perfil en StepLauncher', url: enlacePerfil.value });
+            return;
+        } catch {
+            // Cierre del diálogo o sin soporte real: se copia el enlace.
+        }
+    }
+    await copiarTexto(enlacePerfil.value, 'share');
+}
 
 function fechaCorta(iso: string | null | undefined): string {
     if (!iso) return '—';
@@ -142,6 +164,10 @@ async function guardar() {
 <template>
     <section class="Perfil" aria-label="Perfil">
         <div class="TopRow">
+            <button v-if="enlacePerfil" type="button" class="GhostBtn" @click="compartirPerfil">
+                <component :is="copiado === 'share' ? IconCheck : IconShare2" stroke="2" />
+                {{ copiado === 'share' ? '¡Copiado!' : 'Compartir' }}
+            </button>
             <button v-if="!editando" type="button" class="GhostBtn" @click="empezarEdicion">
                 <IconPencil stroke="2" />
                 Editar
@@ -284,6 +310,8 @@ async function guardar() {
     .TopRow{
         display: flex;
         justify-content: flex-end;
+        gap: .5rem;
+        flex-wrap: wrap;
     }
     .Vista{
         display: flex;
@@ -558,16 +586,57 @@ async function guardar() {
         }
     }
 }
-@media (max-width: 500px){
-    .Card{
+@media (max-width: 600px){
+    .Perfil{
+        min-width: 0;
+        .TopRow{
+            flex-direction: column;
+            align-items: stretch;
+            .GhostBtn{
+                width: 100%;
+                min-height: 2.75rem;
+            }
+        }
         .Vista{
+            min-width: 0;
             .Tiles{
                 grid-template-columns: minmax(0, 1fr);
+                .Tile{
+                    min-width: 0;
+                    div{
+                        b{
+                            white-space: normal;
+                            overflow: visible;
+                            overflow-wrap: anywhere;
+                        }
+                    }
+                }
             }
             .Uuid{
                 flex-direction: column;
                 align-items: stretch;
-                text-align: center;
+                gap: .6rem;
+                div{
+                    b{
+                        white-space: normal;
+                        overflow-wrap: anywhere;
+                    }
+                }
+                .GhostBtn{
+                    width: 100%;
+                    min-height: 2.75rem;
+                }
+            }
+        }
+        .Form{
+            .Actions{
+                flex-direction: column-reverse;
+                align-items: stretch;
+                .GhostBtn,
+                .BtnPrimary{
+                    width: 100%;
+                    min-height: 2.75rem;
+                }
             }
         }
     }

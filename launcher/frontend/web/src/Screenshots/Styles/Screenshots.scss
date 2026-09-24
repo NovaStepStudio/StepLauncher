@@ -379,6 +379,45 @@ transition: var(--transition);
     }
 }
 
+.Shots_BgBtn {
+    width: auto !important;
+    gap: 0.4rem;
+    padding: 0 0.7rem !important;
+    font-size: 0.72rem;
+    font-weight: 600;
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: wait;
+    }
+}
+
+.Shots_BgMsg {
+    position: absolute;
+    left: 50%;
+    bottom: 3.6rem;
+    transform: translateX(-50%);
+    z-index: 7;
+    padding: 0.4rem 0.9rem;
+    border-radius: 0.55rem;
+    background: rgba(10, 10, 14, 0.85);
+    border: 1px solid color-mix(in srgb, var(--color-success) 45%, transparent);
+    color: var(--color-success);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+
+    &.error {
+        border-color: color-mix(in srgb, var(--color-error) 45%, transparent);
+        color: var(--color-error);
+    }
+}
+
 .Shots_NavPrev {
     left: 0.8rem;
 }

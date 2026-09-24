@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconBox, IconPuzzle, IconMusic, IconPalette } from '@tabler/icons-vue';
+import { IconBox, IconPuzzle, IconMusic, IconPalette, IconKey, IconDownload } from '@tabler/icons-vue';
 </script>
 
 <template>
@@ -10,7 +10,7 @@ import { IconBox, IconPuzzle, IconMusic, IconPalette } from '@tabler/icons-vue';
             </div>
             <div class="Description">
                 <h2>Todo Minecraft en una sola app.</h2>
-                <p>Sin launchers pesados ni mil programas: versiones, instancias, mods, cuentas y música conviven en StepLauncher.</p>
+                <p>Sin launchers pesados ni mil programas: descarga oficial, instancias, mods, cuentas con Yggdrasil y música conviven en StepLauncher.</p>
             </div>
         </div>
         <div class="Cards sl-stagger">
@@ -40,6 +40,20 @@ import { IconBox, IconPuzzle, IconMusic, IconPalette } from '@tabler/icons-vue';
                 <div class="CardTxt">
                     <b>Personalización total</b>
                     <small>Fondos, colores, fuentes y efectos con vista previa en vivo.</small>
+                </div>
+            </div>
+            <div class="Card">
+                <span class="CardIcon"><IconDownload stroke="2" /></span>
+                <div class="CardTxt">
+                    <b>Descarga y ejecución oficial</b>
+                    <small>El juego y los modloaders (Forge, Fabric, Quilt, NeoForge) se descargan desde fuentes oficiales y se ejecutan en tu PC.</small>
+                </div>
+            </div>
+            <div class="Card">
+                <span class="CardIcon"><IconKey stroke="2" /></span>
+                <div class="CardTxt">
+                    <b>Cuentas con Yggdrasil público</b>
+                    <small>Tu cuenta es tu identidad en el juego (nombre, UUID, skin y capa) y cualquier servidor puede aceptarla. También podés sumar externos.</small>
                 </div>
             </div>
         </div>

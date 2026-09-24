@@ -191,6 +191,11 @@ export function useAuth() {
         try {
             const res = await entrar({ identifier: identifier.trim(), password });
             user.value = res.user;
+            // Con confirmación exigida la API siempre devuelve sesión en login;
+            // si viniera nula se trata como no confirmado (sin guardar nada).
+            if (!res.session) {
+                throw new ApiError('email_not_confirmed', 'Tenés que confirmar tu correo antes de entrar. Revisá tu bandeja.', 403);
+            }
             tomarSesion(res.session);
             await cargarPerfil();
             await ponerEnLinea(res.session.accessToken, true);
@@ -199,17 +204,31 @@ export function useAuth() {
         }
     }
 
-    async function register(email: string, username: string, password: string): Promise<void> {
+    // Registro con confirmación: devuelve true si quedó pendiente de correo.
+    // En pendiente NO se guarda sesión (autenticado sigue en false).
+    async function register(email: string, username: string, password: string): Promise<{ pendiente: boolean }> {
         ocupado.value = true;
         try {
             const res = await registrar({ email: email.trim().toLowerCase(), username: username.trim(), password });
             user.value = res.user;
+            if (!res.session || res.emailConfirmationRequired) {
+                return { pendiente: true };
+            }
             tomarSesion(res.session);
             await cargarPerfil();
             await ponerEnLinea(res.session.accessToken, true);
+            return { pendiente: false };
         } finally {
             ocupado.value = false;
         }
+    }
+
+    // Sesión obtenida al confirmar el correo (callback): la guarda y marca presencia.
+    async function confirmarSesion(nuevoUsuario: AuthUser, nuevaSesion: ApiSession): Promise<void> {
+        user.value = nuevoUsuario;
+        tomarSesion(nuevaSesion);
+        await cargarPerfil();
+        await ponerEnLinea(nuevaSesion.accessToken, true);
     }
 
     async function logout(): Promise<void> {
@@ -275,6 +294,7 @@ export function useAuth() {
         esperarLista,
         login,
         register,
+        confirmarSesion,
         logout,
         conAuth,
         cargarPerfil,

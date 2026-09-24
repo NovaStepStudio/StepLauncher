@@ -174,7 +174,7 @@
         height: 1.7rem;
         border-radius: 0.4rem;
         border: 1px solid color-mix(in srgb, var(--background-button-primary) 55%, transparent);
-        background: linear-gradient(135deg, color-mix(in srgb, var(--background-button-primary) 45%, #222), #1a1a1c);
+        background: #1a1a1c;
         flex-shrink: 0;
         display: flex;
         justify-content: center;
@@ -223,8 +223,8 @@
     gap: 0.45rem;
     padding: 0.5rem;
     border-radius: 0.6rem;
-    border: 1px solid color-mix(in srgb, var(--background-button-primary) 75%, white 25%);
-    background: linear-gradient(135deg, color-mix(in srgb, var(--background-button-primary) 92%, white 8%), color-mix(in srgb, var(--background-button-primary) 62%, black 10%));
+    border: 1px solid #2e2e2e;
+    background: var(--background-play-button);
     color: #fff;
     text-shadow: 0 1px 2px #0009;
     font-family: var(--font-primary), Arial, sans-serif;
@@ -327,7 +327,7 @@
     align-items: center;
     justify-content: center;
     padding: 2.2rem 2.6rem;
-    background-color: #0007;
+    background: var(--background-modal-primary);
     overflow-y: auto;
     min-width: 0;
     min-height: 27rem;
@@ -429,7 +429,7 @@
     padding: 0.7rem 0.8rem;
     border-radius: 0.7rem;
     border: var(--border-style);
-    background: linear-gradient(135deg, #ffffff08, #00000022);
+    background: #101010;
     color: var(--text-primary);
     text-shadow: var(--text-shadow-primary, none);
     cursor: pointer;
@@ -440,7 +440,7 @@
     &:hover {
         transform: translateY(-2px);
         border-color: color-mix(in srgb, var(--background-button-primary) 55%, transparent);
-        background: linear-gradient(135deg, #ffffff12, #0000002a);
+        background: #161616;
     }
 
     &:active {
@@ -866,14 +866,14 @@
 }
 
 .WelcomeModal_BtnPrimary {
-    border: 1px solid color-mix(in srgb, var(--background-button-primary) 75%, white 25%);
-    background: linear-gradient(135deg, color-mix(in srgb, var(--background-button-primary) 92%, white 8%), color-mix(in srgb, var(--background-button-primary) 62%, black 10%));
+    border: 1px solid #2e2e2e;
+    background: var(--background-button-primary);
     color: var(--text-primary);
     text-shadow: var(--text-shadow-primary, none);
 
     &:hover:not(:disabled) {
-        filter: brightness(1.15);
-        background: linear-gradient(135deg, color-mix(in srgb, var(--background-button-primary) 92%, white 8%), color-mix(in srgb, var(--background-button-primary) 62%, black 10%));
+        filter: brightness(1.35);
+        background: var(--background-button-primary);
     }
 }
 

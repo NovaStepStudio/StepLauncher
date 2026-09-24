@@ -12,3 +12,6 @@ SUPABASE_SERVICE_ROLE_KEY="PEGAR_SERVICE_ROLE_SOLO_LOCAL_Y_WRANGLER_SECRET"
 API_ENV="local"
 # Orígenes CORS permitidos en local, separados por coma.
 ALLOWED_ORIGINS="http://localhost:5173,http://localhost:8787"
+# Base pública de la web para los enlaces de correo (verificación y recupero).
+# En local apunta al dev de la web; en producción va en `vars` de wrangler.jsonc.
+SITE_URL="http://localhost:5173"

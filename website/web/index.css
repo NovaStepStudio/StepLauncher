@@ -11,7 +11,9 @@
 html {
     scroll-behavior: smooth;
     scroll-padding-top: 4rem;
-    overflow-x: hidden;
+    /* clip en vez de hidden: evita el scroll horizontal sin romper
+    los position: sticky de la página (hidden los desactivaba). */
+    overflow-x: clip;
 }
 
 *,
@@ -26,7 +28,7 @@ body {
     font-family: 'Inter', system-ui;
     margin: 0;
     padding: 0;
-    overflow-x: hidden;
+    overflow-x: clip;
     max-width: 100dvw;
 }
 
