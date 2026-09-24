@@ -37,6 +37,12 @@ type AbstractForgeProvider struct {
 
 func (p *AbstractForgeProvider) Name() string { return p.NameVal }
 
+func (p *AbstractForgeProvider) SetHTTPClient(client *http.Client) {
+	if client != nil {
+		p.httpClient = client
+	}
+}
+
 func (p *AbstractForgeProvider) GetVersions(mcVersion string) ([]modloader.LoaderVersion, error) {
 	var metadata map[string][]string
 	if err := fetchCachedJSON(p.CacheDir, p.MetadataURL, "forge-meta-"+p.NameVal, p.httpClient, &metadata, p.CacheManager); err != nil {

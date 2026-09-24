@@ -94,6 +94,18 @@ func (l LauncherConfig) VerifyBeforeLaunchEnabled() bool {
 func boolPtr(b bool) *bool { return &b }
 func floatPtr(v float64) *float64 { return &v }
 
+// normalizeProxy desactiva el proxy cuando está incompleto (host vacío o
+// puerto inválido): un proxy "fantasma" activado sin datos rompe TODAS las
+// peticiones del launcher (manifiesto de Mojang, metadatos de modloaders)
+// con errores de protocolo confusos. Devuelve los valores saneados.
+func normalizeProxy(enabled bool, host string, port int, user, pass string) (bool, string, int, string, string) {
+	host = strings.TrimSpace(host)
+	if enabled && (host == "" || port < 1 || port > 65535) {
+		return false, "", 0, "", ""
+	}
+	return enabled, host, port, strings.TrimSpace(user), pass
+}
+
 func validIntegritySector(s string) bool {
 	switch s {
 	case "todo", "global", "instances":
@@ -745,6 +757,20 @@ func (m *Manager) sanitize() {
 	if c.Personalization.RecentColors == nil {
 		c.Personalization.RecentColors = []string{}
 	}
+	// Un proxy activado sin host/puerto válidos se auto-desactiva: si no,
+	// cada fetch de red falla con errores de protocolo (ver Bug-3 2.5.0).
+	enabled, host, port, user, pass := normalizeProxy(
+		c.MinecraftConfig.ProxyEnabled, c.MinecraftConfig.ProxyHost,
+		c.MinecraftConfig.ProxyPort, c.MinecraftConfig.ProxyUser, c.MinecraftConfig.ProxyPass,
+	)
+	if !enabled && c.MinecraftConfig.ProxyEnabled {
+		m.logf("Proxy fantasma desactivado (host=%q puerto=%d incompletos)", c.MinecraftConfig.ProxyHost, c.MinecraftConfig.ProxyPort)
+	}
+	c.MinecraftConfig.ProxyEnabled = enabled
+	c.MinecraftConfig.ProxyHost = host
+	c.MinecraftConfig.ProxyPort = port
+	c.MinecraftConfig.ProxyUser = user
+	c.MinecraftConfig.ProxyPass = pass
 	keep := c.Personalization.RecentColors[:0]
 	for _, col := range c.Personalization.RecentColors {
 		if sanitizeColorString(col) == "" {
@@ -907,6 +933,9 @@ func (m *Manager) SetAuthVerify(verify bool) error {
 }
 
 func (m *Manager) SetProxy(enabled bool, host string, port int, user, pass string) error {
+	// Normalizar aquí también (no solo en sanitize): activar el proxy sin
+	// host/puerto válidos dejaba un "proxy fantasma" que rompía toda la red.
+	enabled, host, port, user, pass = normalizeProxy(enabled, host, port, user, pass)
 	m.mu.Lock()
 	m.cfg.MinecraftConfig.ProxyEnabled = enabled
 	m.cfg.MinecraftConfig.ProxyHost = host

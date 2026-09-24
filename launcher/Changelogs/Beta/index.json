@@ -1,9 +1,13 @@
 ﻿{
-    "latest":  "2.5.0",
-    "content":  [
-                    {
-                        "version":  "2.5.0",
-                        "path":  "./StepLauncher-2.5.0/news.json"
-                    }
-                ]
+    "latest": "2.5.0-beta.3",
+    "content": [
+        {
+            "version": "2.5.0-beta.3",
+            "path": "./StepLauncher-2.5.0-beta.3/news.json"
+        },
+        {
+            "version": "2.5.0",
+            "path": "./StepLauncher-2.5.0/news.json"
+        }
+    ]
 }

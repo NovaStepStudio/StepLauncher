@@ -96,6 +96,12 @@ func (e *Engine) applyNetworkConfig(cfg engineconfig.Config) {
 	if e.sharedDl != nil {
 		e.sharedDl.SetHTTPClient(client)
 	}
+	// Los providers de modloaders guardan su propio cliente: propagarlo para
+	// que el proxy/límite nuevo aplique a los metadatos sin reiniciar.
+	// (nil durante la inicialización: el orquestador aún no existe.)
+	if e.modloader != nil {
+		e.modloader.SetHTTPClient(client)
+	}
 }
 
 func (e *Engine) SetVerifyIntegrity(v bool) {

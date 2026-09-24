@@ -8,6 +8,8 @@ const proxyHost = ref('');
 const proxyPort = ref(8080);
 const proxyUser = ref('');
 const proxyPass = ref('');
+const proxyMsg = ref('');
+const proxyMsgOk = ref(true);
 
 async function loadConfig() {
     try {
@@ -35,6 +37,26 @@ async function saveAuthVerify() {
 }
 
 async function saveProxy() {
+    proxyMsg.value = '';
+    // No permitir un proxy "fantasma": activado sin host/puerto válidos
+    // rompía todas las peticiones (manifiesto, modloaders) con errores raros.
+    if (proxyEnabled.value) {
+        const host = proxyHost.value.trim();
+        const port = Number(proxyPort.value);
+        if (!host) {
+            proxyEnabled.value = false;
+            proxyMsg.value = 'Escribe la dirección del proxy antes de activarlo.';
+            proxyMsgOk.value = false;
+            return;
+        }
+        if (!Number.isFinite(port) || port < 1 || port > 65535) {
+            proxyEnabled.value = false;
+            proxyMsg.value = 'El puerto debe estar entre 1 y 65535.';
+            proxyMsgOk.value = false;
+            return;
+        }
+        proxyHost.value = host;
+    }
     try {
         await SetProxy?.(
             proxyEnabled.value,
@@ -102,6 +124,7 @@ async function saveProxy() {
                     </div>
                 </div>
             </template>
+            <p v-if="proxyMsg" :class="['Ss_ProxyMsg', { error: !proxyMsgOk }]">{{ proxyMsg }}</p>
             <div v-if="proxyEnabled" class="SsTip">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 <span>Error "malformed HTTP status" = puerto equivocado. Si usas Clash/V2Ray, el HTTP suele ser 7890 y el SOCKS 7891. Prueba con socks5:// delante del host si tu proxy es SOCKS.</span>

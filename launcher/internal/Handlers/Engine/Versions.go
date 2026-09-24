@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"StepLauncher/internal/Core/Downloader"
 )
@@ -72,6 +73,28 @@ func (e *Engine) ListDownloadedVersions() []InstalledVersion {
 	return out
 }
 
+// getManifestURL pide una URL con hasta 3 intentos y backoff para fallos
+// transitorios. Los errores de protocolo de proxy fallan rápido: ya tienen
+// su propia ruta (reintento directo + caché expirado) y reintentarlos solo
+// alargaría el error.
+func getManifestURL(client *http.Client, url string) (*http.Response, error) {
+	var resp *http.Response
+	var err error
+	for i := 0; i < 3; i++ {
+		resp, err = client.Get(url)
+		if err == nil {
+			return resp, nil
+		}
+		if downloader.IsProxyProtocolError(err) {
+			return nil, err
+		}
+		if i < 2 {
+			time.Sleep(time.Duration(1<<i) * time.Second)
+		}
+	}
+	return nil, err
+}
+
 func (e *Engine) GetVersions(versionType string) ([]VersionInfo, error) {
 	if !validTypes[versionType] {
 		return nil, fmt.Errorf("invalid version type '%s'. valid: release, snapshot, old_beta, old_alpha", versionType)
@@ -89,7 +112,7 @@ func (e *Engine) GetVersions(versionType string) ([]VersionInfo, error) {
 	foundFull, expiredFull, _ := e.cache.GetWithFallback("manifest", fullCacheKey, &fullCached)
 
 	client := e.downloader.HTTPClient()
-	resp, err := client.Get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
+	resp, err := getManifestURL(client, "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
 	if err != nil {
 		// Detectar mala configuración del proxy (SOCKS vs HTTP) y dar pista accionable
 		if downloader.IsProxyProtocolError(err) {
@@ -201,7 +224,7 @@ func (e *Engine) FetchVersionManifest() (*downloader.Manifest, error) {
 	}
 
 	client := e.downloader.HTTPClient()
-	resp, err := client.Get("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
+	resp, err := getManifestURL(client, "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
 	if err != nil {
 		// Envolver error de proxy con pista accionable
 		if downloader.IsProxyProtocolError(err) {

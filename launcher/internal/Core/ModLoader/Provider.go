@@ -1,7 +1,13 @@
 package modloader
 
+import "net/http"
+
 type ModLoaderProvider interface {
 	Name() string
+
+	// SetHTTPClient reemplaza el cliente HTTP del provider para que los
+	// cambios de red (proxy, límite de velocidad) apliquen sin reiniciar.
+	SetHTTPClient(client *http.Client)
 
 	GetVersions(minecraftVersion string) ([]LoaderVersion, error)
 

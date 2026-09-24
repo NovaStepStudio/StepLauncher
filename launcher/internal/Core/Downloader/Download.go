@@ -204,11 +204,17 @@ func IsProxyProtocolError(err error) bool {
 }
 
 // WrapProxyError decora un error de red con una pista accionable sobre el proxy.
+// Si no se conoce el proxy en uso (host vacío), no se inventa un "proxy :0":
+// se indica que la petición iba directa o tras un proxy del sistema.
 func WrapProxyError(err error, host string, port int) error {
 	if err == nil {
 		return nil
 	}
 	if isProxyProtocolError(err) {
+		host = strings.TrimSpace(host)
+		if host == "" {
+			return fmt.Errorf("%w — la petición falló con respuesta no-HTTP (la red puede estar interceptada por un proxy del sistema, VPN o antivirus). Revisa tu conexión y Ajustes > Red > Proxy: si usas Clash/V2Ray, el puerto HTTP suele ser 7890, no el SOCKS 7891", err)
+		}
 		return fmt.Errorf("%w — el proxy %s:%d parece no ser HTTP (¿es SOCKS? Prueba con socks5://%s:%d o usa el puerto HTTP de tu proxy, ej. Clash usa 7890 para HTTP y 7891 para SOCKS; o desactívalo en Ajustes > Red)", err, host, port, host, port)
 	}
 	return err

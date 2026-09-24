@@ -51,6 +51,20 @@ func NewOrchestrator(workDir, cacheDir string, client *http.Client, reg *Registr
 
 func (o *Orchestrator) Registry() *Registry { return o.registry }
 
+// SetHTTPClient reemplaza el cliente del orquestador y de todos sus
+// providers (para que la red reconfigurada aplique en caliente).
+func (o *Orchestrator) SetHTTPClient(client *http.Client) {
+	if client == nil {
+		return
+	}
+	o.mu.Lock()
+	o.httpClient = client
+	o.mu.Unlock()
+	if o.registry != nil {
+		o.registry.SetHTTPClientAll(client)
+	}
+}
+
 func (o *Orchestrator) ModloaderCacheDir() string {
 	return filepath.Join(o.cacheDir, "modloader")
 }

@@ -33,6 +33,12 @@ type AbstractFabricProvider struct {
 
 func (p *AbstractFabricProvider) Name() string { return p.NameVal }
 
+func (p *AbstractFabricProvider) SetHTTPClient(client *http.Client) {
+	if client != nil {
+		p.HttpClient = client
+	}
+}
+
 func (p *AbstractFabricProvider) GetVersions(mcVersion string) ([]modloader.LoaderVersion, error) {
 	url := fmt.Sprintf("%s/versions/loader/%s", p.MetaBase, mcVersion)
 	cacheKey := fmt.Sprintf("fabric-versions-%s-%s", p.NameVal, mcVersion)
