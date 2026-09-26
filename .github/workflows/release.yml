@@ -316,6 +316,9 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+    # Sin checkout en este job: gh resuelve el repo desde GH_REPO.
+    env:
+      GH_REPO: ${{ github.repository }}
     steps:
       - name: Descargar todos los artefactos
         uses: actions/download-artifact@v7
