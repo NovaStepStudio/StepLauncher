@@ -47,11 +47,11 @@ const captura = capturaAlAzar('Mods');
                 </div>
             </div>
             <div class="ModloaderList sl-stagger">
-                <img src="../../../assets/modloaders/fabric.png" alt="Fabric" loading="lazy" decoding="async">
-                <img src="../../../assets/modloaders/forge.png" alt="Forge" loading="lazy" decoding="async">
-                <img src="../../../assets/modloaders/neoforge.png" alt="NeoForge" loading="lazy" decoding="async">
-                <img src="../../../assets/modloaders/quilt.png" alt="Quilt" loading="lazy" decoding="async">
-                <img src="../../../assets/modloaders/legacyfabric.png" alt="LegacyFabric" loading="lazy" decoding="async">
+                <img src="../../../assets/modloaders/fabric.webp" alt="Fabric" loading="lazy" decoding="async">
+                <img src="../../../assets/modloaders/forge.webp" alt="Forge" loading="lazy" decoding="async">
+                <img src="../../../assets/modloaders/neoforge.webp" alt="NeoForge" loading="lazy" decoding="async">
+                <img src="../../../assets/modloaders/quilt.webp" alt="Quilt" loading="lazy" decoding="async">
+                <img src="../../../assets/modloaders/legacyfabric.webp" alt="LegacyFabric" loading="lazy" decoding="async">
             </div>
         </div>
     </div>

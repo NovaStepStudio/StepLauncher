@@ -7,9 +7,10 @@ import {
     clearDownload as clearCentralDownload,
     activeDownloads as dlActiveDownloads,
 } from '@/Downloads/Store';
-import { ListInstances, GetInstance, CreateInstance as CreateInstanceBinding, UpdateInstanceMetadata, DeleteInstance, UpdateInstanceConfig, AddInstanceVersion, CancelInstanceDownload, VerifyInstance, CloneInstance, OpenInstanceFolder as OpenInstanceFolderBinding, StartInstanceVerify as StartInstanceVerifyBinding, CancelInstanceVerify as CancelInstanceVerifyBinding, InstanceVerifyStatus as InstanceVerifyStatusBinding, CreateInstanceBackup as CreateInstanceBackupBinding } from '@wailsjs/StepLauncher/internal/Services/Instance/instanceservice';
+import { ListInstances, GetInstance, CreateInstance as CreateInstanceBinding, UpdateInstanceMetadata, DeleteInstance, UpdateInstanceConfig, AddInstanceVersion, CancelInstanceDownload, VerifyInstance, CloneInstance, OpenInstanceFolder as OpenInstanceFolderBinding, StartInstanceVerify as StartInstanceVerifyBinding, CancelInstanceVerify as CancelInstanceVerifyBinding, InstanceVerifyStatus as InstanceVerifyStatusBinding, CreateInstanceBackup as CreateInstanceBackupBinding, ListProvisioning } from '@wailsjs/StepLauncher/internal/Services/Instance/instanceservice';
 import { LaunchInstance, GetInstanceStats as GetInstanceStatsBinding } from '@wailsjs/StepLauncher/internal/Services/Game/gameservice';
 import { InstallInstanceModLoader, GetInstalledInstanceModLoader, RemoveInstanceModLoaderState } from '@wailsjs/StepLauncher/internal/Services/ModLoader/modloaderservice';
+import { CancelModContent } from '@wailsjs/StepLauncher/internal/Services/Mods/modsservice';
 import type {
     AddVersionReq,
     CreateInstanceReq as EngineCreateInstanceReq,
@@ -167,7 +168,7 @@ export interface MergedActiveDownload {
     id: string;
     label: string;
     version: string;
-    kind: 'version' | 'instance' | 'loader';
+    kind: 'version' | 'instance' | 'loader' | 'mod';
     state: string;
     percent: number;
     mbDownloaded: number;
@@ -179,7 +180,24 @@ export interface MergedActiveDownload {
     phase?: string;
     message?: string;
     loader?: string;
+    sessionId?: string;
+    iconUrl?: string;
     cancellable: boolean;
+}
+
+// Sesión de contenido de Modrinth (mod/shader/textura o modpack) en curso,
+// alimentada por los eventos modcontent_*/modpack_* del backend. Vive en el
+// Store para que el widget principal la muestre aunque el diálogo de Mods
+// esté cerrado, igual que las descargas de versiones e instancias.
+export interface ContentDl {
+    sessionId: string;
+    label: string;
+    detail: string;
+    message: string;
+    progress: number;
+    total: number;
+    done: boolean;
+    errorMsg: string;
 }
 
 const ACTIVE_LOADER_PHASES = ['resolving', 'downloading', 'installing'];
@@ -211,6 +229,28 @@ export const allActiveDownloads = computed<MergedActiveDownload[]>(() => {
             cancellable: false,
         });
     }
+    for (const [sid, cd] of Object.entries(contentDls.value)) {
+        if (cd.done || cd.errorMsg) continue;
+        const total = cd.total > 0 ? cd.total : 0;
+        const percent = total > 0 ? Math.min(100, (cd.progress / total) * 100) : 0;
+        list.push({
+            id: `mod-${sid}`,
+            label: cd.label,
+            version: cd.detail,
+            kind: 'mod',
+            state: 'downloading',
+            percent,
+            mbDownloaded: 0,
+            mbTotal: 0,
+            filesDownloaded: cd.progress,
+            filesTotal: total,
+            speedMbps: 0,
+            message: cd.message,
+            sessionId: sid,
+            iconUrl: contentMeta.value[sid]?.iconUrl ?? '',
+            cancellable: true,
+        });
+    }
     return list.sort((a, b) => a.id.localeCompare(b.id));
 });
 
@@ -218,9 +258,105 @@ export const anyAllActive = computed(() => allActiveDownloads.value.length > 0);
 
 export const instances = ref<InstanceInfo[]>([]);
 export const details = ref<Record<string, InstanceDetails | null>>({});
+
+// Instancias en creación por modpacks (ocultas de la lista hasta el 100%):
+// se muestran como tarjetas bloqueadas con su progreso y cancelación.
+export interface ProvisionEntry {
+    name: string;
+    title: string;
+    iconUrl: string;
+    sessionId: string;
+    startedAt: string;
+}
+
+export const provisioning = ref<ProvisionEntry[]>([]);
+
+export async function loadProvisioning(): Promise<void> {
+    try {
+        const list = await ListProvisioning();
+        provisioning.value = (Array.isArray(list) ? list : [])
+            .filter((p) => p !== null)
+            .map((p) => ({
+                name: String((p as any).name ?? ''),
+                title: String((p as any).title ?? (p as any).name ?? ''),
+                iconUrl: String((p as any).iconUrl ?? ''),
+                sessionId: String((p as any).sessionId ?? ''),
+                startedAt: String((p as any).startedAt ?? ''),
+            }))
+            .filter((p) => p.name);
+    } catch {
+        provisioning.value = [];
+    }
+}
 export const loaders = ref<Record<string, InstalledLoaderInfo | null>>({});
 export const downloads = ref<Record<string, InstanceDownloadState>>({});
 export const loaderDls = ref<Record<string, InstanceLoaderDl>>({});
+export const contentDls = ref<Record<string, ContentDl>>({});
+
+// Metadatos que el diálogo conoce al iniciar la descarga (icono del proyecto,
+// título, destino): se pegan a la sesión para mostrar icono en las filas,
+// aunque los eventos del backend no traigan icono.
+export interface ContentMeta {
+    iconUrl: string;
+    title: string;
+    dest: string;
+}
+
+export const contentMeta = ref<Record<string, ContentMeta>>({});
+
+export function registerContentMeta(sessionId: string, meta: ContentMeta): void {
+    if (!sessionId) return;
+    contentMeta.value = { ...contentMeta.value, [sessionId]: meta };
+}
+
+export function contentMetaOf(sessionId: string): ContentMeta | null {
+    return contentMeta.value[sessionId] ?? null;
+}
+
+// Fallos persistentes de contenido/modpacks (p. ej. instalador con 404): no
+// se auto-borran como el widget; viven hasta que el usuario los descarta para
+// que el error siempre se comunique en la UI (tarjeta en instancias e
+// Instalado), aunque el diálogo esté cerrado.
+export interface FailedContent {
+    sessionId: string;
+    label: string;
+    dest: string;
+    iconUrl: string;
+    error: string;
+    at: number;
+}
+
+export const failedContent = ref<Record<string, FailedContent>>({});
+
+export function dismissFailedContent(sessionId: string): void {
+    if (!failedContent.value[sessionId]) return;
+    const next = { ...failedContent.value };
+    delete next[sessionId];
+    failedContent.value = next;
+}
+
+// Último evento de modloader por sesión (para mostrar su progreso 0-100 y
+// mensajes dentro de la instalación del modpack que lo contiene).
+export interface LoaderFeed {
+    message: string;
+    progress: number;
+    total: number;
+    at: number;
+}
+
+export const modloaderFeed = ref<Record<string, LoaderFeed>>({});
+
+// El feed más reciente y fresco (30 s): el que debe mostrar la UI mientras un
+// modpack instala su loader.
+export function latestLoaderFeed(): (LoaderFeed & { sessionId: string }) | null {
+    const now = Date.now();
+    let best: (LoaderFeed & { sessionId: string }) | null = null;
+    for (const [sid, f] of Object.entries(modloaderFeed.value)) {
+        if (now - f.at > 30000) continue;
+        if (!best || f.at > best.at) best = { ...f, sessionId: sid };
+    }
+    return best;
+}
 export const launching = ref<Record<string, boolean>>({});
 export const loadingList = ref(false);
 
@@ -298,6 +434,13 @@ function parsePayload(raw: unknown): any {
 
 let eventsOff: (() => void)[] | null = null;
 
+// ensureContentEvents activa los listeners del store (widget + Instalados)
+// para las sesiones de Modrinth. Idempotente: llamar al abrir el diálogo de
+// descarga basta para seguir la sesión aunque luego se cierre.
+export function ensureContentEvents(): void {
+    ensureEvents();
+}
+
 function ensureEvents() {
     if (eventsOff) return;
     eventsOff = [
@@ -311,6 +454,17 @@ function ensureEvents() {
         Events.On('modloader_installing', ({ data: raw }: any) => updateModLoaderEvent(raw)),
         Events.On('modloader_installed', ({ data: raw }: any) => updateModLoaderEvent(raw)),
         Events.On('modloader_error', ({ data: raw }: any) => updateModLoaderEvent(raw)),
+        // Contenido de Modrinth (mods/shaders/texturas/modpacks): el widget
+        // principal muestra la sesión aunque el diálogo de Mods esté cerrado.
+        Events.On('modcontent_resolving', ({ data: raw }: any) => updateContentEvent(raw)),
+        Events.On('modcontent_downloading', ({ data: raw }: any) => updateContentEvent(raw)),
+        Events.On('modcontent_installed', ({ data: raw }: any) => updateContentEvent(raw)),
+        Events.On('modcontent_error', ({ data: raw }: any) => updateContentEvent(raw)),
+        Events.On('modpack_resolving', ({ data: raw }: any) => updateContentEvent(raw)),
+        Events.On('modpack_downloading', ({ data: raw }: any) => updateContentEvent(raw)),
+        Events.On('modpack_installing', ({ data: raw }: any) => updateContentEvent(raw)),
+        Events.On('modpack_installed', ({ data: raw }: any) => updateContentEvent(raw)),
+        Events.On('modpack_error', ({ data: raw }: any) => updateContentEvent(raw)),
     ];
 }
 
@@ -327,7 +481,21 @@ function updateModLoaderEvent(raw: unknown): void {
         total?: number;
     };
     const inst = e?.sessionId ? loaderSessionToInstance.get(e.sessionId) : undefined;
-    if (!inst || !e?.type) return;
+    if (!e?.type) return;
+    // Feed global para incrustar el progreso del loader en el modpack en curso.
+    if (e.sessionId) {
+        const prevFeed = modloaderFeed.value[e.sessionId];
+        modloaderFeed.value = {
+            ...modloaderFeed.value,
+            [e.sessionId]: {
+                message: e.message ?? e.error ?? prevFeed?.message ?? '',
+                progress: Number(e.progress ?? prevFeed?.progress ?? 0),
+                total: Number(e.total ?? prevFeed?.total ?? 0),
+                at: Date.now(),
+            },
+        };
+    }
+    if (!inst) return;
     const prev = loaderDls.value[inst];
     const next: InstanceLoaderDl = {
         loader: e.loader ?? prev?.loader ?? 'modloader',
@@ -367,6 +535,111 @@ function updateModLoaderEvent(raw: unknown): void {
             break;
     }
     loaderDls.value = { ...loaderDls.value, [inst]: next };
+}
+
+// Sesión de contenido/modpack en curso (modcontent_*/modpack_*): crea o
+// actualiza la entrada del widget. Los eventos traen sessionId siempre; el
+// título/detalle se conserva entre eventos de la misma sesión.
+function updateContentEvent(raw: unknown): void {
+    const e = parsePayload(raw) as {
+        type?: string;
+        sessionId?: string;
+        title?: string;
+        file?: string;
+        dest?: string;
+        instance?: string;
+        message?: string;
+        error?: string;
+        progress?: number;
+        total?: number;
+    };
+    const sid = e?.sessionId;
+    if (!sid || !e?.type) return;
+    const prev = contentDls.value[sid];
+    const meta = contentMeta.value[sid];
+    const isModpack = e.type.startsWith('modpack_');
+    const label = isModpack
+        ? e.instance || prev?.label || meta?.title || 'Modpack'
+        : e.title || prev?.label || meta?.title || 'Contenido';
+    const detail = isModpack
+        ? e.message || prev?.detail || ''
+        : (e.dest ? `en ${e.dest}` : prev?.detail || '');
+    const next: ContentDl = {
+        sessionId: sid,
+        label,
+        detail,
+        message: e.message ?? e.file ?? prev?.message ?? '',
+        progress: Number(e.progress ?? prev?.progress ?? 0),
+        total: Number(e.total ?? prev?.total ?? 0),
+        done: prev?.done ?? false,
+        errorMsg: prev?.errorMsg ?? '',
+    };
+    switch (e.type) {
+        case 'modcontent_installed':
+        case 'modpack_installed':
+            next.done = true;
+            // El backend puede traer aviso no fatal en message (p. ej. sin
+            // loader): se muestra tal cual en vez del texto genérico.
+            next.message = (typeof e.message === 'string' && e.message)
+                || (e.type === 'modpack_installed' && e.instance ? `Instalado en ${e.instance}` : 'Instalación completada');
+            void loadInstances();
+            void loadProvisioning();
+            window.setTimeout(() => clearContentDl(sid), 4000);
+            break;
+        case 'modcontent_error':
+        case 'modpack_error': {
+            const errMsg = e.error ?? 'Error desconocido';
+            next.done = true;
+            next.errorMsg = errMsg;
+            void loadProvisioning();
+            window.setTimeout(() => clearContentDl(sid), 12000);
+            // Superficie persistente del error (no se auto-borra).
+            const meta = contentMeta.value[sid];
+            failedContent.value = {
+                ...failedContent.value,
+                [sid]: {
+                    sessionId: sid,
+                    label: next.label,
+                    dest: meta?.dest ?? '',
+                    iconUrl: meta?.iconUrl ?? '',
+                    error: errMsg,
+                    at: Date.now(),
+                },
+            };
+            break;
+        }
+        default:
+            // Fases intermedias del modpack: refrescar creando (aparece la
+            // tarjeta bloqueada en cuanto el backend reserva el nombre).
+            if (isModpack) void loadProvisioning();
+            // Una sesión nueva limpia su fallo anterior si lo hubo.
+            if (failedContent.value[sid]) dismissFailedContent(sid);
+            break;
+    }
+    contentDls.value = { ...contentDls.value, [sid]: next };
+}
+
+export function clearContentDl(sessionId: string): void {
+    if (!contentDls.value[sessionId]) return;
+    const next = { ...contentDls.value };
+    delete next[sessionId];
+    contentDls.value = next;
+}
+
+export function contentDlOf(sessionId: string): ContentDl | null {
+    return contentDls.value[sessionId] ?? null;
+}
+
+// Cancela una sesión de contenido/modpack en curso desde el widget o la
+// pestaña Instalados. El backend emite modcontent_error/modpack_error al
+// cancelar y el store limpia la entrada.
+export async function cancelContentDownload(sessionId: string): Promise<string> {
+    try {
+        await CancelModContent(sessionId);
+        return '';
+    } catch (e: any) {
+        return e?.message ?? 'No se pudo cancelar la descarga.';
+    }
 }
 
 // Registra la sesión de instalación de un modloader para poder mapear los

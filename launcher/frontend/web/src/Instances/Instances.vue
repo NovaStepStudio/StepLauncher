@@ -6,7 +6,7 @@ import {
 import { CLOSE_OVERLAYS_EVENT } from '@/Common/Stores/Idle';
 import {
     loadInstances, loadDetails,
-    deleteInstance, cloneInstance,
+    deleteInstance, cloneInstance, loadProvisioning,
 } from './Store';
 import InstancesView from './List.vue';
 import InstanceDetailView from './Detail.vue';
@@ -136,6 +136,7 @@ watch(heavyPanel, (p) => {
     view.value = 'list';
     selected.value = '';
     void loadInstances();
+    void loadProvisioning();
 });
 
 onMounted(() => {

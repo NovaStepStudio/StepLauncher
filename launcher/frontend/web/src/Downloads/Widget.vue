@@ -19,6 +19,7 @@ const title = computed(() => {
     const d = allActiveDownloads.value[0];
     if (!d) return 'Descargando…';
     if (d.kind === 'loader') return `Instalando ${d.loader ?? 'modloader'} en ${d.label}`;
+    if (d.kind === 'mod') return d.version ? `Instalando ${d.label} en ${d.version}` : `Instalando ${d.label}`;
     return `Descargando ${d.label}`;
 });
 
@@ -37,6 +38,10 @@ const sub = computed(() => {
             default:
                 return `Progreso ${percent.value}%`;
         }
+    }
+    if (d.kind === 'mod') {
+        if (d.filesTotal > 0) return `${d.message || 'Descargando'} · ${d.filesDownloaded}/${d.filesTotal}`;
+        return d.message || `Progreso ${percent.value}%`;
     }
     if (d.state === 'verifying' || d.state === 'redownloading') {
         return `Verificando · ${d.filesDownloaded}/${d.filesTotal}`;

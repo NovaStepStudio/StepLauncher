@@ -9,8 +9,20 @@ import (
 )
 
 func (m *InstanceManager) AddVersion(name string, req AddVersionReq) (*downloader.Download, error) {
-	if err := m.assertUsable(name); err != nil {
-		return nil, err
+	return m.addVersion(name, req, false)
+}
+
+// AddVersionSystem descarga una versión saltando el bloqueo de provisioning.
+// Solo la usa el flujo interno del motor para la instancia en creación.
+func (m *InstanceManager) AddVersionSystem(name string, req AddVersionReq) (*downloader.Download, error) {
+	return m.addVersion(name, req, true)
+}
+
+func (m *InstanceManager) addVersion(name string, req AddVersionReq, system bool) (*downloader.Download, error) {
+	if !system {
+		if err := m.assertUsable(name); err != nil {
+			return nil, err
+		}
 	}
 	if req.Version == "" {
 		return nil, fmt.Errorf("version is required")

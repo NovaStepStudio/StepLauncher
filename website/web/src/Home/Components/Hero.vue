@@ -57,6 +57,9 @@ const { version, load } = useVersion();
 
 const captura = capturaAlAzar('MainMenu');
 
+// El logo cuenta clics para el easter egg Bad Apple (5 seguidos lo abren).
+const emite = defineEmits<{ clicLogo: [] }>();
+
 onMounted(() => {
     load();
     if (fondos.length === 0) return;
@@ -95,7 +98,7 @@ onUnmounted(() => {
         <div class="Bg" :class="{ on: encendido }" :style="{ backgroundImage: fondo ? `url(${fondo})` : undefined }" aria-hidden="true"></div>
         <div class="TextAndButtons">
             <div class="AppName sl-enter" style="--sl-delay: 0s">
-                <img class="sl-float" src="../../../assets/logo-step-white.png" alt="StepLauncher" loading="eager" decoding="async" fetchpriority="high">
+                <img class="sl-float LogoBtn" src="../../../assets/logo-step-white.png" alt="StepLauncher" loading="eager" decoding="async" fetchpriority="high" @click="emite('clicLogo')">
                 <h1>StepLauncher</h1>
             </div>
             <div class="Badges sl-enter" style="--sl-delay: .08s">
@@ -186,6 +189,7 @@ onUnmounted(() => {
             }
         }
         .Badges{
+            flex-wrap: wrap;
             gap: .5rem;
             .BadgeMain,
             .Badge{
@@ -221,13 +225,14 @@ onUnmounted(() => {
             }
         }
         .Buttons{
+            flex-wrap: wrap;
             gap: .6rem;
             a{
                 display:flex;
                 justify-content:center;
                 align-items:center;
                 gap: .45rem;
-                padding: .6rem 1.3rem;
+                padding: .7rem 1.3rem;
                 border-radius: .5rem;
                 font-size: .85rem;
                 font-weight: 600;
@@ -314,15 +319,67 @@ onUnmounted(() => {
             padding-left: 0;
             align-items:center;
             text-align:center;
+            .AppName{
+                h1{
+                    font-size: clamp(1.9rem, 9vw, 2.6rem);
+                }
+            }
+            .Badges{
+                justify-content: center;
+            }
             .Description{
                 align-items:center;
+                max-width: 100%;
+                h2{
+                    text-wrap: balance;
+                }
+                p{
+                    max-width: 30rem;
+                }
+            }
+            .Buttons{
+                justify-content: center;
+            }
+            .MiniInfo{
+                flex-wrap: wrap;
+                justify-content: center;
             }
         }
         .Image{
             margin: 0;
+            width: 100%;
             img{
                 width: 100%;
                 max-width: 34rem;
+            }
+        }
+    }
+}
+@media (max-width: 600px){
+    .FirstPrew{
+        padding: 4.5rem 1rem 1.5rem 1rem;
+        .TextAndButtons{
+            .AppName{
+                img{
+                    width: clamp(3.2rem, 16vw, 5rem);
+                }
+            }
+            .Description{
+                h2{
+                    font-size: clamp(1.2rem, 6vw, 1.6rem);
+                }
+                p{
+                    font-size: .85rem;
+                }
+            }
+            .Buttons{
+                flex-direction: column;
+                align-items: stretch;
+                width: min(100%, 22rem);
+                a{
+                    width: 100%;
+                    padding: .8rem 1.3rem;
+                }
             }
         }
     }

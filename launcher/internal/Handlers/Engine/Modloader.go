@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -56,7 +57,15 @@ func (e *Engine) InstallModLoader(loader, loaderVersion, mcVersion, instancePath
 }
 
 func (e *Engine) GetInstalledModLoader(instancePath string) (*InstalledLoader, error) {
-	return e.modloader.GetInstalledLoader(instancePath)
+	st, err := e.modloader.GetInstalledLoader(instancePath)
+	if err != nil {
+		// Sin loader instalado: estado normal, no error de binding.
+		if errors.Is(err, modloader.ErrNoLoaderState) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return st, nil
 }
 
 func (e *Engine) RemoveModLoaderState(instancePath string) error {

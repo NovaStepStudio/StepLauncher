@@ -1,3 +1,7 @@
+// Botones globales del launcher.
+// Regla: el botón siempre debe distinguirse del fondo del modal (#0b0b0b) en
+// reposo y el hover debe ser inconfundible (fondo + borde + desplazamiento).
+// El relleno base es translúcido a propósito para heredar la personalización.
 .SsBtn {
     display: inline-flex;
     align-items: center;
@@ -5,6 +9,7 @@
     padding: 0.5rem 1rem;
     border-radius: 0.45rem;
     border: var(--border-style);
+    border-color: rgba(255, 255, 255, 0.14);
     background: var(--control-bg);
     color: var(--text-primary);
     text-shadow: var(--text-shadow-primary, none);
@@ -15,7 +20,19 @@
     white-space: nowrap;
 
     &:hover {
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.26);
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        background: rgba(255, 255, 255, 0.16);
+        transform: translateY(0);
+    }
+
+    &:focus-visible {
+        outline: 2px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 2px;
     }
 
     &:disabled {
@@ -24,19 +41,27 @@
 
         &:hover {
             background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.14);
+            transform: none;
         }
     }
 }
 
 .SsBtnPrimary {
-    background: color-mix(in srgb, var(--background-button-primary) 12%, transparent);
-    border-color: color-mix(in srgb, var(--background-button-primary) 25%, transparent);
+    background: color-mix(in srgb, var(--background-button-primary) 56%, transparent);
+    border-color: color-mix(in srgb, rgba(255,255,255,0.16) 72%, transparent);
     color: var(--text-primary);
     text-shadow: var(--text-shadow-primary, none);
 
     &:hover {
-        background: color-mix(in srgb, var(--background-button-primary) 20%, transparent);
-        border-color: color-mix(in srgb, var(--background-button-primary) 40%, transparent);
+        background: color-mix(in srgb, var(--background-button-primary) 28%, transparent);
+        border-color: color-mix(in srgb, rgba(255,255,255,0.16) 50%, transparent);
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        background: color-mix(in srgb, var(--background-button-primary) 34%, transparent);
+        transform: translateY(0);
     }
 }
 

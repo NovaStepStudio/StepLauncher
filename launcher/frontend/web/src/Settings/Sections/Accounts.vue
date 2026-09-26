@@ -32,8 +32,8 @@ async function toggle(v: boolean) {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Renovar sesiones al iniciar el launcher</span>
-                    <span class="SsDesc">Al abrir StepLauncher, comprueba las sesiones guardadas y renueva automáticamente las que hayan caducado. Si lo desactivas y una sesión expira, tendrás que volver a iniciar sesión antes de jugar.</span>
+                    <span class="SsLabel">Renovar sesiones vencidas al abrir</span>
+                    <span class="SsDesc">Al iniciar, renueva solo los tokens Yggdrasil caducados para que puedas jugar sin iniciar sesión de nuevo. Apagado: si tu sesión expiró, tendrás que loguearte antes de jugar.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg">

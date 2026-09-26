@@ -59,6 +59,7 @@ const installLabel = computed(() => {
     const info = updateInfo.value;
     if (!info) return 'Actualizar';
     if (isWindows.value && info.hasUpdater) return 'Actualizar ahora';
+    if (info.hasUpdate) return 'Abrir GitHub';
     return 'Descargar desde GitHub';
 });
 
@@ -68,7 +69,10 @@ const installText = computed(() => {
     const info = updateInfo.value;
     if (!info) return '';
     if (isWindows.value && info.hasUpdater) {
-        return 'Se descargará el StepLauncher-Updater.exe, el launcher se cerrará y el actualizador completará la instalación automáticamente.';
+        return 'Se descargará el instalador (steplauncher-…-installer.exe), el launcher se cerrará y el instalador completará la actualización automáticamente.';
+    }
+    if (info.hasUpdate) {
+        return 'Hay una nueva actualización disponible y en tu sistema debes instalarla manualmente: se abrirá la release en GitHub para que descargues el paquete de tu plataforma (.deb, .rpm, .AppImage, .dmg o .app).';
     }
     return 'Se abrirá la última release en el navegador para que descargues la nueva versión manualmente.';
 });

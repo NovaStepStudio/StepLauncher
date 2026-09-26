@@ -32,6 +32,7 @@
     flex-direction: column;
     overflow: hidden;
     background: var(--control-bg-dark);
+    transition: min-height 0.35s ease;
 }
 
 .InstDet_BannerImg {
@@ -42,6 +43,7 @@
     object-fit: cover;
     opacity: 0.55;
     transform: scale(1.02);
+    transition: opacity 0.35s ease;
 }
 
 .InstDet_HeroScrim {
@@ -317,6 +319,81 @@ transition: var(--transition);
         background: color-mix(in srgb, var(--color-error) 18%, transparent);
         border-color: color-mix(in srgb, var(--color-error) 38%, transparent);
         color: var(--color-error);
+    }
+}
+
+// Comprimir el banner: misma posición que Cerrar, un poco a la izquierda.
+.InstDet_Collapse {
+    position: absolute;
+    top: 0.7rem;
+    right: 3.4rem;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    background: var(--control-bg-dark);
+    border: 1px solid color-mix(in srgb, var(--text-primary) 12%, transparent);
+    color: var(--text-primary);
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: var(--transition);
+
+    svg {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    &:hover {
+        background: color-mix(in srgb, var(--text-primary) 14%, transparent);
+        border-color: color-mix(in srgb, var(--text-primary) 24%, transparent);
+    }
+}
+
+// Hero comprimido: tira fina animada que CONSERVA la imagen de fondo (más
+// tenue) con fila compacta, para ver más contenido abajo. El overlay de
+// descarga pasa a flujo normal para seguir visible.
+.InstDet_Hero.collapsed {
+    min-height: 5.2rem;
+
+    .InstDet_BannerImg {
+        opacity: 0.3;
+    }
+
+    .InstDet_DlOverlay {
+        position: static;
+        margin: 3rem 1.5rem 0;
+    }
+
+    .InstDet_HeroMain {
+        padding: 2.9rem 1.5rem 0.7rem;
+        align-items: center;
+        transition: padding 0.35s ease;
+    }
+
+    .InstDet_Icon {
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 0.6rem;
+        transition: width 0.35s ease, height 0.35s ease;
+
+        svg {
+            width: 1.1rem;
+            height: 1.1rem;
+        }
+    }
+
+    .InstDet_Identity {
+        h3 {
+            font-size: calc(0.95rem * var(--font-size-primary, 1));
+            transition: font-size 0.35s ease;
+        }
+
+        p {
+            display: none;
+        }
     }
 }
 

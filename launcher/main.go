@@ -17,6 +17,7 @@ import (
 	gamesvc "StepLauncher/internal/Services/Game"
 	instsvc "StepLauncher/internal/Services/Instance"
 	modsvc "StepLauncher/internal/Services/ModLoader"
+	modscontent "StepLauncher/internal/Services/Mods"
 	musicsvc "StepLauncher/internal/Services/Music"
 	syssvc "StepLauncher/internal/Services/System"
 
@@ -27,6 +28,10 @@ import (
 // Wails embebe los archivos del frontend compilado dentro del binario.
 // Cualquier archivo de frontend/dist se incrusta y queda disponible para el
 // frontend. Ver https://pkg.go.dev/embed para más información.
+
+// Repositorio de releases contra el que comprueba actualizaciones,
+// directo a GitHub sin APIs externas intermedias.
+const updateRepo = "NovaStepStudio/StepLauncher"
 
 //go:embed all:frontend/dist
 var assets embed.FS
@@ -107,7 +112,7 @@ func createEngineAndHandler() (*engine.Engine, *Handlers.App) {
 	return eng, handler
 }
 
-// registerDomainServices crea y registra los 9 servicios por dominio.
+// registerDomainServices crea y registra los 10 servicios por dominio.
 func registerDomainServices(wailsApp *application.App, eng *engine.Engine, handler *Handlers.App) {
 	systemService := syssvc.NewSystemService(wailsApp, handler, eng)
 	configService := cfgsvc.NewConfigService(handler, eng)
@@ -116,6 +121,7 @@ func registerDomainServices(wailsApp *application.App, eng *engine.Engine, handl
 	downloadService := dlsvc.NewDownloadService(eng)
 	accountService := accsvc.NewAccountService(handler, eng)
 	modLoaderService := modsvc.NewModLoaderService(eng)
+	modsService := modscontent.NewModsService(eng)
 	musicService := musicsvc.NewMusicService(handler)
 	appearanceService := appsvc.NewAppearanceService(handler, eng)
 
@@ -126,25 +132,26 @@ func registerDomainServices(wailsApp *application.App, eng *engine.Engine, handl
 	wailsApp.RegisterService(application.NewService(downloadService))
 	wailsApp.RegisterService(application.NewService(accountService))
 	wailsApp.RegisterService(application.NewService(modLoaderService))
+	wailsApp.RegisterService(application.NewService(modsService))
 	wailsApp.RegisterService(application.NewService(musicService))
 	wailsApp.RegisterService(application.NewService(appearanceService))
 }
 
-// initWailsUpdater configura app.Updater con el Worker de Cloudflare en headless.
-// Usa https://steplauncher.stepnicka012.workers.dev/updates/steplauncher/releases
-// y /prereleases en lugar de GitHub directo para evitar rate limit y cachear.
-// La lógica de matching de assets y semver vive en internal/Updater/worker_provider.go.
+// initWailsUpdater configura app.Updater con el provider oficial de
+// GitHub Releases en headless, directo contra el repositorio.
+// La UI personalizada (Update.vue) escucha los eventos wails:updater:*
+// y muestra el prompt "¿Quieres actualizar? Actualizar Ahora / Más tarde".
+// Sin ventana builtin: el frontend controla todo el flujo.
+// La instalación en sí la aplica el flujo legacy (Engine/Update.go):
+// en Windows descarga el *-installer.exe y cierra el launcher.
 func initWailsUpdater(app *application.App) error {
-	wp, err := worker.NewWorker(worker.WorkerProvider{
-		ReleasesURL:    "https://steplauncher.stepnicka012.workers.dev/updates/steplauncher/releases",
-		PrereleasesURL: "https://steplauncher.stepnicka012.workers.dev/updates/steplauncher/prereleases",
-	})
+	provider, err := worker.NewGithubProvider(updateRepo)
 	if err != nil {
 		return err
 	}
 	return app.Updater.Init(updater.Config{
 		CurrentVersion: engineconfig.AppVersion,
-		Providers:      []updater.Provider{wp},
+		Providers:      []updater.Provider{provider},
 		Window:         updater.WindowNone,
 	})
 }

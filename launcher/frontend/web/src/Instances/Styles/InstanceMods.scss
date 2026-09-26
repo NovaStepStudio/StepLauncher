@@ -1,0 +1,234 @@
+@use '../../Common/Styles/Components' as *;
+
+.InstMods {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.InstMods_Head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+
+    > span {
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.82rem * var(--font-size-primary, 1));
+        font-weight: 700;
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+    }
+}
+
+.InstMods_HeadActions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    .SsBtn svg {
+        width: 0.85rem;
+        height: 0.85rem;
+    }
+}
+
+.InstMods_Search {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0 0.6rem;
+    height: 1.9rem;
+    border-radius: 0.45rem;
+    border: 1px solid var(--border-style);
+    background: color-mix(in srgb, var(--control-bg) 45%, transparent);
+    color: var(--text-secondary);
+
+    svg {
+        width: 0.85rem;
+        height: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    input {
+        width: 7rem;
+        background: none;
+        border: none;
+        outline: none;
+        color: var(--text-primary);
+        font-size: calc(0.68rem * var(--font-size-secundary, 1));
+
+        &::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+    }
+}
+
+.InstMods_Tabs {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+
+    button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.32rem 0.7rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-style);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: calc(0.66rem * var(--font-size-secundary, 1));
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+
+        em {
+            font-style: normal;
+            font-size: calc(0.6rem * var(--font-size-secundary, 1));
+            opacity: 0.6;
+        }
+
+        &:hover {
+            color: var(--text-primary);
+        }
+
+        &.on {
+            color: var(--text-primary);
+            border-color: color-mix(in srgb, var(--background-button-primary) 65%, white 10%);
+            background: color-mix(in srgb, var(--background-button-primary) 12%, transparent);
+
+            em {
+                opacity: 1;
+            }
+        }
+    }
+}
+
+.InstMods_State {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 1.6rem 1rem;
+    text-align: center;
+    color: var(--text-secondary);
+
+    b {
+        color: var(--text-primary);
+        font-size: calc(0.8rem * var(--font-size-primary, 1));
+    }
+
+    span,
+    p {
+        margin: 0;
+        font-size: calc(0.68rem * var(--font-size-secundary, 1));
+        opacity: 0.65;
+    }
+
+    svg {
+        width: 1.2rem;
+        height: 1.2rem;
+        opacity: 0.5;
+    }
+}
+
+.InstMods_List {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.InstMods_Row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--border-style);
+    background: color-mix(in srgb, var(--control-bg) 35%, transparent);
+
+    &.off {
+        opacity: 0.55;
+    }
+}
+
+.InstMods_Icon {
+    width: 1.9rem;
+    height: 1.9rem;
+    flex-shrink: 0;
+    border-radius: 0.45rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: color-mix(in srgb, var(--control-bg) 70%, transparent);
+    border: 1px solid var(--border-style);
+    color: var(--text-secondary);
+    overflow: hidden;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    svg {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+}
+
+.InstMods_Info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+}
+
+.InstMods_Name {
+    font-size: calc(0.7rem * var(--font-size-primary, 1));
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.InstMods_Sub {
+    font-size: calc(0.6rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.55;
+}
+
+.InstMods_Actions {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+
+    .SsBtn {
+        padding: 0.35rem 0.55rem;
+
+        svg {
+            width: 0.85rem;
+            height: 0.85rem;
+        }
+    }
+}
+
+.InstMods_Danger {
+    &:hover:not(:disabled) {
+        color: var(--color-error);
+        border-color: color-mix(in srgb, var(--color-error) 45%, transparent);
+    }
+}
+
+.spin {
+    animation: InstMods_Spin 1s linear infinite;
+}
+
+@keyframes InstMods_Spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

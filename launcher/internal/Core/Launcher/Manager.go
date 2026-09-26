@@ -196,6 +196,16 @@ func (m *LaunchManager) SetSeparateGameDir(v bool) {
 	m.mu.Unlock()
 }
 
+// GetSeparateGameDir devuelve el valor efectivo actual (el que usa Launch al
+// resolver el gameDir). En modo Minecraft es false aunque la config persista
+// otro valor, así que los destinos de contenido deben leerlo de aquí y no de
+// la config en crudo.
+func (m *LaunchManager) GetSeparateGameDir() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.separateGameDir
+}
+
 func (m *LaunchManager) Stop(id string) error {	m.mu.RLock()
 	instance, ok := m.games[id]
 	m.mu.RUnlock()

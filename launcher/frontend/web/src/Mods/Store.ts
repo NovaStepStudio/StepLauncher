@@ -107,6 +107,15 @@ export function environmentLabel(envs: readonly string[] | undefined | null): st
 export const activeTab = ref<ModTypeKey>('all');
 export const viewMode = ref<'grid' | 'list'>('grid');
 
+// Instancia preferida para el diálogo de descarga (la pone quien abre Mods
+// desde el detalle de una instancia con "Añadir"). El diálogo la usa para
+// preseleccionar el destino y la conserva durante la sesión.
+export const pendingInstance = ref<string | null>(null);
+
+export function preferInstance(name: string | null): void {
+    pendingInstance.value = name && name.trim() ? name.trim() : null;
+}
+
 export function selectTab(tab: ModTypeKey): void {
     activeTab.value = tab;
 }

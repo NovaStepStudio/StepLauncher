@@ -195,7 +195,7 @@ func (o *Orchestrator) downloadEntries(sessionId string, entries []DownloadPlanE
 		}
 
 		if err := downloader.DownloadFile(ctx, task, o.httpClient, 3, nil, 60000, 3); err != nil {
-			return fmt.Errorf("download %s: %w", entry.Name, err)
+			return fmt.Errorf("download %s (%s): %w", entry.Name, entry.URL, err)
 		}
 	}
 	return nil
@@ -211,7 +211,11 @@ func (o *Orchestrator) stateKey(instancePath string) string {
 	return strings.ToLower(abs)
 }
 
-var errNoLoaderState = errors.New("no modloader installed")
+// ErrNoLoaderState indica que no hay modloader instalado en el destino. Se
+// exporta para que las capas superiores (Engine, servicios) lo traduzcan a
+// "sin loader" (nil, nil) en vez de propagar un error que el runtime de Wails
+// registraría como fallo del binding aunque sea un estado normal.
+var ErrNoLoaderState = errors.New("no modloader installed")
 
 func (o *Orchestrator) saveState(instancePath string, loader *InstalledLoader) error {
 	key := o.stateKey(instancePath)
@@ -231,7 +235,7 @@ func (o *Orchestrator) LoadState(instancePath string) (*InstalledLoader, error) 
 	o.mu.RLock()
 	if o.stateRemoved[key] {
 		o.mu.RUnlock()
-		return nil, errNoLoaderState
+		return nil, ErrNoLoaderState
 	}
 	if loader := o.stateCache[key]; loader != nil {
 		o.mu.RUnlock()
@@ -273,7 +277,7 @@ func (o *Orchestrator) deriveFromDisk(instancePath string) (*InstalledLoader, er
 	versionsDir := filepath.Join(instancePath, "versions")
 	entries, err := os.ReadDir(versionsDir)
 	if err != nil {
-		return nil, errNoLoaderState
+		return nil, ErrNoLoaderState
 	}
 	for _, e := range entries {
 		if !e.IsDir() {
@@ -309,7 +313,7 @@ func (o *Orchestrator) deriveFromDisk(instancePath string) (*InstalledLoader, er
 		}
 		return NewInstalledLoader(loaderType, loaderVersion, vj.InheritsFrom, id, ""), nil
 	}
-	return nil, errNoLoaderState
+	return nil, ErrNoLoaderState
 }
 
 // DetectLoaderFromID clasifica el tipo de modloader a partir del id del

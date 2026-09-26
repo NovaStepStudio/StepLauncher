@@ -18,11 +18,11 @@ import { heavyPanel } from '@/Common/Overlays/Store';
 import { applyPersonalization } from '@/Common/Stores/Ui';
 import { useBackground } from '@/Common/Composables/useBackground';
 
-import iconFabric from '../../assets/icons/fabric.png';
-import iconForge from '../../assets/icons/forge.png';
-import iconNeoForge from '../../assets/icons/neoforge.png';
-import iconQuilt from '../../assets/icons/quilt.png';
-import iconLegacyFabric from '../../assets/icons/legacyfabric.png';
+import iconFabric from '../../assets/icons/fabric.webp';
+import iconForge from '../../assets/icons/forge.webp';
+import iconNeoForge from '../../assets/icons/neoforge.webp';
+import iconQuilt from '../../assets/icons/quilt.webp';
+import iconLegacyFabric from '../../assets/icons/legacyfabric.webp';
 
 const props = defineProps<{
     slugOrId: string;

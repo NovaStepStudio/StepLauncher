@@ -274,6 +274,7 @@
     gap: 1rem;
     padding: 0.4rem 1.5rem 1.4rem;
     align-content: start;
+    align-items: start;
     text-shadow: var(--text-shadow-secundary, none);
 }
 
@@ -895,5 +896,110 @@ transition: var(--transition);
                 background: color-mix(in srgb, var(--color-error) 12%, transparent);
             }
         }
+    }
+}
+
+// --- Instancias en creación por modpacks: tarjetas bloqueadas dentro de la
+// --- rejilla hasta estar al 100% (sin abrir, fijar, editar ni jugar). ---
+
+.InstCardProv {
+    cursor: default;
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--background-button-primary) 40%, transparent);
+
+    &:hover {
+        transform: none;
+    }
+
+    .spin {
+        animation: InstCardProv_Spin 1s linear infinite;
+    }
+}
+
+// Fallo de instalación: tarjeta de aviso persistente hasta descartarla.
+.InstCardFail {
+    cursor: default;
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--color-error) 45%, transparent);
+
+    &:hover {
+        transform: none;
+        border-color: color-mix(in srgb, var(--color-error) 65%, transparent);
+    }
+}
+
+.InstCardFail_Lock {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: calc(0.6rem * var(--font-size-secundary, 1));
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-error);
+    opacity: 0.95;
+}
+
+.InstCardFail_Msg {
+    color: var(--color-error);
+    opacity: 0.85;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    white-space: normal;
+}
+
+@keyframes InstCardProv_Spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.InstCardProv_Lock {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: calc(0.6rem * var(--font-size-secundary, 1));
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-warning, #e8b53a);
+    opacity: 0.9;
+}
+
+.InstCardProv_Msg {
+    margin: 0.45rem 0 0;
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.InstCardProv_Bar {
+    height: 0.4rem;
+    border-radius: 0.3rem;
+    margin-top: 0.4rem;
+    background: color-mix(in srgb, var(--control-bg) 60%, transparent);
+    overflow: hidden;
+
+    span {
+        display: block;
+        height: 100%;
+        border-radius: 0.3rem;
+        background: color-mix(in srgb, var(--background-button-primary) 75%, white 10%);
+        transition: width 0.3s ease;
+    }
+}
+
+.InstCardProv_Actions {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+
+    .SsBtn svg {
+        width: 0.85rem;
+        height: 0.85rem;
     }
 }

@@ -23,12 +23,12 @@ import { downloads, loadDetails, detailOf, addVersion, cancelDownload, scheduleL
 import { isOffline, CONNECTIVITY_ONLINE_EVENT } from '@/Common/Stores/Connectivity';
 import OfflineBadge from '@/Common/Components/OfflineBadge.vue';
 
-import iconVanilla from '../../assets/icons/minecraft.png';
-import iconFabric from '../../assets/icons/fabric.png';
-import iconForge from '../../assets/icons/forge.png';
-import iconNeoForge from '../../assets/icons/neoforge.png';
-import iconQuilt from '../../assets/icons/quilt.png';
-import iconLegacyFabric from '../../assets/icons/legacyfabric.png';
+import iconVanilla from '../../assets/icons/minecraft.webp';
+import iconFabric from '../../assets/icons/fabric.webp';
+import iconForge from '../../assets/icons/forge.webp';
+import iconNeoForge from '../../assets/icons/neoforge.webp';
+import iconQuilt from '../../assets/icons/quilt.webp';
+import iconLegacyFabric from '../../assets/icons/legacyfabric.webp';
 
 type VersionEntry = { id: string; type: string; releaseTime: string };
 

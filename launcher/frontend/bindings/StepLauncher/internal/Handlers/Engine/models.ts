@@ -162,6 +162,34 @@ export enum IntegrityState {
 
 export type LaunchConfig = launcher$0.LaunchConfig;
 
+/**
+ * ModContentRequest pide descargar un archivo de Modrinth (mod, shader,
+ * resourcepack o .mrpack suelto) al juego global o a una instancia.
+ * Destination es "global" o "instance"; Instance lleva el nombre cuando el
+ * destino es una instancia. HashSHA1/HashSHA512 verifican la descarga.
+ */
+export interface ModContentRequest {
+    "projectType": string;
+    "title": string;
+    "fileUrl": string;
+    "fileName": string;
+    "fileSize": number;
+    "hashSha1"?: string;
+    "hashSha512"?: string;
+    "iconUrl"?: string;
+    "destination": string;
+    "instance"?: string;
+}
+
+/**
+ * ModContentResult devuelve el sessionId de la operación asíncrona. El
+ * progreso llega con eventos modcontent_* o modpack_* según el caso.
+ */
+export interface ModContentResult {
+    "sessionId": string;
+    "status": string;
+}
+
 export interface ModLoaderInstallResult {
     "sessionId": string;
     "status": string;
@@ -169,7 +197,27 @@ export interface ModLoaderInstallResult {
 
 export type ModLoaderVersion = modloader$0.LoaderVersion;
 
+/**
+ * ModpackInstallRequest pide instalar un modpack .mrpack. Destination elige
+ * dónde: "global" (juego global), "instance" (una instancia existente,
+ * Instance) o "new" (crear una instancia nueva, InstanceName + IconURL).
+ */
+export interface ModpackInstallRequest {
+    "title": string;
+    "fileUrl": string;
+    "fileName": string;
+    "fileSize": number;
+    "hashSha1"?: string;
+    "hashSha512"?: string;
+    "destination": string;
+    "instance"?: string;
+    "instanceName"?: string;
+    "iconUrl"?: string;
+}
+
 export type Profile = profile$0.Profile;
+
+export type ProvisionInfo = instance$0.ProvisionInfo;
 
 export type UpdateMetadataReq = instance$0.UpdateMetadataReq;
 

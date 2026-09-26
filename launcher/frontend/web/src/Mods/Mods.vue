@@ -8,10 +8,11 @@ import { useModrinth } from '@/Common/Composables/useModrinth';
 import type { SearchHit } from '@/Common/Composables/useModrinth';
 import ModsContent from './Content.vue';
 import ModsDetail from './Detail.vue';
+import ModsInstalled from './Installed.vue';
 
 const modrinth = useModrinth();
 
-const view = ref<'list' | 'detail'>('list');
+const view = ref<'list' | 'detail' | 'installed'>('list');
 const selected = ref('');
 const selectedHit = ref<SearchHit | null>(null);
 
@@ -27,6 +28,14 @@ function toGrid() {
     selected.value = '';
     selectedHit.value = null;
     modrinth.clearProject();
+}
+
+function showInstalled() {
+    selected.value = '';
+    selectedHit.value = null;
+    modrinth.clearProject();
+    modrinth.abortSearch();
+    view.value = 'installed';
 }
 
 interface DownloadTarget {
@@ -69,8 +78,10 @@ watch(heavyPanel, (p) => {
         closeModsDownloadDialogs();
         return;
     }
-    toGrid();
-    modrinth.abortSearch();
+    if (view.value !== 'installed') {
+        toGrid();
+        modrinth.abortSearch();
+    }
 });
 
 onMounted(() => {
@@ -85,7 +96,7 @@ onUnmounted(() => {
 
 <template>
     <div class="ModsModal_Overlay">
-        <header v-if="view === 'list'" class="ModsModal_Head">
+        <header v-if="view !== 'detail'" class="ModsModal_Head">
             <div class="ModsModal_Title">
                 <span class="ModsModal_Icon"><IconPuzzle stroke="2" /></span>
                 <div class="ModsModal_Titles">
@@ -99,7 +110,8 @@ onUnmounted(() => {
         </header>
 
         <div class="ModsModal_Body">
-            <ModsContent v-if="view === 'list'" @open="openDetail" @download="openDownload" />
+            <ModsContent v-if="view === 'list'" @open="openDetail" @download="openDownload" @installed="showInstalled" />
+            <ModsInstalled v-else-if="view === 'installed'" @back="toGrid" />
             <ModsDetail
                 v-else
                 :slug-or-id="selected"

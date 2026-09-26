@@ -250,6 +250,12 @@
         opacity: 0.4;
         cursor: default;
     }
+
+    &.on {
+        color: var(--text-primary);
+        border-color: color-mix(in srgb, var(--background-button-primary) 55%, transparent);
+        background: color-mix(in srgb, var(--background-button-primary) 10%, transparent);
+    }
 }
 
 .ModsView_ViewToggle {
@@ -332,6 +338,18 @@
         color: var(--progress-color, var(--color-success));
         box-shadow: var(--shadow-settings-normal) color-mix(in srgb, var(--progress-color, var(--color-success)) 18%, transparent);
     }
+}
+
+.ModsView_TabSep {
+    width: 1px;
+    align-self: stretch;
+    margin: 0.15rem 0.25rem;
+    background: color-mix(in srgb, var(--text-primary) 12%, transparent);
+    flex-shrink: 0;
+}
+
+.ModsView_TabInstalled {
+    border-style: dashed;
 }
 
 // ---------- Cuerpo: sidebar + contenido ----------

@@ -5,11 +5,12 @@ import {
     IconSearch, IconDownload, IconPuzzle, IconPackage, IconPalette, IconWallpaper,
     IconLayoutGrid, IconList, IconRotateClockwise, IconBox, IconLoader2,
     IconChevronLeft, IconChevronRight, IconClock, IconTrash, IconX,
+    IconLayoutSidebar, IconArchive,
 } from '@tabler/icons-vue';
 import {
     activeTab, selectTab, MOD_TYPE_TABS,
     LOADER_OPTIONS, SORT_OPTIONS, LIMIT_OPTIONS,
-    viewMode, setViewMode, buildModsFacets, environmentLabel,
+    viewMode, setViewMode, buildModsFacets,
 } from './Store';
 import {
     useModrinth, formatCount,
@@ -18,15 +19,16 @@ import {
 import type { SearchHit } from '@/Common/Composables/useModrinth';
 import { heavyPanel } from '@/Common/Overlays/Store';
 
-import iconFabric from '../../assets/icons/fabric.png';
-import iconForge from '../../assets/icons/forge.png';
-import iconNeoForge from '../../assets/icons/neoforge.png';
-import iconQuilt from '../../assets/icons/quilt.png';
-import iconLegacyFabric from '../../assets/icons/legacyfabric.png';
+import iconFabric from '../../assets/icons/fabric.webp';
+import iconForge from '../../assets/icons/forge.webp';
+import iconNeoForge from '../../assets/icons/neoforge.webp';
+import iconQuilt from '../../assets/icons/quilt.webp';
+import iconLegacyFabric from '../../assets/icons/legacyfabric.webp';
 
 const emit = defineEmits<{
     (e: 'open', slugOrId: string, hit: SearchHit): void;
     (e: 'download', hit: SearchHit): void;
+    (e: 'installed'): void;
 }>();
 
 const LOADER_ICONS: Record<string, string> = {
@@ -53,6 +55,8 @@ const mcVersion = ref('');
 const sortBy = ref<'any' | 'relevance' | 'downloads' | 'follows' | 'newest' | 'updated'>('any');
 const limit = ref(20);
 const showHistory = ref(false);
+// La barra lateral de filtros se puede plegar para dar aire a la rejilla.
+const sidebarOpen = ref(true);
 
 // Historial de búsqueda (usa directamente el ref del store para mutaciones reactivas)
 const searchHistory = modrinth.searchHistory;
@@ -247,6 +251,14 @@ onUnmounted(() => {
                 <button class="ModsView_Reload" title="Recargar resultados" :disabled="modrinth.searchState.loading" @click="runSearch(0)">
                     <IconRotateClockwise stroke="2" :class="{ spin: modrinth.searchState.loading }" />
                 </button>
+                <button
+                    class="ModsView_Reload"
+                    :class="{ on: sidebarOpen }"
+                    title="Mostrar u ocultar filtros"
+                    @click="sidebarOpen = !sidebarOpen"
+                >
+                    <IconLayoutSidebar stroke="2" />
+                </button>
                 <div class="ModsView_ViewToggle" title="Vista">
                     <button :class="{ on: viewMode === 'grid' }" title="Vista en cards" @click="setViewMode('grid')">
                         <IconLayoutGrid stroke="2" />
@@ -270,10 +282,19 @@ onUnmounted(() => {
                 <component :is="TAB_ICONS[tab.type]" stroke="2" />
                 {{ tab.label }}
             </button>
+            <span class="ModsView_TabSep"></span>
+            <button
+                class="ModsView_Tab ModsView_TabInstalled"
+                title="Ver, activar y borrar tu contenido instalado"
+                @click="emit('installed')"
+            >
+                <IconArchive stroke="2" />
+                Instalado
+            </button>
         </div>
 
         <div class="ModsView_Body">
-            <aside class="ModsView_Sidebar">
+            <aside v-if="sidebarOpen" class="ModsView_Sidebar">
                 <section class="ModsView_FilterGroup">
                     <h4 class="ModsView_FilterTitle">ModLoader</h4>
                     <div class="ModsView_LoaderList">
@@ -406,14 +427,11 @@ onUnmounted(() => {
                                 <p class="ModsCard_Desc">{{ hit.description }}</p>
 
                                 <div class="ModsCard_Meta">
-                                    <span v-for="l in loadersOf(hit).slice(0, 3)" :key="l" class="ModsCard_Cat" :title="l">
+                                    <span v-for="l in loadersOf(hit).slice(0, 2)" :key="l" class="ModsCard_Cat" :title="l">
                                         <img v-if="LOADER_ICONS[l]" :src="LOADER_ICONS[l]" alt="" />
                                         {{ l }}
                                     </span>
-                                    <span v-if="loadersOf(hit).length > 3" class="ModsCard_Cat">+{{ loadersOf(hit).length - 3 }}</span>
-                                    <span v-if="environmentLabel(hit.environment)" class="ModsCard_Cat ModsCard_Env" :title="hit.environment.join(', ')">
-                                        {{ environmentLabel(hit.environment) }}
-                                    </span>
+                                    <span v-if="loadersOf(hit).length > 2" class="ModsCard_Cat">+{{ loadersOf(hit).length - 2 }}</span>
                                     <span class="ModsCard_Dl">
                                         <IconDownload stroke="2" /> {{ formatCount(hit.downloads ?? 0) }}
                                     </span>
@@ -448,12 +466,9 @@ onUnmounted(() => {
                                 </span>
                             </div>
                             <div class="ModsRow_Chips">
-                                <span v-for="l in loadersOf(hit).slice(0, 3)" :key="l" class="ModsRow_Chip" :title="l">
+                                <span v-for="l in loadersOf(hit).slice(0, 2)" :key="l" class="ModsRow_Chip" :title="l">
                                     <img v-if="LOADER_ICONS[l]" :src="LOADER_ICONS[l]" alt="" />
                                     {{ l }}
-                                </span>
-                                <span v-if="environmentLabel(hit.environment)" class="ModsRow_Chip ModsRow_Env" :title="hit.environment.join(', ')">
-                                    {{ environmentLabel(hit.environment) }}
                                 </span>
                                 <span class="ModsRow_Chip ModsRow_Dl">
                                     <IconDownload stroke="2" /> {{ formatCount(hit.downloads ?? 0) }}

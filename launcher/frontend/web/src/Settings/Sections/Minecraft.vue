@@ -175,8 +175,8 @@ async function saveVerifyBeforeLaunch() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Usar opciones de gráfica</span>
-                <span class="SsDesc">Si lo apagas, el juego usa lo que trae por defecto.</span>
+                <span class="SsLabel">Ajustes de GPU personalizados</span>
+                <span class="SsDesc">Si lo apagás, Minecraft usa su configuración gráfica por defecto e ignora lo de abajo.</span>
             </div>
             <div class="SsCtrl">
                 <label class="SsTg"><input type="checkbox" v-model="hwEnabled" @change="save"><span class="SsTgS"></span></label>
@@ -185,8 +185,8 @@ async function saveVerifyBeforeLaunch() {
         <template v-if="hwEnabled">
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Aceleración</span>
-                    <span class="SsDesc">Usa tu gráfica para que vaya más fluido.</span>
+                <span class="SsLabel">Aceleración por hardware</span>
+                <span class="SsDesc">Usa tu GPU para renderizar: más FPS y menos carga de CPU.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="hwAccel" @change="save"><span class="SsTgS"></span></label>
@@ -194,22 +194,22 @@ async function saveVerifyBeforeLaunch() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Qué gráfica usar</span>
-                    <span class="SsDesc">Automático elige la mejor para tu PC.</span>
+                <span class="SsLabel">GPU preferida</span>
+                <span class="SsDesc">En equipos con dos gráficas, forzá cuál usa el juego. Automático suele acertar.</span>
                 </div>
                 <div class="SsCtrl">
                     <select class="SsSel" v-model="gpuType" @change="save">
                         <option value="">Desactivado</option>
                         <option value="auto">Automático</option>
-                        <option value="dedicated">Dedicada</option>
-                        <option value="integrated">Integrada</option>
+                        <option value="dedicated">Dedicada (NVIDIA/AMD)</option>
+                        <option value="integrated">Integrada (Intel/AMD APU)</option>
                     </select>
                 </div>
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Modo de la gráfica</span>
-                    <span class="SsDesc">Rendimiento va más rápido, Calidad se ve mejor.</span>
+                <span class="SsLabel">Perfil de la GPU</span>
+                <span class="SsDesc">Rendimiento prioriza FPS, Calidad prioriza imagen, Balanceado reparte.</span>
                 </div>
                 <div class="SsCtrl">
                     <select class="SsSel" v-model="gpuPreset" @change="save">
@@ -222,7 +222,7 @@ async function saveVerifyBeforeLaunch() {
             </div>
             <div class="SsTip">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <span>Si el juego no abre, prueba apagando esto.</span>
+                <span>Si el juego crashea al abrir o queda en pantalla negra, apagá estos ajustes y probá de nuevo.</span>
             </div>
         </template>
     </div>
@@ -234,8 +234,8 @@ async function saveVerifyBeforeLaunch() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Memoria para Minecraft</span>
-                <span class="SsDesc">Cuánta memoria le das al juego. Tienes {{ totalRAM }} GB en total.</span>
+                <span class="SsLabel">RAM para Minecraft (−Xmx)</span>
+                <span class="SsDesc">Cuánta memoria le asignás al juego. Tu PC tiene {{ totalRAM }} GB en total.</span>
             </div>
             <div class="SsCtrl">
                 <div class="SsStep">
@@ -247,7 +247,7 @@ async function saveVerifyBeforeLaunch() {
         </div>
         <div class="SsTip">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>Tip: usa la mitad de tu memoria total.</span>
+                <span>Regla práctica: asigná la mitad de tu RAM total. Darle de más puede empeorar el rendimiento.</span>
         </div>
     </div>
 
@@ -258,14 +258,14 @@ async function saveVerifyBeforeLaunch() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Qué Java usar</span>
-                <span class="SsDesc">Déjalo en Automático si no sabes qué es esto.</span>
+                <span class="SsLabel">Versión de Java</span>
+                <span class="SsDesc">Automático elige el Java correcto según la versión de Minecraft. Cambialo solo si sabés lo que hacés.</span>
             </div>
             <div class="SsCtrl">
                 <select class="SsSel" v-model="javaMode" @change="save">
                     <option value="auto">Automático</option>
-                    <option value="system">Elegir de mi PC</option>
-                    <option value="official">El que trae Minecraft</option>
+                    <option value="system">Instalado en mi PC</option>
+                    <option value="official">El oficial de Minecraft</option>
                     <option value="custom">Ruta manual</option>
                 </select>
             </div>
@@ -273,15 +273,15 @@ async function saveVerifyBeforeLaunch() {
         <template v-if="javaMode === 'system'">
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Elige uno</span>
-                    <span class="SsDesc">Busca los Java que tienes y elige.</span>
+                <span class="SsLabel">Java detectados</span>
+                <span class="SsDesc">Elegí uno de los Java encontrados en tu PC, o tocá Buscar para re-escanear.</span>
                 </div>
                 <div class="SsCtrl">
                     <select class="SsSel SsSelJava" v-model="selectedJava" @change="pickJava">
-                        <option value="" disabled>Ninguno</option>
+                        <option value="" disabled>Ninguno seleccionado</option>
                         <option v-for="j in javaSelectOptions" :key="j.path" :value="j.path">{{ j.display }}</option>
                     </select>
-                    <button class="SsBtn" @click="scanJava" title="Detectar Java instalados">
+                    <button class="SsBtn" @click="scanJava" title="Volver a detectar los Java instalados">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                         Buscar
                     </button>
@@ -291,8 +291,8 @@ async function saveVerifyBeforeLaunch() {
         <template v-else-if="javaMode === 'custom'">
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Dónde está Java</span>
-                    <span class="SsDesc">Pega la ruta a javaw.exe</span>
+                <span class="SsLabel">Ruta manual a Java</span>
+                <span class="SsDesc">Pegá la ruta completa al javaw.exe que querés usar (solo Windows).</span>
                 </div>
                 <div class="SsCtrl">
                     <input class="SsIn" v-model="javaCustomPath" placeholder="C:\ruta\javaw.exe" @change="save">
@@ -308,8 +308,8 @@ async function saveVerifyBeforeLaunch() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Tamaño al abrir</span>
-                <span class="SsDesc">Ancho y alto de la ventana del juego.</span>
+                <span class="SsLabel">Tamaño inicial de la ventana</span>
+                <span class="SsDesc">Ancho × alto en píxeles con los que abre el juego (después lo podés cambiar dentro del juego).</span>
             </div>
             <div class="SsGrid">
                 <div class="SsField">
@@ -324,8 +324,8 @@ async function saveVerifyBeforeLaunch() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Pantalla completa</span>
-                <span class="SsDesc">Que el juego ocupe toda la pantalla al abrir.</span>
+                <span class="SsLabel">Abrir en pantalla completa</span>
+                <span class="SsDesc">El juego arranca ocupando todo el monitor. Después se alterna con F11.</span>
             </div>
             <div class="SsCtrl">
                 <label class="SsTg"><input type="checkbox" v-model="fullscreen" @change="save"><span class="SsTgS"></span></label>
@@ -340,8 +340,8 @@ async function saveVerifyBeforeLaunch() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Opciones para Java</span>
-                <span class="SsDesc">Solo toca esto si sabes lo que haces.</span>
+                <span class="SsLabel">Argumentos de la JVM</span>
+                <span class="SsDesc">Flags extra para Java (ej. recolector de basura). Solo si sabés lo que hacés: un flag malo impide abrir el juego.</span>
             </div>
         </div>
         <div class="SsArg">
@@ -349,8 +349,8 @@ async function saveVerifyBeforeLaunch() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Opciones para el juego</span>
-                <span class="SsDesc">También solo para avanzados.</span>
+                <span class="SsLabel">Argumentos del juego</span>
+                <span class="SsDesc">Flags que recibe Minecraft al arrancar (ej. resolución). También solo para avanzados.</span>
             </div>
         </div>
         <div class="SsArg">
@@ -365,8 +365,8 @@ async function saveVerifyBeforeLaunch() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Verificar antes de lanzar Minecraft</span>
-                <span class="SsDesc">Si está activo, comprueba que todos los archivos del juego estén completos antes de iniciar. Desactívalo para lanzar más rápido si sabes que todo está descargado.</span>
+                <span class="SsLabel">Verificar archivos antes de jugar</span>
+                <span class="SsDesc">Comprueba por hash que el juego esté completo antes de abrirlo. Apagalo para lanzar más rápido si ya verificaste todo.</span>
             </div>
             <div class="SsCtrl">
                 <label class="SsTg"><input type="checkbox" v-model="verifyBeforeLaunch" :disabled="isOffline" @change="saveVerifyBeforeLaunch"><span class="SsTgS"></span></label>
@@ -374,23 +374,23 @@ async function saveVerifyBeforeLaunch() {
         </div>
         <div v-if="isOffline" class="SsTip">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>Sin internet esta opción está forzada y no se puede desactivar. Volverá a funcionar al recuperar la conexión.</span>
+            <span>Sin conexión, la verificación queda forzada para evitar arranques rotos. Se libera sola al volver internet.</span>
         </div>
         <div v-else class="SsTip">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>Sin internet esta verificación se activará automáticamente para evitar que el juego falle por archivos incompletos.</span>
+            <span>Si se cae internet al lanzar, esta verificación se activa sola para no abrir el juego con archivos incompletos.</span>
         </div>
     </div>
 
     <div class="SsGroup">
         <div class="SsGroupHead">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            <span>Más opciones</span>
+            <span>Comportamiento</span>
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Jugar sin internet</span>
-                <span class="SsDesc">Te deja entrar aunque no tengas conexión.</span>
+                <span class="SsLabel">Modo sin conexión</span>
+                <span class="SsDesc">Permite jugar offline con tu última sesión. Los servidores online igual exigen internet.</span>
             </div>
             <div class="SsCtrl">
                 <label class="SsTg"><input type="checkbox" v-model="offlineMode" @change="save"><span class="SsTgS"></span></label>
@@ -398,8 +398,8 @@ async function saveVerifyBeforeLaunch() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Modo para PCs viejos</span>
-                <span class="SsDesc">Si tu PC tiene muchos años y el juego falla, prueba esto.</span>
+                <span class="SsLabel">Modo compatibilidad (PCs viejos)</span>
+                <span class="SsDesc">Arranque conservador para equipos antiguos o drivers problemáticos. Probalo si el juego no abre.</span>
             </div>
             <div class="SsCtrl">
                 <label class="SsTg"><input type="checkbox" v-model="compatMode" @change="save"><span class="SsTgS"></span></label>
@@ -407,8 +407,8 @@ async function saveVerifyBeforeLaunch() {
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Guardar más info si falla</span>
-                <span class="SsDesc">Útil si necesitas reportar un error.</span>
+                <span class="SsLabel">Logs detallados</span>
+                <span class="SsDesc">Guarda información extra del arranque. Activálo solo si vas a reportar un error, pesa más.</span>
             </div>
             <div class="SsCtrl">
                 <label class="SsTg"><input type="checkbox" v-model="detailedLogs" @change="save"><span class="SsTgS"></span></label>

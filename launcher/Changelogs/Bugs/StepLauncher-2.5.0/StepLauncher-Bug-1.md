@@ -3,7 +3,7 @@
 - **Fecha**: 2026-08-31
 - **Versión**: 2.5.0
 - **Estado**: corregido y verificado
-- **Release**: en desarrollo — aún no mencionado en ninguna release.
+- **Release**: StepLauncher-2.5.0 — corregido y mencionado en esta release.
 
 ## El bug en cuestión
 

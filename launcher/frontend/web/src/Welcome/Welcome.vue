@@ -18,8 +18,8 @@ import bgWelcome1 from '../../assets/background/bg-welcome.webp';
 import bgWelcome2 from '../../assets/background/bg-welcome-2.webp';
 import bgWelcome3 from '../../assets/background/bg-welcome-3.webp';
 import havingFun from '../../assets/decorations/having-fun.webp';
-import steveAlex from '../../assets/decorations/steve_and_alex.png';
-import minecraftIcon from '../../assets/icons/minecraft.png';
+import steveAlex from '../../assets/decorations/steve_and_alex.webp';
+import minecraftIcon from '../../assets/icons/minecraft.webp';
 import {
     createAccount,
     loginAuthlib,

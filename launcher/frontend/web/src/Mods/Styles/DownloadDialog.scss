@@ -430,3 +430,263 @@
         opacity: 0;
     }
 }
+
+// --- Destino de la instalación (global o instancia) ---
+
+.ModsDl_Dest {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.65rem;
+    border: 1px solid var(--border-style);
+    background: color-mix(in srgb, var(--control-bg) 45%, transparent);
+}
+
+.ModsDl_Radios {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.ModsDl_Radio {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 0.55rem;
+    border: 1px solid var(--border-style);
+    cursor: pointer;
+    user-select: none;
+    transition: var(--transition);
+
+    input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    &.on {
+        border-color: color-mix(in srgb, var(--background-button-primary) 65%, white 10%);
+        background: color-mix(in srgb, var(--background-button-primary) 10%, transparent);
+    }
+}
+
+.ModsDl_RadioDot {
+    width: 0.85rem;
+    height: 0.85rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 1px solid var(--control-border-strong);
+    background: var(--control-bg-soft);
+    position: relative;
+    transition: var(--transition);
+}
+
+.ModsDl_Radio.on .ModsDl_RadioDot {
+    border-color: color-mix(in srgb, var(--background-button-primary) 75%, white 15%);
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0.18rem;
+        border-radius: 50%;
+        background: var(--text-primary);
+    }
+}
+
+.ModsDl_RadioText {
+    font-size: calc(0.7rem * var(--font-size-secundary, 1));
+    font-weight: 600;
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary, none);
+}
+
+.ModsDl_DestPath {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    svg {
+        width: 0.8rem;
+        height: 0.8rem;
+        flex-shrink: 0;
+    }
+}
+
+.ModsDl_DestHint {
+    margin: 0;
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.55;
+    line-height: 1.5;
+}
+
+.ModsDl_LoaderWarn {
+    margin: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.55rem;
+    border: 1px solid color-mix(in srgb, var(--color-warning) 25%, transparent);
+    background: color-mix(in srgb, var(--color-warning) 6%, transparent);
+    color: var(--color-warning);
+    font-size: calc(0.64rem * var(--font-size-secundary, 1));
+    line-height: 1.5;
+
+    svg {
+        width: 0.85rem;
+        height: 0.85rem;
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+    }
+}
+
+.ModsDl_NameInput {
+    width: 100%;
+}
+
+// --- Progreso y resultado de la instalación ---
+
+.ModsDl_Work {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.ModsDl_WorkCount {
+    margin: 0;
+    text-align: center;
+    font-size: calc(0.7rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.65;
+}
+
+.ModsDl_Bar {
+    height: 0.45rem;
+    border-radius: 0.3rem;
+    background: color-mix(in srgb, var(--control-bg) 60%, transparent);
+    overflow: hidden;
+}
+
+.ModsDl_BarFill {
+    height: 100%;
+    border-radius: 0.3rem;
+    background: color-mix(in srgb, var(--background-button-primary) 75%, white 10%);
+    transition: width 0.3s ease;
+}
+
+.ModsDl_WorkHint {
+    margin: 0;
+    text-align: center;
+    font-size: calc(0.62rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.5;
+}
+
+.ModsDl_LoaderFeed {
+    margin: 0;
+    text-align: center;
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    text-shadow: var(--text-shadow-secundary, none);
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ModsDl_Steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    li {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-style);
+        font-size: calc(0.64rem * var(--font-size-secundary, 1));
+        font-weight: 600;
+        color: var(--text-secondary);
+        opacity: 0.55;
+        transition: var(--transition);
+
+        &.active {
+            opacity: 1;
+            color: var(--text-primary);
+            border-color: color-mix(in srgb, var(--background-button-primary) 55%, transparent);
+            background: color-mix(in srgb, var(--background-button-primary) 8%, transparent);
+        }
+
+        &.done {
+            opacity: 0.9;
+            color: var(--color-success);
+            border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
+        }
+    }
+}
+
+.ModsDl_StepDot {
+    width: 1rem;
+    height: 1rem;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+
+    svg {
+        width: 0.8rem;
+        height: 0.8rem;
+    }
+}
+
+.ModsDl_State.ok {
+    opacity: 1;
+    color: var(--text-primary);
+
+    b {
+        font-family: var(--font-primary), Arial, sans-serif;
+        font-size: calc(0.85rem * var(--font-size-primary, 1));
+        font-weight: 700;
+        color: var(--color-success);
+    }
+
+    span {
+        font-size: calc(0.72rem * var(--font-size-secundary, 1));
+        opacity: 0.65;
+    }
+
+    .SsBtn {
+        margin-top: 0.4rem;
+    }
+}
+
+.ModsDl_OkIcon {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid color-mix(in srgb, var(--color-success) 40%, transparent);
+    background: color-mix(in srgb, var(--color-success) 10%, transparent);
+    color: var(--color-success);
+
+    svg {
+        width: 1.2rem;
+        height: 1.2rem;
+    }
+}

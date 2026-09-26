@@ -307,7 +307,7 @@ async function onVideoPick() {
 
 async function onDynamicPick() {
     if (dynamicImages.value.length >= maxDynamicImages) {
-        errorMsg.value = `El fondo dinámico admite hasta ${maxDynamicImages} imágenes.`;
+        errorMsg.value = `La rotación admite hasta ${maxDynamicImages} imágenes.`;
         return;
     }
     const rel = await pickBackground('image');
@@ -340,7 +340,7 @@ function clearVideo() {
 async function onMusicToggle() {
     save();
     if (musicEnabled.value && musicTracks.value.length === 0) {
-        musicMsg.value = 'Aún no hay pistas. Añade una para que suene de fondo.';
+        musicMsg.value = 'Todavía no hay pistas: añadí una con el botón de abajo para que suene de fondo.';
     } else {
         musicMsg.value = '';
     }
@@ -481,15 +481,15 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Tipo de fondo</span>
-                <span class="SsDesc">Imagen estática, video animado o rotación dinámica.</span>
+                <span class="SsLabel">Fondo del launcher</span>
+                <span class="SsDesc">Ninguno (liso), una imagen, un video en loop o una rotación de imágenes.</span>
             </div>
             <div class="SsCtrl">
                 <select class="SsSel" v-model="bgType" @change="save">
                     <option value="none">Ninguno</option>
                     <option value="image">Imagen</option>
-                    <option value="video">Video animado</option>
-                    <option value="dynamic">Dinámico</option>
+                    <option value="video">Video en loop</option>
+                    <option value="dynamic">Rotación (dinámico)</option>
                 </select>
             </div>
         </div>
@@ -497,8 +497,8 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         <template v-if="bgType === 'image'">
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Fondo del launcher</span>
-                    <span class="SsDesc">Imagen de fondo de la interfaz principal.</span>
+                <span class="SsLabel">Imagen de fondo</span>
+                <span class="SsDesc">Va detrás de toda la interfaz. Usá 1920×1080 o más para que no se pixele.</span>
                 </div>
                 <div class="SsCtrl">
                     <button class="SsBtn" @click="onImagePick">
@@ -513,8 +513,8 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         <template v-else-if="bgType === 'video'">
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Fondo animado</span>
-                    <span class="SsDesc">Un video de fondo. Debe ser MP4, GIF o WEBM, pesar menos de 20MB y tener resolución menor a 1080p.</span>
+                <span class="SsLabel">Video de fondo</span>
+                <span class="SsDesc">Un video en loop detrás de la interfaz. MP4, GIF o WEBM de hasta 20 MB y 1080p: más que eso traba PCs modestos.</span>
                 </div>
                 <div class="SsCtrl">
                     <button class="SsBtn" @click="onVideoPick">
@@ -529,8 +529,8 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         <template v-else-if="bgType === 'dynamic'">
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Imágenes del fondo</span>
-                    <span class="SsDesc">Agrega hasta {{ maxDynamicImages }} imágenes y se irán alternando.</span>
+                <span class="SsLabel">Imágenes de la rotación</span>
+                <span class="SsDesc">Se alternan solas como fondo. Hasta {{ maxDynamicImages }} imágenes.</span>
                 </div>
                 <div class="SsCtrl">
                     <button class="SsBtn" :disabled="dynamicImages.length >= maxDynamicImages" @click="onDynamicPick">
@@ -553,8 +553,8 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Orden</span>
-                    <span class="SsDesc">Secuencial o aleatorio.</span>
+                <span class="SsLabel">Orden de rotación</span>
+                <span class="SsDesc">Secuencial las pasa en orden; aleatorio las mezcla.</span>
                 </div>
                 <div class="SsCtrl">
                     <select class="SsSel" v-model="dynamicOrder" @change="save">
@@ -565,8 +565,8 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Tiempo por imagen</span>
-                    <span class="SsDesc">Segundos que se muestra cada fondo.</span>
+                <span class="SsLabel">Duración de cada fondo</span>
+                <span class="SsDesc">Cuántos segundos se muestra cada imagen antes de cambiar (3–300).</span>
                 </div>
                 <div class="SsCtrl">
                     <div class="SsStep">
@@ -591,8 +591,8 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Activar música de fondo</span>
-                <span class="SsDesc">Reproduce un audio mientras usas el launcher. MP3, WAV, OGG o M4A, de máximo 10 minutos y 15 MB.</span>
+                <span class="SsLabel">Música de fondo</span>
+                <span class="SsDesc">Suena mientras usás el launcher (no dentro del juego). MP3, WAV, OGG o M4A de hasta 10 min y 15 MB por pista.</span>
             </div>
             <div class="SsCtrl">
                 <label class="SsTg">
@@ -605,7 +605,7 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         <div class="SsRow">
             <div class="SsInfo">
                 <span class="SsLabel">Estilo de la carátula</span>
-                <span class="SsDesc">Disco (gira), cuadrado, o como fondo del widget (1:1, a la derecha, desvaneciéndose hacia la izquierda).</span>
+                <span class="SsDesc">Disco (vinilo que gira), Cuadrado (portada clásica) o Fondo del widget (la portada tiñe el reproductor).</span>
             </div>
             <div class="SsCtrl">
                 <select class="SsSel" v-model="musicCoverSel" @change="save">
@@ -618,8 +618,8 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
 
         <div v-if="musicCoverSel === 'disc'" class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Rotar el disco</span>
-                <span class="SsDesc">El disco gira siempre, aunque la música esté en pausa.</span>
+                <span class="SsLabel">Girar el disco en pausa</span>
+                <span class="SsDesc">Si está activo, el vinilo sigue girando aunque pauses. Solo estético.</span>
             </div>
             <div class="SsCtrl">
                 <label class="SsTg">
@@ -631,8 +631,8 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
 
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Volumen</span>
-                <span class="SsDesc">Nivel de sonido de la música de fondo (se guarda en tu personalización, no en el widget).</span>
+                <span class="SsLabel">Volumen de fondo</span>
+                <span class="SsDesc">Se guarda en tu personalización y se sincroniza con el reproductor en vivo.</span>
             </div>
             <div class="SsCtrl">
                 <div class="SsVol">
@@ -653,8 +653,8 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
 
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Añadir audio</span>
-                <span class="SsDesc">Se guarda en <code>cache/audio</code> y se registra en launcher_assets.json. Máximo {{ MAX_MUSIC_TRACKS }} pistas.</span>
+                <span class="SsLabel">Tus pistas</span>
+                <span class="SsDesc">Se copian a la carpeta interna de audio del launcher. Máximo {{ MAX_MUSIC_TRACKS }} pistas.</span>
             </div>
             <div class="SsCtrl">
                 <button class="SsBtn" :disabled="musicBusy || musicTracks.length >= MAX_MUSIC_TRACKS" @click="onPickMusic">
@@ -693,8 +693,8 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Tipografía principal</span>
-                <span class="SsDesc">Títulos y elementos destacados.</span>
+                <span class="SsLabel">Fuente de títulos</span>
+                <span class="SsDesc">La que ves en encabezados, botones y cifras (por defecto Lexend).</span>
             </div>
             <div class="SsCtrl">
                 <select class="SsSel" v-model="fontPrimary" @change="onFontChange('primary')">
@@ -704,8 +704,8 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Tipografía secundaria</span>
-                <span class="SsDesc">Textos y descripciones.</span>
+                <span class="SsLabel">Fuente de textos</span>
+                <span class="SsDesc">La de párrafos y descripciones (por defecto Inter: muy legible en chico).</span>
             </div>
             <div class="SsCtrl">
                 <select class="SsSel" v-model="fontSecondary" @change="onFontChange('secundary')">
@@ -715,15 +715,15 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
-                <span class="SsLabel">Color de letra principal</span>
-                <span class="SsDesc">Color de los títulos y elementos destacados.</span>
+                <span class="SsLabel">Color de títulos</span>
+                <span class="SsDesc">Aplica a encabezados y destacados.</span>
             </div>
             <ColorField v-model="fontPrimaryColor" :recents="recentColors" @update:model-value="save" />
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Tamaño de letra principal</span>
-                <span class="SsDesc">Porcentaje respecto al tamaño original.</span>
+                <span class="SsLabel">Tamaño de títulos</span>
+                <span class="SsDesc">Escala de 50% a 200% sobre el tamaño base.</span>
             </div>
             <div class="SsCtrl">
                 <div class="SsStep">
@@ -735,15 +735,15 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
-                <span class="SsLabel">Color de letra secundaria</span>
-                <span class="SsDesc">Color de los textos y descripciones.</span>
+                <span class="SsLabel">Color de textos</span>
+                <span class="SsDesc">Aplica a párrafos y descripciones.</span>
             </div>
             <ColorField v-model="fontSecondaryColor" :recents="recentColors" @update:model-value="save" />
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Tamaño de letra secundaria</span>
-                <span class="SsDesc">Porcentaje respecto al tamaño original.</span>
+                <span class="SsLabel">Tamaño de textos</span>
+                <span class="SsDesc">Escala de 50% a 200% sobre el tamaño base.</span>
             </div>
             <div class="SsCtrl">
                 <div class="SsStep">
@@ -755,8 +755,8 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         </div>
         <div class="SsRow">
             <div class="SsInfo">
-                <span class="SsLabel">Fuentes personalizadas</span>
-                <span class="SsDesc">Importa tus propias tipografías para personalizar el launcher.</span>
+                <span class="SsLabel">Tus propias fuentes</span>
+                <span class="SsDesc">Importá archivos .ttf/.otf y usalos como fuente del launcher.</span>
             </div>
             <div class="SsCtrl">
                 <button class="SsBtn SsBtnPrimary" @click="openFontManager">
@@ -774,85 +774,85 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
-                <span class="SsLabel">Barra lateral</span>
-                <span class="SsDesc">Color de la barra lateral izquierda.</span>
+                <span class="SsLabel">Menú lateral</span>
+                <span class="SsDesc">La barra de navegación de la izquierda (acepta transparencia).</span>
             </div>
             <ColorField v-model="colorSidebar" :recents="recentColors" preview @update:model-value="save" @preview="(v: string) => onPreviewColor('sidebar', v)" />
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
-                <span class="SsLabel">Modal</span>
-                <span class="SsDesc">Fondo de las ventanas modales.</span>
+                <span class="SsLabel">Ventanas</span>
+                <span class="SsDesc">Fondo de ventanas y diálogos.</span>
             </div>
             <ColorField v-model="colorModal" :recents="recentColors" @update:model-value="save" />
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
-                <span class="SsLabel">Bordes de modales</span>
-                <span class="SsDesc">Bordes de las ventanas modales.</span>
+                <span class="SsLabel">Borde de ventanas</span>
+                <span class="SsDesc">El contorno de ventanas y diálogos.</span>
             </div>
             <ColorField v-model="colorBorderModal" :recents="recentColors" @update:model-value="save" />
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
-                <span class="SsLabel">Bordes generales</span>
-                <span class="SsDesc">Bordes de tarjetas y elementos en general.</span>
+                <span class="SsLabel">Borde de tarjetas</span>
+                <span class="SsDesc">Contorno de tarjetas, listas y campos.</span>
             </div>
             <ColorField v-model="colorBorder" :recents="recentColors" preview @update:model-value="save" @preview="(v: string) => onPreviewColor('border', v)" />
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
-                <span class="SsLabel">Progreso de descarga</span>
-                <span class="SsDesc">Color de la barra y del círculo de progreso al descargar.</span>
+                <span class="SsLabel">Barra de progreso</span>
+                <span class="SsDesc">Barras y anillos de progreso de las descargas.</span>
             </div>
             <ColorField v-model="colorProgress" :recents="recentColors" @update:model-value="save" />
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
                 <span class="SsLabel">Error</span>
-                <span class="SsDesc">Errores, acciones destructivas y botones de peligro.</span>
+                <span class="SsDesc">Mensajes de error y botones destructivos (ej. borrar).</span>
             </div>
             <ColorField v-model="colorError" :recents="recentColors" @update:model-value="save" />
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
                 <span class="SsLabel">Éxito</span>
-                <span class="SsDesc">Confirmaciones, listo y estados positivos.</span>
+                <span class="SsDesc">Confirmaciones y estados OK (ej. descarga completada).</span>
             </div>
             <ColorField v-model="colorSuccess" :recents="recentColors" @update:model-value="save" />
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
                 <span class="SsLabel">Etiquetas</span>
-                <span class="SsDesc">Etiquetas y badges informativos.</span>
+                <span class="SsDesc">Insignias y etiquetas (ej. Fabric, release).</span>
             </div>
             <ColorField v-model="colorTag" :recents="recentColors" @update:model-value="save" />
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
                 <span class="SsLabel">Aviso</span>
-                <span class="SsDesc">Advertencias y avisos.</span>
+                <span class="SsDesc">Advertencias (ej. poco espacio en disco).</span>
             </div>
             <ColorField v-model="colorWarning" :recents="recentColors" @update:model-value="save" />
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
-                <span class="SsLabel">Botón de jugar</span>
-                <span class="SsDesc">Color del botón principal de jugar en la pantalla de inicio.</span>
+                <span class="SsLabel">Botón Jugar</span>
+                <span class="SsDesc">El botón grande de la pantalla principal.</span>
             </div>
             <ColorField v-model="colorPlayButton" :recents="recentColors" @update:model-value="save" />
         </div>
         <div class="SsColorRow">
             <div class="SsInfo">
-                <span class="SsLabel">Botones principales</span>
-                <span class="SsDesc">Color de los botones primarios de la interfaz.</span>
+                <span class="SsLabel">Botones de acción</span>
+                <span class="SsDesc">Botones destacados como Guardar, Crear o Descargar.</span>
             </div>
             <ColorField v-model="colorButtonPrimary" :recents="recentColors" @update:model-value="save" />
         </div>
         <div class="SsRow PsColorHead">
             <div class="SsInfo">
-                <span class="SsLabel">Vista previa</span>
-                <span class="SsDesc">Así se verán los colores semánticos en la interfaz.</span>
+                <span class="SsLabel">Muestra de colores</span>
+                <span class="SsDesc">Cómo se ven éxito, aviso, error y etiquetas con tus colores.</span>
             </div>
         </div>
         <div class="PsExamples">
@@ -865,8 +865,8 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
         </div>
         <div class="PsPreviewRow">
             <div class="SsInfo">
-                <span class="SsLabel">Vista previa completa</span>
-                <span class="SsDesc">Abre el launcher tal y como se verá con tus colores actuales.</span>
+                <span class="SsLabel">Probar en vivo</span>
+                <span class="SsDesc">Ves el launcher real con tus colores antes de guardar.</span>
             </div>
             <div class="SsCtrl">
                 <button class="SsBtn SsBtnPrimary" @click="openPreview">

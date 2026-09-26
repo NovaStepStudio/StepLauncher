@@ -7,7 +7,7 @@ export interface SectionConfig {
 </script>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { IconX, IconSettings } from '@tabler/icons-vue';
 import { useAppVersion } from '@/Common/Composables/useAppVersion';
 import { previewColorFieldId } from './Colorfield';
@@ -32,6 +32,17 @@ const defaultSections: SectionConfig[] = [];
 const mergedSections = computed(() => props.sections ?? defaultSections);
 const activeIndex = ref(0);
 const activeSection = computed(() => mergedSections.value[activeIndex.value] ?? null);
+const contentRef = ref<HTMLElement | null>(null);
+
+// Al cambiar de sección (o abrir el modal), el contenido vuelve arriba para
+// no dejar al usuario a mitad de la sección anterior.
+function scrollContentTop() {
+    nextTick(() => {
+        contentRef.value?.scrollTo({ top: 0 });
+    });
+}
+
+watch(activeIndex, () => scrollContentTop());
 
 watch(
     () => props.visible,
@@ -44,6 +55,7 @@ watch(
             const idx = mergedSections.value.findIndex((s) => s.name === props.initialSection);
             if (idx >= 0) activeIndex.value = idx;
         }
+        scrollContentTop();
     }
 );
 
@@ -91,7 +103,7 @@ function onOverlayClick(e: MouseEvent) {
                             </div>
                             <span class="SettingsModal_Version">{{ appName }} v{{ appVersion }}</span>
                         </aside>
-                        <main class="SettingsModal_Content">
+                        <main ref="contentRef" class="SettingsModal_Content">
                             <Transition name="SettingsModal_Section" mode="out-in">
                                 <KeepAlive>
                                     <component

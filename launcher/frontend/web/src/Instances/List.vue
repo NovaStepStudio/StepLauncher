@@ -4,6 +4,7 @@ import {
     IconPlus, IconStar, IconStarFilled, IconDeviceGamepad, IconPhoto, IconSettings,
     IconDots, IconTrash, IconPencil, IconX, IconClock, IconFolder,
     IconCopy, IconSearch, IconBox, IconPin, IconPinFilled, IconDownload,
+    IconLoader2, IconPlayerStop, IconEye, IconEyeOff, IconAlertTriangle, IconCheck,
 } from '@tabler/icons-vue';
 import {
     instances,
@@ -25,17 +26,23 @@ import {
     loaderDlStateText,
     isInstanceBusy,
     isInstanceVerifying,
+    provisioning,
+    loadProvisioning,
+    contentDls,
+    cancelContentDownload,
+    failedContent,
+    dismissFailedContent,
 } from './Store';
 import { loadLocal } from '@/Common/Stores/Ui';
 import { isOffline } from '@/Common/Stores/Connectivity';
 import OfflineBadge from '@/Common/Components/OfflineBadge.vue';
 
-import iconVanilla from '../../assets/icons/minecraft.png';
-import iconFabric from '../../assets/icons/fabric.png';
-import iconForge from '../../assets/icons/forge.png';
-import iconNeoForge from '../../assets/icons/neoforge.png';
-import iconQuilt from '../../assets/icons/quilt.png';
-import iconLegacyFabric from '../../assets/icons/legacyfabric.png';
+import iconVanilla from '../../assets/icons/minecraft.webp';
+import iconFabric from '../../assets/icons/fabric.webp';
+import iconForge from '../../assets/icons/forge.webp';
+import iconNeoForge from '../../assets/icons/neoforge.webp';
+import iconQuilt from '../../assets/icons/quilt.webp';
+import iconLegacyFabric from '../../assets/icons/legacyfabric.webp';
 
 const LOADER_ICONS: Record<string, string> = {
     vanilla: iconVanilla,
@@ -74,6 +81,10 @@ const assetUrls = ref<Record<string, { icon?: string; banner?: string }>>({});
 const search = ref('');
 const filter = ref<'all' | 'fav' | 'pin'>('all');
 const groupFilter = ref('');
+// Las "Creando…" se pueden ocultar de la rejilla sin cancelarlas.
+const hideCreating = ref(false);
+
+const failedList = computed(() => Object.values(failedContent.value).sort((a, b) => b.at - a.at));
 
 const groups = computed(() =>
     [...new Set(instances.value.map((i) => i.group).filter(Boolean))]
@@ -152,6 +163,21 @@ async function cancelDl(name: string) {
     await cancelDownload(name);
 }
 
+function provProgress(p: { sessionId: string }): { text: string; pct: number } {
+    const s = contentDls.value[p.sessionId];
+    if (!s) return { text: 'Preparando…', pct: 0 };
+    const total = s.total > 0 ? s.total : 0;
+    const pct = total > 0 ? Math.min(100, Math.round((s.progress / total) * 100)) : 0;
+    const text = s.message || 'Creando la instancia…';
+    return { text, pct };
+}
+
+async function cancelProv(sessionId: string) {
+    if (!sessionId) return;
+    await cancelContentDownload(sessionId);
+    await loadProvisioning();
+}
+
 async function loadAllDetails() {
     for (const inst of instances.value) void loadDetails(inst.name);
 }
@@ -164,6 +190,7 @@ onMounted(() => {
     // Si el padre ya cargó la lista antes de montar este hijo (reapertura),
     // cargar los detalles de las tarjetas inmediatamente.
     if (instances.value.length) void loadAllDetails();
+    void loadProvisioning();
 });
 
 // Cuando la lista de instancias cambie (primera carga perezosa), hidratar detalles
@@ -206,7 +233,7 @@ onUnmounted(() => {
             </div>
         </header>
 
-        <div class="InstView_Filters" v-if="totalCount">
+        <div class="InstView_Filters" v-if="totalCount || provisioning.length">
             <div class="InstView_FilterChips">
                 <button class="InstView_FilterChip" :class="{ on: filter === 'all' }" @click="filter = 'all'">
                     Todas
@@ -217,6 +244,15 @@ onUnmounted(() => {
                 <button class="InstView_FilterChip" :class="{ on: filter === 'pin' }" @click="filter = 'pin'">
                     <IconPin stroke="2" /> Fijadas <em>{{ pinsCount }}</em>
                 </button>
+                <button
+                    v-if="provisioning.length"
+                    class="InstView_FilterChip"
+                    :class="{ on: !hideCreating }"
+                    :title="hideCreating ? 'Mostrar las que se están creando' : 'Ocultar las que se están creando (siguen en curso)'"
+                    @click="hideCreating = !hideCreating"
+                >
+                    <component :is="hideCreating ? IconEyeOff : IconEye" stroke="2" /> Creando <em>{{ provisioning.length }}</em>
+                </button>
             </div>
             <select v-if="groups.length" class="SsSel InstView_GroupSel" v-model="groupFilter">
                 <option value="">Todos los grupos</option>
@@ -224,9 +260,9 @@ onUnmounted(() => {
             </select>
         </div>
 
-        <p v-if="loadingList && !sortedInstances.length" class="InstView_Empty">Cargando instancias…</p>
+        <p v-if="loadingList && !sortedInstances.length && !provisioning.length && !failedList.length" class="InstView_Empty">Cargando instancias…</p>
 
-        <div v-else-if="!sortedInstances.length" class="InstView_EmptyCard">
+        <div v-else-if="!sortedInstances.length && !provisioning.length && !failedList.length" class="InstView_EmptyCard">
             <span class="InstView_EmptyIcon"><IconBox stroke="1.4" /></span>
             <b class="InstView_EmptyTitle">Aún no tienes instancias</b>
             <p class="InstView_EmptyText">
@@ -247,11 +283,77 @@ onUnmounted(() => {
             </span>
         </div>
 
-        <p v-else-if="!filtered.length" class="InstView_Empty">
+        <p v-else-if="!filtered.length && !provisioning.length && !failedList.length" class="InstView_Empty">
             No hay instancias que coincidan con «{{ search }}».
         </p>
 
         <div v-else class="InstView_Grid">
+            <!-- En creación por modpack: parte de la rejilla, bloqueada (sin
+                 abrir, fijar, editar ni jugar hasta estar lista). Compacta y
+                 sin banner. Se puede ocultar con el filtro sin cancelarla. -->
+            <template v-if="!hideCreating">
+                <article
+                    v-for="p in provisioning"
+                    :key="'prov-' + p.name"
+                    class="InstCard InstCardProv InstCardMini"
+                    :title="`${p.title} se está creando y aún no está lista: no se puede abrir ni modificar`"
+                >
+                    <div class="InstCard_Body">
+                        <div class="InstCard_Line">
+                            <span class="InstCard_Icon">
+                                <img v-if="p.iconUrl" :src="p.iconUrl" alt="" />
+                                <IconLoader2 v-else class="spin" stroke="2" />
+                            </span>
+                            <div class="InstCard_Titles">
+                                <span class="InstCard_Title">{{ p.title }}</span>
+                                <span class="InstCard_Sub">
+                                    <span class="InstCardProv_Lock">
+                                        <IconLoader2 class="spin" stroke="2" /> Creando…
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                        <p class="InstCardProv_Msg" :title="provProgress(p).text">{{ provProgress(p).text }}</p>
+                        <div class="InstCardProv_Bar">
+                            <span :style="{ width: provProgress(p).pct + '%' }" />
+                        </div>
+                        <div class="InstCardProv_Actions">
+                            <button class="SsBtn" title="Cancelar la creación" @click="cancelProv(p.sessionId)">
+                                <IconPlayerStop stroke="2" /> Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            </template>
+            <!-- Fallos de instalación: siempre visibles hasta descartarlos,
+                 para que ningún error pase en silencio. -->
+            <article
+                v-for="f in failedList"
+                :key="'fail-' + f.sessionId"
+                class="InstCard InstCardFail"
+                :title="`Falló la instalación de ${f.label}`"
+            >
+                <div class="InstCard_Body">
+                    <div class="InstCard_Line">
+                        <span class="InstCard_Icon">
+                            <img v-if="f.iconUrl" :src="f.iconUrl" alt="" />
+                            <IconAlertTriangle v-else stroke="2" />
+                        </span>
+                        <div class="InstCard_Titles">
+                            <span class="InstCard_Title">{{ f.label }}</span>
+                            <span class="InstCard_Sub">
+                                <span class="InstCardFail_Lock">No se pudo instalar</span>
+                            </span>
+                        </div>
+                    </div>
+                    <p class="InstCardProv_Msg InstCardFail_Msg" :title="f.error">{{ f.error }}</p>
+                    <div class="InstCardProv_Actions">
+                        <button class="SsBtn" title="Descartar este aviso" @click="dismissFailedContent(f.sessionId)">
+                            <IconCheck stroke="2" /> Entendido
+                        </button>
+                    </div>
+                </div>
+            </article>
             <article
                 v-for="inst in filtered"
                 :key="inst.name"

@@ -153,6 +153,7 @@ function openWidget() {
     const d = allActiveDownloads.value[0];
     if (!d) return;
     if (d.kind === 'version') installOpen.value = true;
+    else if (d.kind === 'mod') openMods();
     else openInstances();
 }
 
@@ -360,7 +361,7 @@ onUnmounted(() => {
                 <div class="VersionSelected" @click="versionsOpen = true" title="Elegir versión o perfil">
                     <div class="ImageVersion">
                         <img v-if="selectedProfile && profiles[selectedProfile]?.icon" :src="profiles[selectedProfile]?.icon" alt="" loading="lazy" decoding="async" fetchpriority="high">
-                        <img v-else src="../assets/icons/minecraft.png" loading="lazy" decoding="async" fetchpriority="high">
+                        <img v-else src="../assets/icons/minecraft.webp" loading="lazy" decoding="async" fetchpriority="high">
                     </div>
                     <div class="InfoVersion">
                         <p>Version {{ selectedProfile ? `Perfil • ${selectedProfile}` : 'Seleccionada' }} :</p>
@@ -399,7 +400,7 @@ onUnmounted(() => {
                     <div class="UserCard" @click="toggleUserMenu">
                         <div class="Avatar">
                             <img v-if="accountAvatars[selectedAccountId]" :src="accountAvatars[selectedAccountId]" alt="" loading="lazy" decoding="async" fetchpriority="low">
-                            <img v-else src="../assets/not_found/avatar_not_found.png" alt="" loading="lazy" decoding="async" fetchpriority="low">
+                            <img v-else src="../assets/not_found/avatar_not_found.webp" alt="" loading="lazy" decoding="async" fetchpriority="low">
                         </div>
                         <div class="Username">
                             <h1>{{ selectedLabel.name }}</h1>

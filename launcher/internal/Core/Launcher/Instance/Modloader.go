@@ -1,6 +1,7 @@
 package instance
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,8 +17,20 @@ import (
 // la instalación; el progreso se emite con los eventos modloader_* y el
 // sessionId correspondiente.
 func (m *InstanceManager) InstallModLoader(name, loader, loaderVersion, mcVersion string) (string, error) {
-	if err := m.assertUsable(name); err != nil {
-		return "", err
+	return m.installModLoader(name, loader, loaderVersion, mcVersion, false)
+}
+
+// InstallModLoaderSystem instala saltando el bloqueo de provisioning. Solo la
+// usa el flujo interno del motor para la instancia en creación.
+func (m *InstanceManager) InstallModLoaderSystem(name, loader, loaderVersion, mcVersion string) (string, error) {
+	return m.installModLoader(name, loader, loaderVersion, mcVersion, true)
+}
+
+func (m *InstanceManager) installModLoader(name, loader, loaderVersion, mcVersion string, system bool) (string, error) {
+	if !system {
+		if err := m.assertUsable(name); err != nil {
+			return "", err
+		}
 	}
 	if m.mlOrchestrator == nil {
 		return "", fmt.Errorf("modloader engine not available")
@@ -60,7 +73,8 @@ func (m *InstanceManager) InstallModLoader(name, loader, loaderVersion, mcVersio
 }
 
 // InstalledModLoader devuelve el estado del modloader instalado en la instancia
-// (nil si no hay ninguno).
+// (nil, nil si no hay ninguno: "sin loader" es un estado normal, no un error,
+// para que el binding no registre fallos espurios en el log).
 func (m *InstanceManager) InstalledModLoader(name string) (*modloader.InstalledLoader, error) {
 	if m.mlOrchestrator == nil {
 		return nil, fmt.Errorf("modloader engine not available")
@@ -69,7 +83,14 @@ func (m *InstanceManager) InstalledModLoader(name string) (*modloader.InstalledL
 	if err != nil {
 		return nil, err
 	}
-	return m.mlOrchestrator.LoadState(instPath)
+	st, err := m.mlOrchestrator.LoadState(instPath)
+	if err != nil {
+		if errors.Is(err, modloader.ErrNoLoaderState) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return st, nil
 }
 
 // RemoveModLoaderState borra el estado del modloader de la instancia sin tocar

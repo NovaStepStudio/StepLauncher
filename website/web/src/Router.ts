@@ -5,6 +5,7 @@ import AboutIndex from './About/Index.vue';
 import FaqIndex from './Faq/Index.vue';
 import ChangelogIndex from './Changelog/Index.vue';
 import BrandingIndex from './Branding/Index.vue';
+import CreditsIndex from './Credits/Index.vue';
 import PrivacyIndex from './Privacy/Index.vue';
 import TermsIndex from './Terms/Index.vue';
 import AuthIndex from './Auth/Index.vue';
@@ -65,6 +66,12 @@ const SEO_PRIVACY: SeoData = {
     description: 'Qué datos guarda StepLauncher, para qué los usa y cómo pedir que se borren.',
     image: DEFAULT_IMAGE,
     url: `${SITE_URL}/privacy`,
+};
+const SEO_CREDITS: SeoData = {
+    title: 'Créditos a Terceros - StepLauncher',
+    description: 'Tipografías, librerías y herramientas open source que hacen posible StepLauncher: Inter, Fredoka, Lexend, Vue, Wails3 y más.',
+    image: DEFAULT_IMAGE,
+    url: `${SITE_URL}/credits`,
 };
 const SEO_TERMS: SeoData = {
     title: 'Términos y condiciones - StepLauncher',
@@ -164,6 +171,7 @@ const Router = createRouter({
         { path: '/faq', name: 'faq', component: FaqIndex, meta: { seo: SEO_FAQ } },
         { path: '/changelog', name: 'changelog', component: ChangelogIndex, meta: { seo: SEO_CHANGELOG } },
         { path: '/branding', name: 'branding', component: BrandingIndex, meta: { seo: SEO_BRANDING } },
+        { path: '/credits', name: 'credits', component: CreditsIndex, meta: { seo: SEO_CREDITS } },
         { path: '/privacy', name: 'privacy', component: PrivacyIndex, meta: { seo: SEO_PRIVACY } },
         { path: '/terms', name: 'terms', component: TermsIndex, meta: { seo: SEO_TERMS } },
         { path: '/login', redirect: { path: '/auth', query: { tab: 'login' } } },

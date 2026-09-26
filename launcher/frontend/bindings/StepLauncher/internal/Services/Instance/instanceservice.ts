@@ -74,6 +74,14 @@ export function ListInstances(): $CancellablePromise<(engine$0.InstanceInfo | nu
     return $Call.ByID(1000038674);
 }
 
+/**
+ * ListProvisioning devuelve las instancias en creación por modpacks (ocultas
+ * de ListInstances hasta estar al 100%).
+ */
+export function ListProvisioning(): $CancellablePromise<(engine$0.ProvisionInfo | null)[] | null> {
+    return $Call.ByID(2356541939);
+}
+
 export function OpenInstanceFolder(name: string): $CancellablePromise<void> {
     return $Call.ByID(3425812745, name);
 }

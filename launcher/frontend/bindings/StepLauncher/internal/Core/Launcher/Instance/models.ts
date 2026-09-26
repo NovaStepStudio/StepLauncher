@@ -157,6 +157,17 @@ export interface InstanceVerifyProgress {
     "error": string;
 }
 
+/**
+ * ProvisionInfo es la vista pública para las tarjetas "Creando…" del panel.
+ */
+export interface ProvisionInfo {
+    "name": string;
+    "title": string;
+    "iconUrl": string;
+    "sessionId": string;
+    "startedAt": string;
+}
+
 export interface UpdateMetadataReq {
     "title"?: string;
     "description"?: string;

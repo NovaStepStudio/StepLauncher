@@ -87,11 +87,11 @@ function formatDate(unix: number): string {
 }
 
 const colorModeOptions = [
-    { value: 'vibrant', label: 'Vibrante', desc: 'Colores más vivos de la carátula' },
-    { value: 'dominant', label: 'Dominante', desc: 'Color principal de la carátula' },
+    { value: 'vibrant', label: 'Vibrante', desc: 'El tono más vivo de la carátula' },
+    { value: 'dominant', label: 'Dominante', desc: 'El color que más aparece' },
     { value: 'muted', label: 'Suave', desc: 'Tonos apagados y elegantes' },
-    { value: 'least', label: 'Sutil', desc: 'Color menos saturado' },
-    { value: 'random', label: 'Aleatorio', desc: 'Color diferente cada vez' },
+    { value: 'least', label: 'Sutil', desc: 'El tono más apagado' },
+    { value: 'random', label: 'Aleatorio', desc: 'Un tono distinto en cada tarjeta' },
 ] as const;
 
 const coverStyleOptions = [
@@ -243,7 +243,7 @@ async function save(shouldRescan = false) {
         // SMTC: notificar cambio para que PlayerStore y MusicStore se coordinen
         window.dispatchEvent(new CustomEvent('stl:smtc-source-changed', { detail: smtcSource.value }));
         localStorage.setItem('stl_smtc_source', smtcSource.value);
-        setMsg(musicFolders.value.length ? `Guardado ${musicFolders.value.length} carpeta(s)` : 'Configuración guardada');
+        setMsg(musicFolders.value.length ? `Biblioteca guardada (${musicFolders.value.length} carpeta(s))` : 'Configuración de música guardada');
         if (shouldRescan && (musicFolders.value.length || musicFolder.value.trim())) {
             void loadLocalLibrary();
             window.dispatchEvent(new CustomEvent('stl:music-folder-changed'));
@@ -253,7 +253,7 @@ async function save(shouldRescan = false) {
         }
         await refreshStats();
     } catch (e: any) {
-        setMsg(e?.message ?? 'No se pudo guardar', false);
+        setMsg(e?.message ?? 'No se pudo guardar la configuración de música', false);
     }
 }
 
@@ -269,7 +269,7 @@ async function pickFolder() {
         await save(true);
         void scan();
     } catch (e: any) {
-        setMsg(e?.message ?? 'No se pudo elegir carpeta', false);
+        setMsg(e?.message ?? 'No se pudo elegir la carpeta.', false);
     }
 }
 
@@ -292,9 +292,9 @@ async function removeFolder(folder: string) {
             await refreshStats();
             void loadLocalLibrary();
         }
-        setMsg(`Carpeta quitada`);
+        setMsg('Carpeta quitada de la biblioteca.');
     } catch (e: any) {
-        setMsg(e?.message ?? 'No se pudo quitar', false);
+        setMsg(e?.message ?? 'No se pudo quitar la carpeta.', false);
     }
 }
 
@@ -302,7 +302,7 @@ async function scan() {
     // PROHIBIDO: nunca usar carpeta por defecto — solo escanea carpetas explícitas del usuario
     const hasMulti = musicFolders.value.length > 0;
     if (!hasMulti && !musicFolder.value) {
-        setMsg('Elige una carpeta primero', false);
+        setMsg('Primero añadí una carpeta de música.', false);
         return;
     }
     scanning.value = true;
@@ -314,7 +314,7 @@ async function scan() {
             list = await ScanMusicFolder(musicFolder.value);
         }
         foundCount.value = Array.isArray(list) ? list.length : (libraryStats.value.totalTracks || 0);
-        setMsg(`Escaneo completado: ${foundCount.value} pistas`);
+        setMsg(`Escaneo listo: ${foundCount.value} pistas en la biblioteca`);
         await refreshStats();
         void loadLocalLibrary();
         window.dispatchEvent(new CustomEvent('stl:music-folder-changed'));
@@ -329,10 +329,10 @@ async function scan() {
     } catch (e: any) {
         const msg = String(e?.message ?? '');
         if (msg.includes('cancelado')) {
-            setMsg('Escaneo cancelado', false);
+            setMsg('Escaneo cancelado: se conserva lo ya indexado.', false);
             await refreshStats();
         } else {
-            setMsg(msg || 'No se pudo escanear', false);
+            setMsg(msg || 'No se pudo escanear la carpeta.', false);
         }
     } finally {
         scanning.value = false;
@@ -346,20 +346,20 @@ async function cancelScan() {
         // El backend pondrá scanning=false en el siguiente poll; optimismo local
         scanning.value = false;
     } catch (e: any) {
-        setMsg(e?.message ?? 'No se pudo cancelar', false);
+        setMsg(e?.message ?? 'No se pudo cancelar el escaneo.', false);
     }
 }
 
 async function rebuild() {
     scanning.value = true;
-    setMsg('Reconstruyendo índice...');
+    setMsg('Reconstruyendo el índice desde cero…');
     try {
         await RebuildMusicIndex();
-        setMsg('Índice reconstruido');
+        setMsg('Índice reconstruido desde cero.');
         await refreshStats();
         void loadLocalLibrary();
     } catch (e: any) {
-        setMsg(e?.message ?? 'Error al reconstruir', false);
+        setMsg(e?.message ?? 'No se pudo reconstruir el índice.', false);
     } finally {
         scanning.value = false;
     }
@@ -367,10 +367,10 @@ async function rebuild() {
 async function clearCache() {
     try {
         const n = await ClearMusicCache();
-        setMsg(`Caché limpiada (${n} entradas)`);
+        setMsg(`Caché limpiada: ${n} entradas liberadas.`);
         await refreshStats();
     } catch (e: any) {
-        setMsg(e?.message ?? 'No se pudo limpiar', false);
+        setMsg(e?.message ?? 'No se pudo limpiar la caché.', false);
     }
 }
 
@@ -392,9 +392,9 @@ async function importPl() {
         const p = await PickPlaylistFile();
         if (!p) return;
         await ImportPlaylistFile(p);
-        setMsg('Lista de reproducción importada');
+        setMsg('Playlist importada a tu biblioteca.');
     } catch (e: any) {
-        setMsg(e?.message ?? 'No se pudo importar', false);
+        setMsg(e?.message ?? 'No se pudo importar la playlist.', false);
     }
 }
 </script>
@@ -439,12 +439,12 @@ async function importPl() {
                 <div class="SsStatsGrid">
                     <div class="SsStat"><IconFileMusic :size="14" stroke="2" /><b>{{ libraryStats.totalTracks }}</b><em>pistas indexadas</em></div>
                     <div class="SsStat"><IconFolder :size="14" stroke="2" /><b>{{ libraryStats.totalFolders || musicFolders.length }}</b><em>carpetas</em></div>
-                    <div class="SsStat"><IconDatabase :size="14" stroke="2" /><b>{{ formatBytes(libraryStats.databaseSizeBytes) }}</b><em>índice</em></div>
+                    <div class="SsStat"><IconDatabase :size="14" stroke="2" /><b>{{ formatBytes(libraryStats.databaseSizeBytes) }}</b><em>tamaño del índice</em></div>
                     <div class="SsStat"><IconClock :size="14" stroke="2" /><b>{{ formatDate(libraryStats.lastScanUnix) }}</b><em>último escaneo</em></div>
                 </div>
                 <div class="SsStatsGrid" style="margin-top:0.4rem;">
-                    <div class="SsStat small"><IconPhoto :size="12" stroke="2" /><b>{{ libraryStats.cachedCovers }}</b><em>carátulas</em></div>
-                    <div class="SsStat small"><IconInfoCircle :size="12" stroke="2" /><b>{{ libraryStats.cachedTracks }}</b><em>en caché</em></div>
+                    <div class="SsStat small"><IconPhoto :size="12" stroke="2" /><b>{{ libraryStats.cachedCovers }}</b><em>carátulas guardadas</em></div>
+                    <div class="SsStat small"><IconInfoCircle :size="12" stroke="2" /><b>{{ libraryStats.cachedTracks }}</b><em>pistas en caché</em></div>
                     <div class="SsStat small"><IconAlertCircle :size="12" stroke="2" /><b>{{ libraryStats.missingCovers }}</b><em>sin carátula</em></div>
                     <button class="SsBtn SsBtnSmall" @click="clearCache"><IconTrash :size="12" stroke="2" /> Limpiar caché</button>
                 </div>
@@ -462,14 +462,14 @@ async function importPl() {
                         </div>
                     </div>
                     <div v-else style="padding:0.6rem; border-radius:0.5rem; border:1px dashed color-mix(in srgb, var(--text-primary) 10%, transparent); text-align:center; opacity:0.6; font-size:0.72rem;">
-                        Sin carpetas — añade al menos una
+                        Sin carpetas: añadí al menos una para empezar
                     </div>
                 </div>
             </div>
             <div class="SsTip">
                 <IconInfoCircle :size="12" stroke="2" />
-                <span v-if="foundCount">Último escaneo: {{ foundCount }} archivos. Índice incremental por tamaño/fecha.</span>
-                <span v-else>El escaneo es incremental: solo procesa archivos nuevos o modificados.</span>
+                <span v-if="foundCount">Último escaneo: {{ foundCount }} archivos procesados. El índice es incremental: solo toca lo nuevo o modificado (por tamaño y fecha).</span>
+                <span v-else>El escaneo es incremental: la primera vez tarda, después solo procesa lo nuevo o modificado.</span>
             </div>
         </div>
 
@@ -481,8 +481,8 @@ async function importPl() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel"><IconDisc :size="12" stroke="2" style="margin-right:4px;" /> Estilo de carátula</span>
-                    <span class="SsDesc">Elige entre disco o carátula nítida.</span>
+                    <span class="SsLabel"><IconDisc :size="12" stroke="2" style="margin-right:4px;" /> Forma de la carátula</span>
+                    <span class="SsDesc">Vinilo (disco) o portada cuadrada clásica.</span>
                 </div>
                 <div class="SsCtrl">
                     <select class="SsSel" v-model="coverStyle" @change="() => save()">
@@ -493,8 +493,8 @@ async function importPl() {
 
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel"><IconPhoto :size="12" stroke="2" style="margin-right:4px;" /> Carátula Predominante</span>
-                    <span class="SsDesc">En Ahora suena muestra solo la carátula enorme con título (1rem) y artista (0.65rem). Actívalo para ajustar el tamaño.</span>
+                    <span class="SsLabel"><IconPhoto :size="12" stroke="2" style="margin-right:4px;" /> Carátula gigante en «Ahora suena»</span>
+                    <span class="SsDesc">Muestra solo la portada en grande, con título y artista. Al activarlo podés ajustar su tamaño.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="nowPlayingHuge" @change="() => save()" /><span class="SsTgS"></span></label>
@@ -503,8 +503,8 @@ async function importPl() {
 
             <div v-if="nowPlayingHuge" class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel"><IconPhoto :size="12" stroke="2" style="margin-right:4px;" /> Tamaño de la carátula</span>
-                    <span class="SsDesc">Desliza entre 15 (compacto) y 30 (inmersivo). El mínimo siempre es 3 — se muestra sin unidad “rem”.</span>
+                    <span class="SsLabel"><IconPhoto :size="12" stroke="2" style="margin-right:4px;" /> Tamaño de la carátula gigante</span>
+                    <span class="SsDesc">De 15 (compacto) a 30 (inmersivo). El número es relativo: más alto, más grande.</span>
                 </div>
                 <div class="SsCtrl" style="gap:0.6rem; flex-wrap:nowrap;">
                     <span style="font-size:0.66rem; opacity:0.5; font-weight:600;">15</span>
@@ -527,8 +527,8 @@ async function importPl() {
 
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel"><IconPalette :size="12" stroke="2" style="margin-right:4px;" /> Color de las tarjetas</span>
-                    <span class="SsDesc">Se aplica al fondo de listas de reproducción y filas. Usa la carátula si tiene color.</span>
+                    <span class="SsLabel"><IconPalette :size="12" stroke="2" style="margin-right:4px;" /> Color ambiente de tarjetas</span>
+                    <span class="SsDesc">Tiñe listas y filas con un color extraído de cada carátula.</span>
                 </div>
                 <div class="SsCtrl">
                     <select class="SsSel" v-model="colorMode" @change="() => save()">
@@ -538,8 +538,8 @@ async function importPl() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel"><IconDroplet :size="12" stroke="2" style="margin-right:4px;" /> Opacidad del fondo</span>
-                    <span class="SsDesc">Qué tan visible es el color de la carátula en el fondo del panel Música (el degradado superior). 0 transparente, 100 opaco.</span>
+                    <span class="SsLabel"><IconDroplet :size="12" stroke="2" style="margin-right:4px;" /> Intensidad del fondo ambiente</span>
+                    <span class="SsDesc">Cuánto tiñe la carátula el fondo del panel Música. 0 = apagado, 100 = pleno.</span>
                 </div>
                 <div class="SsCtrl" style="gap:0.6rem;">
                     <input
@@ -558,7 +558,7 @@ async function importPl() {
             <div class="SsRow">
                 <div class="SsInfo">
                     <span class="SsLabel"><IconList :size="12" stroke="2" style="margin-right:4px;" /> Pistas por página</span>
-                    <span class="SsDesc">Para no cargar 1k filas de golpe.</span>
+                    <span class="SsDesc">Cuántas filas carga cada tanda para no trabar la lista (20–100).</span>
                 </div>
                 <div class="SsCtrl">
                     <select class="SsSel" v-model.number="pageSize" @change="() => save()">
@@ -577,8 +577,8 @@ async function importPl() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel"><IconRefresh :size="12" stroke="2" style="margin-right:4px;" /> Re-escanear automáticamente</span>
-                    <span class="SsDesc">Mantén tu biblioteca actualizada sin intervención.</span>
+                    <span class="SsLabel"><IconRefresh :size="12" stroke="2" style="margin-right:4px;" /> Escaneo automático</span>
+                    <span class="SsDesc">Re-indexa tu biblioteca solo, sin que tengas que acordarte.</span>
                 </div>
                 <div class="SsCtrl">
                     <select class="SsSel" v-model="autoScan" @change="() => save()">
@@ -591,8 +591,8 @@ async function importPl() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel"><IconDisc :size="12" stroke="2" style="margin-right:4px;" /> Control multimedia del sistema (SMTC)</span>
-                    <span class="SsDesc">Elige qué música controla Windows: fondo o biblioteca. “Auto” decide según qué esté sonando.</span>
+                    <span class="SsLabel"><IconDisc :size="12" stroke="2" style="margin-right:4px;" /> Teclas multimedia de Windows (SMTC)</span>
+                    <span class="SsDesc">Qué fuente responden play/pausa del teclado: la música de fondo o la biblioteca. Auto sigue a lo que esté sonando.</span>
                 </div>
                 <div class="SsCtrl">
                     <select class="SsSel" v-model="smtcSource" @change="() => save()">
@@ -604,7 +604,7 @@ async function importPl() {
             </div>
             <div class="SsTip">
                 <IconInfoCircle :size="12" stroke="2" />
-                <span>“Cada día” escanea a la misma hora del último escaneo. “Al iniciar” solo si hay carpetas configuradas.</span>
+                <span>«Cada día» repite 24 h después del último escaneo. «Al iniciar» solo trabaja si ya agregaste carpetas.</span>
             </div>
         </div>
 
@@ -615,8 +615,8 @@ async function importPl() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel"><IconUpload :size="12" stroke="2" style="margin-right:4px;" /> Importar lista de reproducción</span>
-                    <span class="SsDesc">Soporta .m3u/.m3u8 y .json. Rutas relativas funcionan.</span>
+                    <span class="SsLabel"><IconUpload :size="12" stroke="2" style="margin-right:4px;" /> Importar playlist (.m3u/.json)</span>
+                    <span class="SsDesc">Trae una lista externa a tu biblioteca. Acepta .m3u, .m3u8 y .json, con rutas relativas o absolutas.</span>
                 </div>
                 <div class="SsCtrl">
                     <button class="SsBtn SsBtnPrimary" @click="importPl"><IconUpload :size="14" stroke="2" /> Importar</button>

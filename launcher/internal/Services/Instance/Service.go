@@ -153,6 +153,15 @@ func (s *InstanceService) ListInstances() []*engine.InstanceInfo {
 	return s.engine.ListInstances()
 }
 
+// ListProvisioning devuelve las instancias en creación por modpacks (ocultas
+// de ListInstances hasta estar al 100%).
+func (s *InstanceService) ListProvisioning() []*engine.ProvisionInfo {
+	if s.engine == nil {
+		return []*engine.ProvisionInfo{}
+	}
+	return s.engine.ListProvisioning()
+}
+
 func (s *InstanceService) OpenInstanceFolder(name string) error {
 	if s.engine == nil {
 		return errors.New("engine no disponible")

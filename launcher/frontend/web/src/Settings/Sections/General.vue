@@ -155,8 +155,8 @@ async function saveLaunchAfterInstall() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Tamaño de todo</span>
-                    <span class="SsDesc">Haz el launcher más grande o más pequeño. También puedes usar Ctrl + y Ctrl -.</span>
+                    <span class="SsLabel">Escala de la interfaz</span>
+                    <span class="SsDesc">Agranda o achica todo el launcher, de 50% a 200%. Atajo rápido: Ctrl + y Ctrl −.</span>
                 </div>
                 <div class="SsCtrl">
                     <div class="SsStep">
@@ -175,8 +175,8 @@ async function saveLaunchAfterInstall() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Esconder el launcher al jugar</span>
-                    <span class="SsDesc">El launcher se esconde mientras juegas y vuelve cuando cierras el juego.</span>
+                    <span class="SsLabel">Ocultar el launcher al jugar</span>
+                    <span class="SsDesc">Minimiza el launcher a la bandeja mientras el juego está abierto y lo restaura al cerrarlo. Ahorra recursos.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="hideLauncher" @change="saveHideLauncher"><span class="SsTgS"></span></label>
@@ -184,8 +184,8 @@ async function saveLaunchAfterInstall() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Mostrar en Discord</span>
-                    <span class="SsDesc">Tus amigos ven que estás jugando. Necesitas tener Discord abierto.</span>
+                    <span class="SsLabel">Estado en Discord (Rich Presence)</span>
+                    <span class="SsDesc">Muestra en tu perfil de Discord qué versión estás jugando. Requiere tener Discord abierto.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="richPresence" @change="saveRichPresence"><span class="SsTgS"></span></label>
@@ -193,8 +193,8 @@ async function saveLaunchAfterInstall() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Abrir el juego al terminar de instalar</span>
-                    <span class="SsDesc">Cuando termina una instalación, empieza a jugar sin tocar nada.</span>
+                    <span class="SsLabel">Jugar automáticamente al terminar de instalar</span>
+                    <span class="SsDesc">Lanza el juego solo cuando una descarga termina. Ideal si instalás versiones pesadas y te alejás.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="launchAfterInstall" @change="saveLaunchAfterInstall"><span class="SsTgS"></span></label>
@@ -205,12 +205,12 @@ async function saveLaunchAfterInstall() {
         <div class="SsGroup">
             <div class="SsGroupHead">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                <span>Efectos</span>
+                <span>Efectos visuales</span>
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Movimiento</span>
-                    <span class="SsDesc">Animaciones suaves al abrir ventanas.</span>
+                    <span class="SsLabel">Animaciones</span>
+                    <span class="SsDesc">Transiciones suaves al abrir y cerrar ventanas. Apagalas si tu PC va justo.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="animations" @change="saveRendimiento"><span class="SsTgS"></span></label>
@@ -218,8 +218,8 @@ async function saveLaunchAfterInstall() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Fondo borroso</span>
-                    <span class="SsDesc">Desenfoque detrás de las ventanas.</span>
+                    <span class="SsLabel">Desenfoque de fondo (blur)</span>
+                    <span class="SsDesc">Aplica blur detrás de las ventanas. Queda lindo, pero usa GPU.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="blur" @change="saveRendimiento"><span class="SsTgS"></span></label>
@@ -227,8 +227,8 @@ async function saveLaunchAfterInstall() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Sombras</span>
-                    <span class="SsDesc">Sombra de las ventanas.</span>
+                    <span class="SsLabel">Sombras de ventanas</span>
+                    <span class="SsDesc">Profundidad bajo ventanas y diálogos. Solo estético.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="shadows" @change="saveRendimiento"><span class="SsTgS"></span></label>
@@ -236,8 +236,8 @@ async function saveLaunchAfterInstall() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Letras con brillo</span>
-                    <span class="SsDesc">Un resplandor suave en el texto.</span>
+                    <span class="SsLabel">Resplandor en el texto</span>
+                    <span class="SsDesc">Un glow sutil sobre títulos y textos para darles relieve.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="textShadow" @change="saveRendimiento"><span class="SsTgS"></span></label>
@@ -246,8 +246,8 @@ async function saveLaunchAfterInstall() {
             <template v-if="textShadow">
                 <div class="SsRow">
                     <div class="SsInfo">
-                        <span class="SsLabel">Cuánto brillo</span>
-                        <span class="SsDesc">Qué tan fuerte es el resplandor.</span>
+                    <span class="SsLabel">Intensidad del resplandor</span>
+                    <span class="SsDesc">De ×0.50 (sutil) a ×2.00 (marcado).</span>
                     </div>
                     <div class="SsCtrl">
                         <div class="SsStep">
@@ -263,12 +263,12 @@ async function saveLaunchAfterInstall() {
         <div class="SsGroup">
             <div class="SsGroupHead">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                <span>Si no estás usando el launcher</span>
+                <span>En tu ausencia</span>
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Cerrar ventanas si no lo usas</span>
-                    <span class="SsDesc">Si te alejas un rato, cierra las ventanas abiertas y vuelve al inicio.</span>
+                    <span class="SsLabel">Cerrar ventanas al ausentarte</span>
+                    <span class="SsDesc">Si no tocás nada por un rato, cierra los paneles abiertos y vuelve al inicio. Tus descargas siguen en curso.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="autoCloseModals" @change="saveIdle"><span class="SsTgS"></span></label>
@@ -277,8 +277,8 @@ async function saveLaunchAfterInstall() {
             <template v-if="autoCloseModals">
                 <div class="SsRow">
                     <div class="SsInfo">
-                        <span class="SsLabel">Cuánto esperar</span>
-                        <span class="SsDesc">Tiempo sin tocar nada antes de cerrar.</span>
+                    <span class="SsLabel">Tiempo de espera</span>
+                    <span class="SsDesc">Minutos de inactividad antes de cerrar las ventanas (1–10).</span>
                     </div>
                     <div class="SsCtrl">
                         <div class="SsStep">
@@ -291,8 +291,8 @@ async function saveLaunchAfterInstall() {
             </template>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Revisar que todo siga igual</span>
-                    <span class="SsDesc">De vez en cuando comprueba que tus colores y letras sigan como los dejaste.</span>
+                    <span class="SsLabel">Verificar la personalización</span>
+                    <span class="SsDesc">Revisa cada cierto tiempo que tus colores y tipografías sigan aplicados, por si algo externo los pisa.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="configCheckEnabled" @change="saveIdle"><span class="SsTgS"></span></label>
@@ -301,8 +301,8 @@ async function saveLaunchAfterInstall() {
             <template v-if="configCheckEnabled">
                 <div class="SsRow">
                     <div class="SsInfo">
-                        <span class="SsLabel">Cada cuánto</span>
-                        <span class="SsDesc">Cada cuánto revisarlo.</span>
+                    <span class="SsLabel">Frecuencia de revisión</span>
+                    <span class="SsDesc">Cada cuántos minutos se hace la comprobación (1–10).</span>
                     </div>
                     <div class="SsCtrl">
                         <div class="SsStep">
@@ -318,12 +318,12 @@ async function saveLaunchAfterInstall() {
         <div class="SsGroup">
             <div class="SsGroupHead">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                <span>Restablecer</span>
+                <span>Zona de peligro</span>
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Volver todo como al inicio</span>
-                    <span class="SsDesc">Borra tus ajustes y los deja como recién instalado.</span>
+                    <span class="SsLabel">Restablecer ajustes de fábrica</span>
+                    <span class="SsDesc">Borra tu configuración y personalización, y deja todo como recién instalado. Tus mundos e instancias no se tocan.</span>
                 </div>
                 <div class="SsCtrl">
                     <button class="SsBtn SsBtnDanger" @click="showResetConfirm = true">
@@ -341,8 +341,8 @@ async function saveLaunchAfterInstall() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Buscar al abrir</span>
-                    <span class="SsDesc">Mira si hay una versión nueva cada vez que abres el launcher.</span>
+                    <span class="SsLabel">Buscar actualizaciones al abrir</span>
+                    <span class="SsDesc">Consulta GitHub cada vez que iniciás el launcher y te avisa si hay versión nueva.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="checkOnStart" @change="saveCheckOnStart"><span class="SsTgS"></span></label>
@@ -350,8 +350,8 @@ async function saveLaunchAfterInstall() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Probar ahora</span>
-                    <span class="SsDesc">Comprueba en este momento si hay algo nuevo.</span>
+                    <span class="SsLabel">Buscar ahora</span>
+                    <span class="SsDesc">Comprueba manualmente si hay una versión nueva disponible.</span>
                 </div>
                 <div class="SsCtrl">
                     <button class="SsBtn SsBtnPrimary" :disabled="updateChecking" @click="checkUpdates">
@@ -366,7 +366,7 @@ async function saveLaunchAfterInstall() {
             <div v-if="showResetConfirm" class="ConfirmOverlay" @click.self="showResetConfirm = false">
                 <div class="ConfirmDialog">
                     <h3>Restablecer todo</h3>
-                    <p>¿Seguro? Se borrarán tus ajustes y no se puede deshacer.</p>
+                    <p>¿Seguro? Se borran tus ajustes y personalización (mundos e instancias a salvo) y no se puede deshacer.</p>
                     <div class="ConfirmActions">
                         <button class="SsBtn" @click="showResetConfirm = false">Cancelar</button>
                         <button class="SsBtn SsBtnDanger" @click="resetConfig">

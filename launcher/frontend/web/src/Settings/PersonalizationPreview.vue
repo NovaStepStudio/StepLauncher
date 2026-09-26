@@ -21,10 +21,8 @@ import {
 import { CLOSE_OVERLAYS_EVENT } from '@/Common/Stores/Idle';
 import { useOverlayEscape } from '@/Common/Composables/useOverlayEscape';
 import { loadLocal, personalization } from '@/Common/Stores/Ui';
-import iconNotFoundVersion from '../../assets/icons/minecraft.png';
-import avatarNotFound from '../../assets/not_found/avatar_not_found.png';
-import chickenImg from '../../assets/decorations/chicken.png';
-import steveAlexImg from '../../assets/decorations/steve_and_alex.png';
+import iconNotFoundVersion from '../../assets/icons/minecraft.webp';
+import avatarNotFound from '../../assets/not_found/avatar_not_found.webp';
 
 const props = defineProps<{
     visible: boolean;

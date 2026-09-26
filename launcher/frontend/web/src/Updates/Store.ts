@@ -327,21 +327,20 @@ export async function checkForUpdates(auto = false) {
     checking.value = true;
     if (!auto) modalVisible.value = true;
 
-    // Intenta Wails updater (github headless) primero
+    // Intenta Wails updater (GitHub directo, headless) primero
     const wailsCheck = (WailsApp as any).WailsCheckForUpdate as (() => Promise<void>) | undefined;
     if (typeof wailsCheck === 'function') {
         try {
             await wailsCheck();
             // el resultado llegará vía eventos wails:updater:*
-            // no retornamos error aquí; el estado lo maneja el bus
-            return;
         } catch (e: any) {
             // fallback a legacy si Wails falla (p.ej. no configurado)
             console.warn('[updater] WailsCheckForUpdate fallo, fallback legacy', e);
         }
     }
 
-    // Fallback legacy Engine.CheckForUpdates
+    // Siempre también el check legacy: es el que resuelve el instalador
+    // en Windows y el enlace de instalación manual en Linux/macOS.
     try {
         await LegacyCheck();
     } catch {
@@ -352,9 +351,26 @@ export async function checkForUpdates(auto = false) {
 }
 
 export async function installUpdate() {
-    // Si hay wailsRelease pendiente, usa flujo Wails headless (Actualizar Ahora)
-    const hasWailsRelease = !!wailsRelease.value || wailsState.value === 'available';
+    // El flujo legacy es el que aplica la actualización de verdad:
+    // en Windows descarga el *-installer.exe, lo ejecuta y cierra el
+    // launcher; en Linux/macOS abre la release para instalación manual.
+    // (El flujo Wails nunca debe instalar: en Windows pondría el
+    // instalador como binario con el swap en caliente.)
+    const info = updateInfo.value;
+    if (info?.hasUpdate) {
+        try {
+            await ApplyUpdate();
+        } catch (_e) {}
+        return;
+    }
+    // Fallback Wails headless solo si el legacy no resolvió actualización
+    // (p.ej. falló su check pero Wails sí detectó release).
+    if (wailsReady.value) {
+        restartUpdate();
+        return;
+    }
     const wailsInstall = (WailsApp as any).WailsInstallUpdate as (() => Promise<void>) | undefined;
+    const hasWailsRelease = !!wailsRelease.value || wailsState.value === 'available';
     if (hasWailsRelease && typeof wailsInstall === 'function') {
         try {
             wailsState.value = 'downloading';

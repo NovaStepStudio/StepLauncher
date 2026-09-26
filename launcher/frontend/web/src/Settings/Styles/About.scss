@@ -1,49 +1,112 @@
 @use '../../Common/Styles/Components' as *;;
 
-.SsHero {
+.SsAboutTop {
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: center;
     gap: .9rem;
-    padding: 1.75rem 2rem 1.5rem;
-
-    p {
-        margin: 0;
-        max-width: 28rem;
-        font-size: .78rem;
-        line-height: 1.6;
-        opacity: .55;
-
-        strong {
-            color: var(--text-primary);
-            text-shadow: var(--text-shadow-primary, none);
-            opacity: .9;
-        }
-    }
+    padding: 1.25rem 2rem 1.5rem;
+    text-align: center;
 }
 
-.SsHeroLogo {
-    width: 6rem;
+.SsBanner {
+    position: relative;
+    width: 100%;
 }
 
-.SsHeroTitle {
+.SsBannerImg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+// Identidad debajo del banner (no encima): el banner ya trae su propio texto
+// y cualquier franja superpuesta lo tapa y genera choques visuales.
+.SsIdentity {
     display: flex;
-    align-items: baseline;
-    gap: .5rem;
+    align-items: center;
+    gap: .8rem;
+    width: 100%;
+    padding: 0 .25rem;
+    text-align: left;
+}
+
+.SsIdentityLogo {
+    width: 2.6rem;
+    flex-shrink: 0;
+}
+
+.SsIdentityMeta {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.SsIdentityName {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
 
     h3 {
         margin: 0;
         font-family: var(--font-primary), Arial, sans-serif;
-        font-size: calc(1.25rem * var(--font-size-primary, 1));
+        font-size: calc(1.05rem * var(--font-size-primary, 1));
         font-weight: 600;
     }
 }
 
-.SsHeroVersion {
-    font-size: .85rem;
-    font-weight: 600;
-    opacity: .4;
+.SsIdentityVersion {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: .12rem .55rem;
+    border-radius: 99rem;
+    background: var(--control-bg);
+    border: 1px solid var(--control-border);
+}
+
+.SsIdentityTag {
+    font-size: .72rem;
+    opacity: .5;
+}
+
+.SsChips {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: .6rem;
+    font-size: .7rem;
+    opacity: .5;
+
+    i {
+        width: 3px;
+        height: 3px;
+        border-radius: 99rem;
+        background: currentColor;
+    }
+}
+
+.SsLead {
+    margin: 0;
+    max-width: 28rem;
+    font-size: .78rem;
+    line-height: 1.6;
+    opacity: .55;
+
+    strong {
+        color: var(--text-primary);
+        text-shadow: var(--text-shadow-primary, none);
+        opacity: .9;
+    }
+}
+
+.SsHeroActions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: .55rem;
+    flex-wrap: wrap;
 }
 
 .SsLinks {
@@ -140,4 +203,52 @@ transition: var(--transition);
 .SsCreditText {
     flex: 1;
     min-width: 0;
+}
+
+.SsCreditCats {
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+    padding: 0 2rem;
+}
+
+.SsCreditCat {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    padding: .7rem .9rem;
+    border-radius: .55rem;
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
+}
+
+.SsCreditCatName {
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.SsCreditCatDesc {
+    font-size: .7rem;
+    line-height: 1.5;
+    opacity: .5;
+}
+
+.SsCreditActions {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: .55rem;
+    padding: 1.1rem 2rem 1.5rem;
+    text-align: center;
+}
+
+.SsCreditNote {
+    flex-basis: 100%;
+    font-size: .68rem;
+    line-height: 1.5;
+    opacity: .45;
+    max-width: 24rem;
+    margin: 0 auto;
 }

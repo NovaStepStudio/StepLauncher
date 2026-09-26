@@ -5,7 +5,8 @@ import { heavyPanel } from '@/Common/Overlays/Store';
 import {
     IconArrowLeft, IconStar, IconStarFilled, IconPencil, IconSettings, IconTrash,
     IconBox, IconX, IconCheck, IconDownload, IconClock, IconDeviceGamepad, IconPhoto,
-    IconFolderOpen, IconHistory, IconInfoCircle, IconPlayerStop,
+    IconFolderOpen, IconHistory, IconInfoCircle, IconPlayerStop, IconPuzzle,
+    IconChevronUp, IconChevronDown,
 } from '@tabler/icons-vue';
 import { ListInstanceScreenshots, RemoveInstanceVersion } from '@wailsjs/StepLauncher/internal/Services/Instance/instanceservice';
 import { ReadLocalFile } from '@wailsjs/StepLauncher/internal/Services/System/systemservice';
@@ -33,13 +34,14 @@ import {
 import { loadLocal } from '@/Common/Stores/Ui';
 import { isOffline } from '@/Common/Stores/Connectivity';
 import OfflineBadge from '@/Common/Components/OfflineBadge.vue';
+import InstanceMods from './InstanceMods.vue';
 
-import iconVanilla from '../../assets/icons/minecraft.png';
-import iconFabric from '../../assets/icons/fabric.png';
-import iconForge from '../../assets/icons/forge.png';
-import iconNeoForge from '../../assets/icons/neoforge.png';
-import iconQuilt from '../../assets/icons/quilt.png';
-import iconLegacyFabric from '../../assets/icons/legacyfabric.png';
+import iconVanilla from '../../assets/icons/minecraft.webp';
+import iconFabric from '../../assets/icons/fabric.webp';
+import iconForge from '../../assets/icons/forge.webp';
+import iconNeoForge from '../../assets/icons/neoforge.webp';
+import iconQuilt from '../../assets/icons/quilt.webp';
+import iconLegacyFabric from '../../assets/icons/legacyfabric.webp';
 
 const LOADER_ICONS: Record<string, string> = {
     vanilla: iconVanilla,
@@ -92,6 +94,8 @@ const d = computed(() => detailOf(props.name));
 const loadingDetail = ref(true);
 const heroIcon = ref('');
 const heroBanner = ref('');
+// Banner comprimible: oculta la imagen para ver más contenido abajo.
+const heroCollapsed = ref(false);
 
 const flash = ref('');
 const flashOk = ref(true);
@@ -115,7 +119,7 @@ watch(
 
 // ---------- Pestañas ----------
 
-type Tab = 'resumen' | 'versiones' | 'capturas';
+type Tab = 'resumen' | 'versiones' | 'mods' | 'capturas';
 const tab = ref<Tab>('resumen');
 
 // ---------- Acciones ----------
@@ -300,7 +304,7 @@ onMounted(() => {
 
     <div v-else class="InstDet">
         <!-- Hero -->
-        <div class="InstDet_Hero" :class="{ hasBanner: heroBanner }">
+        <div class="InstDet_Hero" :class="{ hasBanner: heroBanner, collapsed: heroCollapsed }">
             <img v-if="heroBanner" :src="heroBanner" alt="" class="InstDet_BannerImg" />
             <div class="InstDet_HeroScrim" />
 
@@ -375,6 +379,14 @@ onMounted(() => {
             <button class="InstDet_Close" title="Cerrar" @click="emit('exit')">
                 <IconX stroke="2" />
             </button>
+            <button
+                class="InstDet_Collapse"
+                :title="heroCollapsed ? 'Expandir banner' : 'Comprimir banner'"
+                @click="heroCollapsed = !heroCollapsed"
+            >
+                <IconChevronUp v-if="heroCollapsed" stroke="2" />
+                <IconChevronDown v-else stroke="2" />
+            </button>
 
             <div class="InstDet_HeroMain">
                 <span class="InstDet_Icon">
@@ -443,6 +455,9 @@ onMounted(() => {
             </button>
             <button :class="{ active: tab === 'versiones' }" @click="tab = 'versiones'">
                 <IconBox stroke="2" /> Versiones instaladas <em>{{ d?.meta?.versions?.length ?? 0 }}</em>
+            </button>
+            <button :class="{ active: tab === 'mods' }" @click="tab = 'mods'">
+                <IconPuzzle stroke="2" /> Mods
             </button>
             <button :class="{ active: tab === 'capturas' }" @click="tab = 'capturas'">
                 <IconPhoto stroke="2" /> Capturas
@@ -567,6 +582,11 @@ onMounted(() => {
                     Esta instancia no tiene versiones descargadas aún.
                     Pulsa «Añadir versión» para descargar una.
                 </p>
+            </template>
+
+            <!-- Mods de la instancia -->
+            <template v-else-if="tab === 'mods'">
+                <InstanceMods :name="props.name" />
             </template>
 
             <!-- Capturas -->

@@ -1,0 +1,7 @@
+{
+    "title": "StepLauncher 2.5.0 — Actualización importante",
+    "type": "major",
+    "body": "Culmina el camino de la 2.3.1 y 2.4.1 con el salto a Wails v3: panel de Mods de Modrinth con modpacks que crean su instancia, música reconstruida, tray renovado, arranque trazable, ajustes reorganizados y actualizador directo a GitHub con instalador en Windows.",
+    "date": "2026-09-26",
+    "changelog": "Changelogs/Releases/StepLauncher-2.5.0/StepLauncher-Release-2.5.0.md"
+}

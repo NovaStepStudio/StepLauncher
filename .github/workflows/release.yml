@@ -7,23 +7,29 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Versión a publicar (ej: v2.5.0). Vacío = usa el tag o 2.5.0"
+        description: "Versión a publicar (ej: v2.5.0). Vacío = usa el tag"
         required: false
         default: ""
 
+# Evita que dos ejecuciones peleen por el mismo draft a la vez.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   APP_NAME: steplauncher
 
 jobs:
   # ───────────────────────────────────────────────────────────────
-  # Build matrix: genera binarios nativos por plataforma
+  # Build matrix: genera binarios nativos por plataforma.
+  # Cada job SOLO compila y sube su staging como artifact.
+  # El draft se crea una única vez en el job `draft` (sin carreras).
   # ───────────────────────────────────────────────────────────────
   build:
     name: Build (${{ matrix.name }})
     runs-on: ${{ matrix.platform }}
     permissions:
-      contents: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -36,7 +42,15 @@ jobs:
             build_task: "windows:build"
             package_task: "windows:package"
 
-          # Linux x64 — bin + AppImage/DEB/RPM/AUR (requiere GTK 4.14+ -> ubuntu-24.04)
+          # Windows ARM64 — exe + instalador NSIS (cross-compile Go, sin CGO)
+          - platform: windows-latest
+            name: windows-arm64
+            os: windows
+            arch: arm64
+            build_task: "windows:build"
+            package_task: "windows:package"
+
+          # Linux x64 — bin + AppImage/DEB/RPM/AUR (GTK 4.14+ -> ubuntu-24.04)
           - platform: ubuntu-24.04
             name: linux-amd64
             os: linux
@@ -44,7 +58,15 @@ jobs:
             build_task: "linux:build"
             package_task: "linux:package"
 
-          # macOS Apple Silicon
+          # Linux ARM64 — build nativo en runner ARM (CGO requerido por WebKit)
+          - platform: ubuntu-24.04-arm
+            name: linux-arm64
+            os: linux
+            arch: arm64
+            build_task: "linux:build"
+            package_task: "linux:package"
+
+          # macOS Apple Silicon (nativo)
           - platform: macos-latest
             name: macos-aarch64
             os: darwin
@@ -52,7 +74,7 @@ jobs:
             build_task: "darwin:build"
             package_task: "darwin:package"
 
-          # macOS Intel
+          # macOS Intel (cross-compile con clang universal del runner)
           - platform: macos-latest
             name: macos-x86_64
             os: darwin
@@ -62,30 +84,30 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - name: Setup Go 1.26.4
-        uses: actions/setup-go@v5
+      - name: Setup Go (versión de go.mod)
+        uses: actions/setup-go@v6
         with:
-          go-version: "1.26.4"
+          go-version-file: launcher/go.mod
           cache: true
           cache-dependency-path: launcher/go.sum
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
       - name: Setup Node 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
 
       # Task es el runner de Wails v3 (Taskfile.yml)
       - name: Setup Task
-        uses: arduino/setup-task@v2
+        uses: arduino/setup-task@v3
         with:
           version: 3.x
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -110,9 +132,10 @@ jobs:
           pkg-config --modversion webkitgtk-6.0 || echo "webkitgtk-6.0 no encontrado"
           pkg-config --modversion gtk+-3.0 || echo "gtk3 no encontrado"
           pkg-config --modversion webkit2gtk-4.1 || echo "webkit2gtk-4.1 no encontrado"
-          pkg-config --atleast-version=4.14 gtk4 && echo "✓ GTK 4.14+ OK" || echo "⚠ GTK <4.14 (fallara el build en ubuntu-22.04, usa ubuntu-24.04)"
+          pkg-config --atleast-version=4.14 gtk4 && echo "✓ GTK 4.14+ OK" || echo "⚠ GTK <4.14 (fallara el build, se requiere ubuntu-24.04)"
           pkg-config --exists webkitgtk-6.0 && echo "✓ webkitgtk-6.0 OK" || echo "⚠ webkitgtk-6.0 no encontrado"
           gcc --version | head -n 1
+          uname -m
 
           # FUSE para AppImage (si está disponible)
           sudo apt-get install -y libfuse2 2>/dev/null || sudo apt-get install -y libfuse2t64 2>/dev/null || echo "FUSE no disponible, AppImage puede requerirlo"
@@ -121,7 +144,7 @@ jobs:
         if: matrix.os == 'windows'
         shell: pwsh
         run: |
-          choco install nsis -y
+          choco install nsis -y --no-progress
           $nsisPath = "C:\Program Files (x86)\NSIS"
           echo $nsisPath | Out-File -FilePath $env:GITHUB_PATH -Append
           $env:Path += ";$nsisPath"
@@ -132,25 +155,28 @@ jobs:
             Write-Host "makensis aún no en PATH este step, pero estará disponible en el siguiente via GITHUB_PATH"
           }
 
-      - name: Instalar Wails CLI v3
+      # La versión del CLI se fija desde go.mod: evita derivas de @latest
+      # que rompen el build cuando Wails publica una beta nueva.
+      - name: Instalar Wails CLI v3 (versión de go.mod)
+        working-directory: launcher
         shell: bash
         run: |
-          go install github.com/wailsapp/wails/v3/cmd/wails3@latest
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-          # Disponible también en este step (GITHUB_PATH solo aplica al siguiente)
+          set -e
+          WAILS_VERSION="$(go list -m github.com/wailsapp/wails/v3 | awk '{print $2}')"
+          echo "→ Wails $WAILS_VERSION (según go.mod)"
+          go install "github.com/wailsapp/wails/v3/cmd/wails3@${WAILS_VERSION}"
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
           export PATH="$PATH:$(go env GOPATH)/bin"
-          wails3 version || echo "wails3 instalado, verificando GOPATH/bin"
+          wails3 version
 
       - name: Verificar herramientas
         shell: bash
         run: |
           export PATH="$PATH:$(go env GOPATH)/bin"
-          wails3 version || echo "wails3 no en PATH este step, pero estará en el siguiente via GITHUB_PATH"
+          wails3 version
           task --version
           go version
           bun --version
-          which wails3 || where wails3 2>/dev/null || echo "wails3 path no resuelto aún"
-          ls -lh $(go env GOPATH)/bin/wails3* 2>&1 | head -n 5 || true
 
       # ── Frontend ──
       - name: Instalar dependencias frontend (bun)
@@ -186,148 +212,342 @@ jobs:
           task darwin:package:dmg ARCH=${{ matrix.arch }} || echo "DMG opcional falló (requiere macOS nativo)"
         continue-on-error: true
 
-      - name: Listar artefactos
+      # ── Normalizado: TODOS los assets llevan versión + plataforma ──
+      # El actualizador (internal/Updater) matchea por subcadenas de SO/arq,
+      # así que ningún archivo puede quedar genérico (ej: steplauncher.deb).
+      - name: Normalizar artefactos (versión + plataforma)
         working-directory: launcher
         shell: bash
         run: |
-          echo "=== bin/ ==="
-          ls -lh bin/ 2>&1 || echo "sin bin/"
-          echo "=== build/ ==="
-          ls -lh build/windows/nsis/*.exe 2>&1 | head -n 20 || true
-          ls -lh build/linux/*.desktop 2>&1 | head -n 20 || true
-          echo "=== frontend/dist ==="
-          ls -lh frontend/dist/ 2>&1 | head -n 20 || true
-
-      # ── Renombrado versionado para release ──
-      - name: Renombrar artefactos con versión y plataforma
-        working-directory: launcher
-        shell: bash
-        run: |
+          set -e
           VERSION="${GITHUB_REF_NAME}"
-          if [ -z "$VERSION" ] || [[ "$VERSION" == "main" ]] || [[ "$VERSION" == "develop" ]]; then
+          if [ "$VERSION" = "main" ] || [ "$VERSION" = "develop" ] || [ "$VERSION" = "master" ] || [ -z "$VERSION" ]; then
             VERSION="${{ inputs.version }}"
           fi
           if [ -z "$VERSION" ]; then
-            VERSION="v2.5.0-${{ matrix.name }}"
+            VERSION="v0.0.0-dev.${{ github.run_number }}"
           fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Usando VERSION=$VERSION"
+          [[ "$VERSION" == v* ]] || VERSION="v$VERSION"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Usando VERSION=$VERSION para ${{ matrix.name }}"
 
-          mkdir -p dist-release
+          rm -rf dist-release && mkdir -p dist-release
+          NAME="${{ matrix.name }}"
 
           # Binario principal
           if [ -f "bin/steplauncher" ]; then
-            cp bin/steplauncher "dist-release/steplauncher-${VERSION}-${{ matrix.name }}"
-            echo "✓ binario linux/macos"
+            cp "bin/steplauncher" "dist-release/steplauncher-${VERSION}-${NAME}"
+            echo "✓ binario unix"
           fi
           if [ -f "bin/steplauncher.exe" ]; then
-            cp bin/steplauncher.exe "dist-release/steplauncher-${VERSION}-${{ matrix.name }}.exe"
+            cp "bin/steplauncher.exe" "dist-release/steplauncher-${VERSION}-${NAME}.exe"
             echo "✓ binario windows"
           fi
 
-          # Instaladores Windows
-          for f in bin/*installer*.exe bin/*Installer*.exe; do
+          # Instalador NSIS (sale en bin/ o en build/windows/nsis/, sin versión de fábrica)
+          for f in bin/*installer*.exe bin/*Installer*.exe build/windows/nsis/*installer*.exe build/windows/nsis/*Installer*.exe; do
             [ -f "$f" ] || continue
-            cp "$f" "dist-release/"
-            echo "✓ $f"
+            case "$(basename "$f")" in steplauncher-v*-*.exe) continue ;; esac
+            cp "$f" "dist-release/steplauncher-${VERSION}-${NAME}-installer.exe"
+            echo "✓ instalador NSIS: $f"
           done
 
-          # Paquetes Linux
-          for f in bin/*.deb bin/*.rpm bin/*.AppImage bin/*.pkg.tar.zst; do
+          # Paquetes Linux (todos versionados; antes salían como steplauncher.deb/.rpm/.AppImage sueltos)
+          for f in bin/*.deb; do
             [ -f "$f" ] || continue
-            cp "$f" "dist-release/"
-            echo "✓ $f"
+            cp "$f" "dist-release/steplauncher-${VERSION}-${NAME}.deb"
+            echo "✓ deb: $f"
+          done
+          for f in bin/*.rpm; do
+            [ -f "$f" ] || continue
+            cp "$f" "dist-release/steplauncher-${VERSION}-${NAME}.rpm"
+            echo "✓ rpm: $f"
+          done
+          for f in bin/*.AppImage bin/*.appimage; do
+            [ -f "$f" ] || continue
+            cp "$f" "dist-release/steplauncher-${VERSION}-${NAME}.AppImage"
+            echo "✓ AppImage: $f"
+          done
+          for f in bin/*.pkg.tar.zst; do
+            [ -f "$f" ] || continue
+            cp "$f" "dist-release/steplauncher-${VERSION}-${NAME}.pkg.tar.zst"
+            echo "✓ arch: $f"
           done
 
-          # macOS .app (comprimir)
+          # macOS .app (comprimida) y .dmg versionados
           if [ -d "bin/steplauncher.app" ]; then
-            (cd bin && tar -czf "../dist-release/steplauncher-${VERSION}-${{ matrix.name }}.app.tar.gz" steplauncher.app)
+            (cd bin && tar -czf "../dist-release/steplauncher-${VERSION}-${NAME}.app.tar.gz" steplauncher.app)
             echo "✓ .app tar.gz"
           fi
           if [ -d "bin/Steplauncher.app" ]; then
-            (cd bin && tar -czf "../dist-release/steplauncher-${VERSION}-${{ matrix.name }}.app.tar.gz" Steplauncher.app)
+            (cd bin && tar -czf "../dist-release/steplauncher-${VERSION}-${NAME}.app.tar.gz" Steplauncher.app)
             echo "✓ .app tar.gz (alt)"
           fi
           for f in bin/*.dmg; do
             [ -f "$f" ] || continue
-            cp "$f" "dist-release/"
-            echo "✓ $f"
+            cp "$f" "dist-release/steplauncher-${VERSION}-${NAME}.dmg"
+            echo "✓ dmg: $f"
           done
 
-          # Si no hubo renombrado, copiar todo bin/ tal cual
-          if [ -z "$(ls -A dist-release 2>/dev/null)" ]; then
-            echo "⚠ dist-release vacío, copiando bin/* directo"
-            cp -r bin/* dist-release/ 2>/dev/null || true
+          if [ -z "$(ls -A dist-release)" ]; then
+            echo "❌ dist-release vacío: el build no dejó artefactos"
+            exit 1
           fi
 
           echo "=== dist-release/ ==="
           ls -lh dist-release/
 
       - name: Upload artefacto ${{ matrix.name }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: steplauncher-${{ matrix.name }}-${{ github.sha }}
           path: launcher/dist-release/*
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 7
 
-      # ── Subida directa al draft release (por job) ──
-      # Cada plataforma sube a la misma tag; GitHub fusiona los assets.
-      # Se usa softprops/action-gh-release que es idempotente con draft.
-      - name: Publicar en Draft Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: launcher/dist-release/*
-          draft: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
-          generate_release_notes: true
-          fail_on_unmatched_files: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   # ───────────────────────────────────────────────────────────────
-  # Job agregador opcional: crea/actualiza draft con notas
-  # (por si el workflow se lanza manualmente sin tag)
+  # Draft único: junta las 6 plataformas, genera checksums +
+  # latest.yml/latest.json para el actualizador y crea UN solo draft
+  # presentable con gh CLI (sin carreras entre jobs).
   # ───────────────────────────────────────────────────────────────
   draft:
-    name: Crear Draft Release (manual)
-    if: github.event_name == 'workflow_dispatch' && !startsWith(github.ref, 'refs/tags/v')
+    name: Crear Draft Release
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - name: Descargar todos los artefactos
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: all-dist
           merge-multiple: true
 
-      - name: Listar artefactos agregados
-        run: ls -lhR all-dist | head -n 100
+      - name: Resolver versión y canal
+        id: meta
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
+            TAG="${{ inputs.version }}"
+          fi
+          [[ "$TAG" == v* ]] || TAG="v$TAG"
+          if [[ "$TAG" == *"-"* ]]; then
+            PRERELEASE="true"
+            CANAL="beta 🧪"
+            AVISO="> ⚠️ **Versión de pruebas (beta):** puede contener errores. Si buscas estabilidad, espera a la release final."
+          else
+            PRERELEASE="false"
+            CANAL="estable ✅"
+            AVISO="> ✅ **Versión estable:** recomendada para todos los usuarios."
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
+          {
+            echo "canal<<EOF"
+            echo "$CANAL"
+            echo "EOF"
+            echo "aviso<<EOF"
+            echo "$AVISO"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "TAG=$TAG prerelease=$PRERELEASE"
+          ls -lhR all-dist | head -n 60
 
-      - name: Crear draft prerelease manual
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ inputs.version != '' && inputs.version || format('v0.0.0-dev.{0}', github.run_number) }}
-          name: "StepLauncher ${{ inputs.version != '' && inputs.version || format('DEV #{0}', github.run_number) }}"
-          body: |
-            🛠️ **Build de desarrollo**
-            Compilación manual desde `${{ github.ref_name }}` — run #${{ github.run_number }}.
-
-            Incluye binarios para **Windows**, **Linux** y **macOS** (Apple Silicon + Intel).
-
-            > Generado automáticamente por `release.yml` (workflow_dispatch).
-
-            ## Artefactos
-            - `steplauncher-*.exe` — Windows (exe + instalador NSIS)
-            - `steplauncher-*` — Linux (bin + .deb/.rpm/.AppImage)
-            - `steplauncher-*.app.tar.gz` / `*.dmg` — macOS
-          draft: true
-          prerelease: true
-          files: all-dist/*
-          fail_on_unmatched_files: false
-          generate_release_notes: true
+      # Genera CHECKSUMS-SHA256.txt, latest.json/latest.yml (version, notes,
+      # pub_date, platforms{signature,url,sha256}) y la tabla de descargas.
+      - name: Generar checksums + latest.yml/json + tabla
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          set -e
+          python3 - <<"PYEOF"
+          import base64, datetime, hashlib, json, os
+
+          dist = "all-dist"
+          tag = os.environ["TAG"]
+          short = tag[1:] if tag.startswith("v") else tag
+          repo = os.environ.get("GITHUB_REPOSITORY", "NovaStepStudio/StepLauncher")
+          pub_date = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          base_url = f"https://github.com/{repo}/releases/download/{tag}"
+
+          files = sorted(
+              f for f in os.listdir(dist)
+              if os.path.isfile(os.path.join(dist, f)) and not f.startswith(".")
+          )
+          assert files, "sin artefactos para publicar"
+
+          def plat_key(fname):
+              l = fname.lower()
+              if "windows" in l or l.endswith(".exe"):
+                  plat = "windows"
+              elif "linux" in l or l.endswith((".deb", ".rpm", ".appimage", ".pkg.tar.zst")):
+                  plat = "linux"
+              elif "darwin" in l or "macos" in l or "mac" in l or l.endswith(".dmg") or ".app." in l:
+                  plat = "darwin"
+              else:
+                  plat = "unknown"
+              if "aarch64" in l or "arm64" in l:
+                  arch = "aarch64"
+              elif "amd64" in l or "x86_64" in l or "x64" in l:
+                  arch = "x86_64"
+              else:
+                  arch = "unknown"
+              key = f"{plat}-{arch}"
+              if "-installer." in l or "installer" in l:
+                  key += "-nsis"
+              elif l.endswith(".deb"):
+                  key += "-deb"
+              elif l.endswith(".rpm"):
+                  key += "-rpm"
+              elif l.endswith(".appimage"):
+                  key += "-appimage"
+              elif l.endswith(".pkg.tar.zst"):
+                  key += "-aur"
+              elif l.endswith(".app.tar.gz"):
+                  key += "-app"
+              elif l.endswith(".dmg"):
+                  key += "-dmg"
+              return key
+
+          checksums, platforms, rows = [], {}, []
+          for fname in files:
+              path = os.path.join(dist, fname)
+              size = os.path.getsize(path)
+              with open(path, "rb") as fh:
+                  data = fh.read()
+              sha256 = hashlib.sha256(data).hexdigest()
+              sig = base64.b64encode(hashlib.sha512(data).digest()).decode()
+              checksums.append(f"{sha256}  {fname}")
+              platforms[plat_key(fname)] = {
+                  "signature": sig,
+                  "url": f"{base_url}/{fname}",
+                  "sha256": sha256,
+              }
+              mb = size / (1024 * 1024)
+              rows.append(f"| `{fname}` | {mb:.1f} MB | `{sha256[:12]}…` |")
+
+          with open("all-dist/CHECKSUMS-SHA256.txt", "w", encoding="utf-8") as fh:
+              fh.write("\n".join(checksums) + "\n")
+
+          manifest = {
+              "version": short,
+              "notes": f"StepLauncher {tag}: ver notas completas en la página de la release.",
+              "pub_date": pub_date,
+              "platforms": platforms,
+          }
+          with open("all-dist/latest.json", "w", encoding="utf-8") as fh:
+              json.dump(manifest, fh, indent=2, ensure_ascii=False)
+              fh.write("\n")
+
+          with open("all-dist/latest.yml", "w", encoding="utf-8") as fh:
+              fh.write(f'version: "{short}"\n')
+              fh.write(f'notes: "{manifest["notes"]}"\n')
+              fh.write(f'pub_date: "{pub_date}"\n')
+              fh.write("platforms:\n")
+              for key in sorted(platforms):
+                  p = platforms[key]
+                  fh.write(f"  {key}:\n")
+                  fh.write(f'    signature: "{p["signature"]}"\n')
+                  fh.write(f'    url: "{p["url"]}"\n')
+                  fh.write(f'    sha256: "{p["sha256"]}"\n')
+
+          with open("assets-table.md", "w", encoding="utf-8") as fh:
+              fh.write("| Archivo | Tamaño | SHA-256 |\n")
+              fh.write("|---|---|---|\n")
+              fh.write("\n".join(rows) + "\n")
+
+          print(f"✓ {len(files)} assets, latest.yml/json + checksums generados")
+          PYEOF
+          ls -lh all-dist/
+
+      - name: Componer cuerpo del draft
+        shell: bash
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Notas generadas por GitHub (mismo motor que "Generate release notes").
+          gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+            -f tag_name="$TAG" --jq '.body' > generated-notes.md 2>/dev/null \
+            || echo "_Notas automáticas no disponibles para este tag._" > generated-notes.md
+
+          {
+            echo "# ⬇️ StepLauncher $TAG"
+            echo ""
+            echo "![versión](https://img.shields.io/badge/versión-${TAG}-blue) ![canal](https://img.shields.io/badge/canal-${{ steps.meta.outputs.canal }}-green) ![plataformas](https://img.shields.io/badge/plataformas-Windows_%7C_Linux_%7C_macOS-lightgrey)"
+            echo ""
+            echo "${{ steps.meta.outputs.aviso }}"
+            echo ""
+            echo "## 📋 Novedades"
+            echo ""
+            cat generated-notes.md
+            echo ""
+            echo "## 📦 Descargas"
+            echo ""
+            echo "Elige el archivo de tu sistema operativo. Todos los nombres incluyen **versión + plataforma**."
+            echo ""
+            cat assets-table.md
+            echo ""
+            echo "<details>"
+            echo "<summary><b>🛠️ Cómo instalar</b></summary>"
+            echo ""
+            echo "**Windows:** ejecuta el \`*-installer.exe\` (recomendado) o usa el portable \`*.exe\`. Puede pedir WebView2 en el primer arranque."
+            echo ""
+            echo "**Linux:** \`*.deb\` (Debian/Ubuntu), \`*.rpm\` (Fedora/RHEL), \`*.pkg.tar.zst\` (Arch) o \`*.AppImage\` portable (\`chmod +x\` antes de abrir). Requiere GTK 4.14+ y WebKitGTK 6.0."
+            echo ""
+            echo "**macOS:** abre el \`*.dmg\` o descomprime el \`*.app.tar.gz\` y arrastra a Aplicaciones. Si macOS bloquea la app, clic derecho → Abrir. Requiere macOS 12+."
+            echo ""
+            echo "</details>"
+            echo ""
+            echo "<details>"
+            echo "<summary><b>✅ Verificar la descarga</b></summary>"
+            echo ""
+            echo "Compara el hash de tu archivo con \`CHECKSUMS-SHA256.txt\`:"
+            echo ""
+            echo "\`\`\`bash"
+            echo "sha256sum -c CHECKSUMS-SHA256.txt   # Linux / macOS"
+            echo "\`\`\`"
+            echo "\`\`\`powershell"
+            echo "certutil -hashfile <archivo> SHA256          # Windows"
+            echo "\`\`\`"
+            echo ""
+            echo "</details>"
+            echo ""
+            echo "## 🔄 Actualización automática"
+            echo ""
+            echo "El launcher detecta esta versión solo. Los archivos \`latest.yml\` / \`latest.json\` de esta release alimentan al actualizador con URLs y firmas SHA-512 por plataforma."
+            echo ""
+            echo "## 🔗 Enlaces"
+            echo ""
+            echo "- 🌐 Web: https://steplauncher.pages.dev"
+            echo "- 🐞 Reportar un problema: https://github.com/${GITHUB_REPOSITORY}/issues"
+            echo "- 📜 Historial del launcher: \`launcher/Changelogs/\` del repositorio"
+          } > body.md
+          wc -l body.md all-dist/latest.yml
+
+      - name: Crear o actualizar draft y subir assets
+        shell: bash
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+          PRERELEASE: ${{ steps.meta.outputs.prerelease }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          FLAGS="--draft --title \"StepLauncher $TAG\" --notes-file body.md"
+          if [ "$PRERELEASE" = "true" ]; then
+            FLAGS="$FLAGS --prerelease"
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "→ El draft $TAG ya existe, se actualiza"
+            # shellcheck disable=SC2086
+            gh release edit "$TAG" $FLAGS
+          else
+            echo "→ Creando draft $TAG"
+            # shellcheck disable=SC2086
+            gh release create "$TAG" $FLAGS
+          fi
+          echo "→ Subiendo assets (binarios + instaladores + latest.yml/json + checksums)"
+          gh release upload "$TAG" all-dist/* --clobber
+          echo "✓ Draft listo: $(gh release view "$TAG" --json url -q '.url')"

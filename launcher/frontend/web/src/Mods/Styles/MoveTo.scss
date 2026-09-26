@@ -1,0 +1,108 @@
+@use '../../Common/Styles/Components' as *;
+
+.ModsMove {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.65rem 0.8rem;
+    border-radius: 0.6rem;
+    border: 1px dashed color-mix(in srgb, var(--background-button-primary) 40%, transparent);
+    background: color-mix(in srgb, var(--background-button-primary) 5%, transparent);
+}
+
+.ModsMove_Title {
+    margin: 0;
+    font-size: calc(0.7rem * var(--font-size-secundary, 1));
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    b {
+        font-weight: 700;
+    }
+}
+
+.ModsMove_Sub {
+    margin: 0;
+    font-size: calc(0.62rem * var(--font-size-secundary, 1));
+    opacity: 0.55;
+}
+
+.ModsMove_Radios {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.ModsMove_Radio {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-style);
+    font-size: calc(0.66rem * var(--font-size-secundary, 1));
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+    transition: var(--transition);
+
+    input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    &.on {
+        color: var(--text-primary);
+        border-color: color-mix(in srgb, var(--background-button-primary) 65%, white 10%);
+        background: color-mix(in srgb, var(--background-button-primary) 10%, transparent);
+    }
+
+    &.off {
+        opacity: 0.4;
+        cursor: default;
+    }
+}
+
+.ModsMove_RadioDot {
+    width: 0.8rem;
+    height: 0.8rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 1px solid var(--control-border-strong);
+    background: var(--control-bg-soft);
+    position: relative;
+}
+
+.ModsMove_Radio.on .ModsMove_RadioDot::after {
+    content: '';
+    position: absolute;
+    inset: 0.16rem;
+    border-radius: 50%;
+    background: var(--text-primary);
+}
+
+.ModsMove_Field .SsSel {
+    width: 100%;
+    max-width: none;
+}
+
+.ModsMove_Target {
+    margin: 0;
+    font-size: calc(0.62rem * var(--font-size-secundary, 1));
+    opacity: 0.6;
+}
+
+.ModsMove_Actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.4rem;
+
+    .SsBtn svg {
+        width: 0.85rem;
+        height: 0.85rem;
+    }
+}

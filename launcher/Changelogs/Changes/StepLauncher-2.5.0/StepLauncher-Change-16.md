@@ -3,7 +3,7 @@
 - **Fecha**:   2026-09-24
 - **Versión**: 2.5.0
 - **Estado**:  implementado y verificado
-- **Release**: en desarrollo — aún no mencionado en ninguna release.
+- **Release**: StepLauncher-2.5.0 — en esta release se menciona que fue añadido.
 
 ## Qué cambió
 

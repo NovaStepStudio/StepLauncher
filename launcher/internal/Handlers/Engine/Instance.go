@@ -16,6 +16,7 @@ type VerifyResult = linstance.VerifyResult
 type VerifyIssue = linstance.VerifyIssue
 type InstanceVerifyProgress = linstance.InstanceVerifyProgress
 type InstanceLaunchResult = linstance.InstanceLaunchResult
+type ProvisionInfo = linstance.ProvisionInfo
 
 func (e *Engine) CreateInstance(req CreateInstanceReq) (*InstanceMetadata, string, error) {
 	return e.instances.Create(req)
@@ -23,6 +24,15 @@ func (e *Engine) CreateInstance(req CreateInstanceReq) (*InstanceMetadata, strin
 
 func (e *Engine) ListInstances() []*InstanceInfo {
 	return e.instances.List()
+}
+
+// ListProvisioning expone las instancias en creación por modpacks.
+func (e *Engine) ListProvisioning() []*ProvisionInfo {
+	list := e.instances.ListProvisioning()
+	if list == nil {
+		list = []*ProvisionInfo{}
+	}
+	return list
 }
 
 func (e *Engine) GetInstance(name string) (*InstanceMetadata, *InstanceLaunchConfig, error) {

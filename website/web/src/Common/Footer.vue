@@ -51,6 +51,7 @@ onMounted(() => load());
                     <b>Legal</b>
                     <RouterLink to="/privacy">Privacidad</RouterLink>
                     <RouterLink to="/terms">Términos</RouterLink>
+                    <RouterLink to="/credits">Créditos</RouterLink>
                 </div>
             </div>
         </div>
@@ -181,18 +182,36 @@ onMounted(() => load());
 @media (max-width: 800px){
     .Footer{
         width: calc(100% - 3rem);
-        padding: 2.5rem 1.5rem 1.5rem 1.5rem;
+        padding: 2.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom, 0px)) 1.5rem;
         .Content{
             flex-direction:column;
+            align-items: stretch;
             .Brand{
                 align-items:center;
                 text-align:center;
                 max-width: 100%;
+                p{
+                    max-width: 26rem;
+                }
             }
             .Columns{
                 width: 100%;
-                justify-content: space-around;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 1.5rem 1rem;
+                .Column{
+                    a{
+                        // Área táctil amplia sin cambiar el visual.
+                        padding: .35rem 0;
+                    }
+                }
             }
+        }
+        .Bottom{
+            flex-wrap: wrap;
+            justify-content: center;
+            text-align: center;
+            row-gap: .3rem;
         }
     }
 }

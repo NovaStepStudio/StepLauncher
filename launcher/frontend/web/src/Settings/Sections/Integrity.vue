@@ -27,12 +27,12 @@ const integrityPercent = computed(() => integrityStatus.value?.percent ?? 0);
 
 const integrityPhaseLabel = computed(() => {
     switch (integrityStatus.value?.phase) {
-        case 'indexing': return 'Buscando qué tiene que estar';
-        case 'existence': return 'Bajando lo que falta';
-        case 'retry': return 'Reintentando lo que falló';
-        case 'verify': return 'Comprobando que todo esté bien';
-        case 'done': return 'Terminado';
-        default: return 'Preparando...';
+        case 'indexing': return 'Inventariando archivos esperados';
+        case 'existence': return 'Descargando lo que falta';
+        case 'retry': return 'Reintentando descargas fallidas';
+        case 'verify': return 'Verificando hashes';
+        case 'done': return 'Completado';
+        default: return 'Preparando la revisión…';
     }
 });
 
@@ -40,10 +40,10 @@ const integrityDoneText = computed(() => {
     const st = integrityStatus.value;
     if (!st || st.state === 'running') return '';
     if (st.state === 'completed') {
-        return `Listo: revisé ${st.versionsScanned} versiones y arreglé ${st.filesRestored} archivos.`;
+        return `Listo: revisé ${st.versionsScanned} versiones y reparé ${st.filesRestored} archivos.`;
     }
-    if (st.state === 'cancelled') return 'Lo cancelaste.';
-    if (st.state === 'error') return 'Hubo un error. Mira los logs si quieres más detalle.';
+    if (st.state === 'cancelled') return 'Revisión cancelada por vos.';
+    if (st.state === 'error') return 'Falló la revisión. Revisá los logs para el detalle técnico.';
     return '';
 });
 
@@ -146,8 +146,8 @@ onUnmounted(() => {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Revisar archivos al descargar</span>
-                    <span class="SsDesc">Si está activo, comprueba cada archivo al bajarlo. Más lento, pero evita que el juego falle por un archivo roto. Recomendado dejarlo activo.</span>
+                    <span class="SsLabel">Verificar cada descarga (hash)</span>
+                    <span class="SsDesc">Comprueba la firma de cada archivo al bajarlo. Es un poco más lento, pero evita arranques rotos. Recomendado: dejar activo.</span>
                 </div>
                 <div class="SsCtrl">
                     <label class="SsTg"><input type="checkbox" v-model="verifyIntegrity" @change="saveVerifyIntegrity"><span class="SsTgS"></span></label>
@@ -155,7 +155,7 @@ onUnmounted(() => {
             </div>
             <div class="SsTip">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <span>Esto es automático. No hace nada ahora, solo cuando descargas algo.</span>
+                <span>Esto no hace nada ahora: actúa solo mientras descargás.</span>
             </div>
         </div>
 
@@ -166,21 +166,21 @@ onUnmounted(() => {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Qué quieres revisar</span>
-                    <span class="SsDesc">Elige si revisamos todo, solo el juego base o solo tus mundos.</span>
+                    <span class="SsLabel">Alcance de la revisión</span>
+                    <span class="SsDesc">Elegí qué revisar: todo el contenido, solo los archivos base del juego o solo tus instancias (mods, mundos y configs).</span>
                 </div>
                 <div class="SsCtrl">
                     <div class="SsSeg">
                         <button :class="{ active: integrityScope === 'todo' }" :disabled="integrityBusy" @click="setIntegrityScope('todo')">Todo</button>
-                        <button :class="{ active: integrityScope === 'global' }" :disabled="integrityBusy" @click="setIntegrityScope('global')">Juego</button>
-                        <button :class="{ active: integrityScope === 'instances' }" :disabled="integrityBusy" @click="setIntegrityScope('instances')">Mundos</button>
+                        <button :class="{ active: integrityScope === 'global' }" :disabled="integrityBusy" @click="setIntegrityScope('global')">Juego base</button>
+                        <button :class="{ active: integrityScope === 'instances' }" :disabled="integrityBusy" @click="setIntegrityScope('instances')">Instancias</button>
                     </div>
                 </div>
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Reparar ahora</span>
-                    <span class="SsDesc">Busca archivos que faltan o están rotos y los vuelve a descargar. Puede tardar varios minutos.</span>
+                    <span class="SsLabel">Reparar archivos ahora</span>
+                    <span class="SsDesc">Detecta faltantes y corruptos por hash y los re-descarga. Puede tardar varios minutos según tu disco e internet.</span>
                 </div>
                 <div class="SsCtrl">
                     <button class="SsBtn SsBtnPrimary" :disabled="integrityBusy" @click="startIntegrityCheck">
@@ -210,7 +210,7 @@ onUnmounted(() => {
             </template>
             <div class="SsTip">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <span>Esto sí hace algo ahora. Usa el de arriba si solo quieres prevenir futuros errores.</span>
+                <span>Esto sí trabaja ahora mismo. Para prevenir (no curar), usá la verificación automática de arriba.</span>
             </div>
         </div>
 

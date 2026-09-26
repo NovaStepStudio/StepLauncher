@@ -9,6 +9,7 @@ export type {
     InstanceLaunchResult,
     InstanceMetadata,
     InstanceVerifyProgress,
+    ProvisionInfo,
     UpdateMetadataReq,
     VerifyIssue,
     VerifyResult

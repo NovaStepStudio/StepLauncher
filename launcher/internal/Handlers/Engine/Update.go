@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -19,23 +21,27 @@ import (
 )
 
 const (
-	updateRepo             = "NovaStepStudio/StepLauncher"
-	updateWorkerReleases   = "https://steplauncher.stepnicka012.workers.dev/updates/steplauncher/releases"
-	updateWorkerPrerelease = "https://steplauncher.stepnicka012.workers.dev/updates/steplauncher/prereleases"
-	updaterAssetName       = "StepLauncher-Updater.exe"
-	updaterTempDir         = "StepLauncher-Updater"
-	updateMaxBodySize      = 4 * 1024 * 1024
+	updateRepo = "NovaStepStudio/StepLauncher"
+	// GitHub directo: la API pública de releases no necesita token y
+	// devuelve el mismo JSON que consumía el Worker (tag_name, assets...).
+	updateGitHubReleases = "https://api.github.com/repos/" + updateRepo + "/releases"
+	// Carpeta temporal donde se descarga el instalador en Windows.
+	updaterTempDir = "StepLauncher-Updater"
+	// Nombre de respaldo si la URL del instalador no trae nombre usable.
+	updaterFallbackName = "steplauncher-installer.exe"
+	updateMaxBodySize    = 4 * 1024 * 1024
 )
 
 // Cliente directo del launcher (sin proxy del sistema ni HTTP/2).
 var updateHTTPClient = &http.Client{Transport: downloader.DefaultTransport.Clone(), Timeout: 25 * time.Second}
 
-type workerRelease struct {
+type githubRelease struct {
 	TagName     string `json:"tag_name"`
 	Name        string `json:"name"`
 	PublishedAt string `json:"published_at"`
 	HTMLURL     string `json:"html_url"`
 	Body        string `json:"body"`
+	Prerelease  bool   `json:"prerelease"`
 	Assets      []struct {
 		Name               string `json:"name"`
 		BrowserDownloadURL string `json:"browser_download_url"`
@@ -89,43 +95,43 @@ func (e *Engine) checkUpdate() *UpdateInfo {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	// Usa el Worker de Cloudflare en lugar de GitHub directo para evitar rate limit.
-	// El Worker cachea y sirve el JSON de releases (array) sin necesidad de token.
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, updateWorkerReleases, nil)
+	// GitHub directo: /releases devuelve las publicadas (incluye
+	// prereleases, que se filtran abajo para seguir el canal estable).
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, updateGitHubReleases, nil)
 	if err != nil {
 		info.Error = err.Error()
 		return info
 	}
-	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "StepLauncher/"+engineconfig.AppVersion)
 
 	resp, err := updateHTTPClient.Do(req)
 	if err != nil {
-		info.Error = "no se pudo conectar con el servidor de actualizaciones: " + err.Error()
+		info.Error = "no se pudo conectar con GitHub: " + err.Error()
 		return info
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		info.Error = fmt.Sprintf("servidor de actualizaciones respondió %s", resp.Status)
+		info.Error = fmt.Sprintf("GitHub respondió %s", resp.Status)
 		return info
 	}
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, updateMaxBodySize))
 	if err != nil {
-		info.Error = "no se pudo leer la respuesta del servidor: " + err.Error()
+		info.Error = "no se pudo leer la respuesta de GitHub: " + err.Error()
 		return info
 	}
 
-	// El Worker devuelve un array de releases; busca la más nueva > current.
-	var releases []workerRelease
+	// GitHub devuelve un array de releases; busca la más nueva > current.
+	var releases []githubRelease
 	if err := json.Unmarshal(body, &releases); err != nil {
-		// Fallback: si el Worker devolviera un objeto único (latest), soportarlo
-		var single workerRelease
+		// Fallback: si algún día se consulta /latest (objeto único), soportarlo
+		var single githubRelease
 		if err2 := json.Unmarshal(body, &single); err2 == nil && single.TagName != "" {
-			releases = []workerRelease{single}
+			releases = []githubRelease{single}
 		} else {
-			info.Error = "respuesta del servidor inválida: " + err.Error()
+			info.Error = "respuesta de GitHub inválida: " + err.Error()
 			return info
 		}
 	}
@@ -135,11 +141,15 @@ func (e *Engine) checkUpdate() *UpdateInfo {
 		return info
 	}
 
-	// Encuentra la release más nueva que sea > currentVersion
-	var best *workerRelease
+	// Encuentra la release estable más nueva que sea > currentVersion.
+	// Las prereleases se ignoran (canal estable).
+	var best *githubRelease
 	bestVer := ""
 	for i := range releases {
 		r := &releases[i]
+		if r.Prerelease {
+			continue
+		}
 		ver := strings.TrimPrefix(strings.TrimSpace(r.TagName), "v")
 		if ver == "" {
 			continue
@@ -168,9 +178,14 @@ func (e *Engine) checkUpdate() *UpdateInfo {
 	info.ReleaseDate = rel.PublishedAt
 	info.Notes = strings.TrimSpace(rel.Body)
 
+	// En Windows la actualización se aplica con el instalador NSIS de la
+	// release (*-installer.exe de la arquitectura en curso): se descarga,
+	// se ejecuta y se cierra el launcher para que instale limpio.
+	// En Linux/macOS no hay instalador/actualizador: el diálogo invita a
+	// instalar manualmente desde la página de la release.
 	if runtime.GOOS == "windows" {
 		for _, a := range rel.Assets {
-			if strings.EqualFold(a.Name, updaterAssetName) && a.BrowserDownloadURL != "" {
+			if isWindowsInstallerAsset(a.Name, runtime.GOARCH) && a.BrowserDownloadURL != "" {
 				info.HasUpdater = true
 				info.UpdaterURL = a.BrowserDownloadURL
 				break
@@ -224,6 +239,26 @@ func compareVersions(a, b string) int {
 	return 0
 }
 
+// isWindowsInstallerAsset indica si name es el instalador NSIS de Windows
+// para la arquitectura indicada (p. ej. steplauncher-v2.5.0-windows-amd64-installer.exe).
+func isWindowsInstallerAsset(name, arch string) bool {
+	lower := strings.ToLower(name)
+	if !strings.HasSuffix(lower, ".exe") || !strings.Contains(lower, "installer") {
+		return false
+	}
+	if !strings.Contains(lower, "windows") && !strings.Contains(lower, "win") {
+		return false
+	}
+	switch strings.ToLower(arch) {
+	case "amd64", "x86_64", "x64":
+		return strings.Contains(lower, "amd64") || strings.Contains(lower, "x86_64") || strings.Contains(lower, "x64")
+	case "arm64", "aarch64":
+		return strings.Contains(lower, "arm64") || strings.Contains(lower, "aarch64")
+	default:
+		return arch == "" || strings.Contains(lower, strings.ToLower(arch))
+	}
+}
+
 func (e *Engine) DownloadUpdater(url string) (string, error) {
 	if url == "" {
 		return "", fmt.Errorf("url del actualizador vacía")
@@ -233,7 +268,10 @@ func (e *Engine) DownloadUpdater(url string) (string, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "", fmt.Errorf("crear carpeta temporal: %w", err)
 	}
-	dest := filepath.Join(dir, updaterAssetName)
+	// Guarda el instalador con su nombre real de la release para no chocar
+	// con descargas de otras versiones.
+	destName := installerFileName(url)
+	dest := filepath.Join(dir, destName)
 
 	tmp, err := os.CreateTemp(dir, "updater-*.tmp")
 	if err != nil {
@@ -256,15 +294,15 @@ func (e *Engine) DownloadUpdater(url string) (string, error) {
 
 	resp, err := updateHTTPClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("descargar actualizador: %w", err)
+		return "", fmt.Errorf("descargar instalador: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("descargar actualizador: GitHub respondió %s", resp.Status)
+		return "", fmt.Errorf("descargar instalador: GitHub respondió %s", resp.Status)
 	}
 	if _, err := io.Copy(tmp, resp.Body); err != nil {
-		return "", fmt.Errorf("descargar actualizador: %w", err)
+		return "", fmt.Errorf("descargar instalador: %w", err)
 	}
 	if err := tmp.Close(); err != nil {
 		return "", err
@@ -273,10 +311,24 @@ func (e *Engine) DownloadUpdater(url string) (string, error) {
 	if err := os.Rename(tmpPath, dest); err != nil {
 		os.Remove(dest)
 		if err2 := os.Rename(tmpPath, dest); err2 != nil {
-			return "", fmt.Errorf("mover actualizador: %w", err2)
+			return "", fmt.Errorf("mover instalador: %w", err2)
 		}
 	}
 	return dest, nil
+}
+
+// installerFileName extrae un nombre de archivo seguro desde la URL del
+// asset de GitHub (p. ej. steplauncher-v2.5.0-windows-amd64-installer.exe).
+func installerFileName(rawURL string) string {
+	parsed, err := url.Parse(rawURL)
+	if err != nil || parsed == nil {
+		return updaterFallbackName
+	}
+	base := path.Base(strings.TrimSpace(parsed.Path))
+	if base == "" || base == "." || base == "/" || strings.ContainsAny(base, `/\:`) {
+		return updaterFallbackName
+	}
+	return base
 }
 
 func (e *Engine) LaunchUpdater(updaterPath string) error {

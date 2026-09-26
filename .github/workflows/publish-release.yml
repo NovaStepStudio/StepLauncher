@@ -27,6 +27,42 @@ jobs:
           echo "Publicación cancelada por el usuario (publish != yes)."
           exit 0
 
+      - name: Revisar draft antes de publicar
+        if: github.event.inputs.publish == 'yes'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.inputs.tag }}"
+          echo "=== $TAG (antes de publicar) ==="
+          gh release view "$TAG" --json name,tagName,isDraft,isPrerelease \
+            -q '"\(.name) (\(.tagName)) — draft=\(.isDraft) prerelease=\(.isPrerelease)"'
+          echo ""
+          echo "=== Assets ==="
+          gh release view "$TAG" --json assets -q '.assets[] | "\(.name) (\(.size // 0 | tostring) bytes)"'
+          echo ""
+          echo "=== Comprobaciones ==="
+          MISSING=0
+          for patron in "latest.yml" "latest.json" "CHECKSUMS-SHA256.txt"; do
+            if gh release view "$TAG" --json assets -q '.assets[].name' | grep -qx "$patron"; then
+              echo "✓ $patron presente"
+            else
+              echo "⚠ $patron AUSENTE en el draft"
+              MISSING=1
+            fi
+          done
+          # Aviso (no bloquea): cada asset principal debe llevar versión + plataforma
+          gh release view "$TAG" --json assets -q '.assets[].name' | while read -r a; do
+            case "$a" in
+              steplauncher-*) echo "✓ $a" ;;
+              *) echo "⚠ sin versionar: $a" ;;
+            esac
+          done
+          if [ "$MISSING" -ne 0 ]; then
+            echo ""
+            echo "⚠ Faltan archivos del actualizador (latest.yml/json o checksums)."
+            echo "   Se publica igual, pero el actualizador automático quedará incompleto."
+          fi
+
       - name: Publicar release (quitar draft)
         if: github.event.inputs.publish == 'yes'
         env:
@@ -48,9 +84,14 @@ jobs:
           fi
           echo "✅ Release ${{ github.event.inputs.tag }} ahora es pública."
 
-      - name: Mostrar notas de la release
+      - name: Mostrar resumen final
         if: github.event.inputs.publish == 'yes'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release view "${{ github.event.inputs.tag }}" --json name,tagName,isDraft,isPrerelease,url -q '"\(.name) (\(.tagName)) — draft=\(.isDraft) prerelease=\(.isPrerelease)\n\(.url)"'
+          gh release view "${{ github.event.inputs.tag }}" --json name,tagName,isDraft,isPrerelease,url,publishedAt \
+            -q '"\(.name) (\(.tagName)) — draft=\(.isDraft) prerelease=\(.isPrerelease)\nPublicada: \(.publishedAt)\n\(.url)"'
+          echo ""
+          echo "URLs estables del actualizador:"
+          echo "https://github.com/${GH_REPO}/releases/latest/download/latest.yml"
+          echo "https://github.com/${GH_REPO}/releases/latest/download/latest.json"

@@ -55,6 +55,11 @@ type InstanceManager struct {
 	verifyCancel   map[string]context.CancelFunc
 	verifyProgress map[string]*InstanceVerifyProgress
 
+	// Creación en curso por un modpack: mientras existe la marca, la instancia
+	// NO aparece en List/Get y no se puede utilizar (solo el flujo interno del
+	// motor trabaja con ella vía las variantes System).
+	provisioning map[string]*Provision
+
 	// Impide backups concurrentes de la misma instancia.
 	backingUp map[string]bool
 
@@ -71,6 +76,7 @@ func NewManager(instancesDir, sharedDir string) *InstanceManager {
 		verifying:        make(map[string]bool),
 		verifyCancel:     make(map[string]context.CancelFunc),
 		verifyProgress:   make(map[string]*InstanceVerifyProgress),
+		provisioning:     make(map[string]*Provision),
 		backingUp:        make(map[string]bool),
 		persistenceLocks: make(map[string]*sync.Mutex),
 	}
@@ -88,6 +94,9 @@ func (m *InstanceManager) isVerifying(name string) bool {
 func (m *InstanceManager) assertUsable(name string) error {
 	if m.isVerifying(name) {
 		return fmt.Errorf("la instancia %s se está verificando y no se puede utilizar hasta que termine", name)
+	}
+	if m.IsProvisioning(name) {
+		return fmt.Errorf("la instancia %s se está creando y aún no está lista", name)
 	}
 	return nil
 }
@@ -328,6 +337,10 @@ func (m *InstanceManager) List() []*InstanceInfo {
 		if !e.IsDir() {
 			continue
 		}
+		// En creación por modpack: oculta hasta estar al 100%.
+		if m.IsProvisioning(e.Name()) {
+			continue
+		}
 		meta, err := m.readMetadata(e.Name())
 		if err != nil {
 			continue
@@ -342,6 +355,9 @@ func (m *InstanceManager) List() []*InstanceInfo {
 }
 
 func (m *InstanceManager) Get(name string) (*InstanceMetadata, *InstanceLaunchConfig, error) {
+	if m.IsProvisioning(name) {
+		return nil, nil, fmt.Errorf("la instancia %s se está creando y aún no está lista", name)
+	}
 	meta, err := m.readMetadata(name)
 	if err != nil {
 		return nil, nil, err
@@ -393,8 +409,21 @@ func (m *InstanceManager) Delete(name string) error {
 }
 
 func (m *InstanceManager) UpdateMetadata(name string, req UpdateMetadataReq) (*InstanceMetadata, error) {
-	if err := m.assertUsable(name); err != nil {
-		return nil, err
+	return m.updateMetadata(name, req, false)
+}
+
+// UpdateMetadataSystem actualiza el metadata saltando el bloqueo de
+// provisioning/verificación. Solo la usa el flujo interno del motor (icono o
+// datos de una instancia en creación); la UI siempre pasa por UpdateMetadata.
+func (m *InstanceManager) UpdateMetadataSystem(name string, req UpdateMetadataReq) (*InstanceMetadata, error) {
+	return m.updateMetadata(name, req, true)
+}
+
+func (m *InstanceManager) updateMetadata(name string, req UpdateMetadataReq, system bool) (*InstanceMetadata, error) {
+	if !system {
+		if err := m.assertUsable(name); err != nil {
+			return nil, err
+		}
 	}
 	lock := m.persistenceLock(name)
 	lock.Lock()
@@ -440,8 +469,20 @@ func (m *InstanceManager) UpdateMetadata(name string, req UpdateMetadataReq) (*I
 }
 
 func (m *InstanceManager) UpdateConfig(name string, cfg *InstanceLaunchConfig) (*InstanceLaunchConfig, error) {
-	if err := m.assertUsable(name); err != nil {
-		return nil, err
+	return m.updateConfig(name, cfg, false)
+}
+
+// UpdateConfigSystem igual que UpdateMetadataSystem pero para la config
+// (el motor fija la versión del loader como activa tras un modpack).
+func (m *InstanceManager) UpdateConfigSystem(name string, cfg *InstanceLaunchConfig) (*InstanceLaunchConfig, error) {
+	return m.updateConfig(name, cfg, true)
+}
+
+func (m *InstanceManager) updateConfig(name string, cfg *InstanceLaunchConfig, system bool) (*InstanceLaunchConfig, error) {
+	if !system {
+		if err := m.assertUsable(name); err != nil {
+			return nil, err
+		}
 	}
 	lock := m.persistenceLock(name)
 	lock.Lock()

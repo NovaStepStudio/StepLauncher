@@ -42,8 +42,8 @@ async function saveMbps() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Archivos a la vez</span>
-                    <span class="SsDesc">Cuántos archivos se bajan al mismo tiempo. Más es más rápido, pero usa más internet.</span>
+                    <span class="SsLabel">Descargas en paralelo</span>
+                    <span class="SsDesc">Cuántos archivos bajan a la vez (1–8). Más es más rápido, pero satura tu conexión y puede fallar en redes flojas.</span>
                 </div>
                 <div class="SsCtrl">
                     <div class="SsStep">
@@ -55,8 +55,8 @@ async function saveMbps() {
             </div>
             <div class="SsRow">
                 <div class="SsInfo">
-                    <span class="SsLabel">Límite de velocidad</span>
-                    <span class="SsDesc">Hasta qué velocidad puede descargar. 0 es sin límite, ideal si tu internet es bueno.</span>
+                    <span class="SsLabel">Tope de velocidad</span>
+                    <span class="SsDesc">Máximo en Mbps. En 0 (sin límite) usa todo tu ancho de banda: útil si nadie más usa internet.</span>
                 </div>
                 <div class="SsCtrl">
                     <div class="SsStep">
@@ -70,7 +70,7 @@ async function saveMbps() {
 
         <div class="SsTip">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>¿Los archivos se bajan mal? Activa la verificación automática en <strong>Integridad</strong>.</span>
+            <span>¿Descargas corruptas o juego que no abre? Activá la verificación automática en <strong>Integridad</strong>.</span>
         </div>
 
     </div>
