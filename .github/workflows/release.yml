@@ -313,7 +313,7 @@ jobs:
   draft:
     name: Crear Draft Release
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
@@ -535,18 +535,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
-          FLAGS="--draft --title \"StepLauncher $TAG\" --notes-file body.md"
+          args=(--draft --title "StepLauncher $TAG" --notes-file body.md)
           if [ "$PRERELEASE" = "true" ]; then
-            FLAGS="$FLAGS --prerelease"
+            args+=(--prerelease)
           fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "→ El draft $TAG ya existe, se actualiza"
-            # shellcheck disable=SC2086
-            gh release edit "$TAG" $FLAGS
+            gh release edit "$TAG" "${args[@]}"
           else
             echo "→ Creando draft $TAG"
-            # shellcheck disable=SC2086
-            gh release create "$TAG" $FLAGS
+            gh release create "$TAG" "${args[@]}"
           fi
           echo "→ Subiendo assets (binarios + instaladores + latest.yml/json + checksums)"
           gh release upload "$TAG" all-dist/* --clobber
